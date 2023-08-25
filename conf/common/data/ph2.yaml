@@ -1,0 +1,21 @@
+# @package _global_
+
+data:
+    drop_last_batch: True
+    
+    train: &common
+        _target_: datasets.SkinCancerSegmentationDataset
+        root: ${hydra:runtime.cwd}/data/PH2
+        split: train
+        split_seed: 87
+        cross_val_num_buckets: 5
+        cross_val_bucket_validation_index: 0
+        in_memory: false
+        target: true
+        image_size: 
+        - 256
+        - 256
+
+    validation:
+        split: validation
+        <<: *common   # reinsert 'train' block content

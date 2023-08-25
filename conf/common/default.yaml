@@ -1,0 +1,19 @@
+# @package _global_
+
+cache_folder: ${hydra:runtime.cwd}/model_zoo
+seed: 10
+gpu: 0
+
+hydra:
+  run:
+    dir: runs/${hydra.job.override_dirname}/run-${data.train.cross_val_bucket_validation_index} 
+  sweep:
+    dir: runs
+    subdir: ${hydra.job.override_dirname}
+  job:
+    config:
+      override_dirname:
+        exclude_keys:
+          - optim.resume
+          - data.train.cross_val_bucket_validation_index
+          - data.validation.cross_val_bucket_validation_index

@@ -1,0 +1,22 @@
+# @package _global_
+
+defaults:
+  - /common: default
+  - /common/data: ph2
+  - /common/optim: default
+
+optim:
+    batch_size: 4
+    batch_accumulation: 2
+    num_workers: 4
+
+    epochs: 60
+
+data:
+    train: &common
+        image_size:
+        - 256
+        - 256
+
+    validation:
+        <<: *common   # reinsert 'train' block content

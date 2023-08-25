@@ -1,4 +1,9 @@
+requests
 tqdm
 torch
 opencv-python
 albumentations
+hydra-core==1.2.0
+omegaconf
+pandas
+tensorboard

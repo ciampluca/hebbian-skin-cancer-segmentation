@@ -20,8 +20,6 @@ class SkinCancerSegmentationDataset(Dataset):
         split_seed=None,
         cross_val_num_buckets=5,
         cross_val_bucket_validation_index=0,
-        num_train_val_samples=None,
-        num_test_samples=None,
         in_memory=True,
         target=None,
         transforms=None,
@@ -41,8 +39,6 @@ class SkinCancerSegmentationDataset(Dataset):
         self.split_seed = split_seed
         self.cross_val_num_buckets = cross_val_num_buckets
         self.cross_val_bucket_validation_index = cross_val_bucket_validation_index
-        self.num_train_val_samples = num_train_val_samples
-        self.num_test_samples = num_test_samples
         self.target = target
         self.transforms = transforms
 
@@ -88,6 +84,7 @@ class SkinCancerSegmentationDataset(Dataset):
         return image
     
     def _get_mask(self, mask_path):
+        # TODO check, they should be 0-1 binary masks
         mask = cv2.imread(mask_path.as_posix(), cv2.IMREAD_UNCHANGED)
 
         return mask
