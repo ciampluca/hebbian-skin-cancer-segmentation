@@ -12,10 +12,48 @@ data:
         cross_val_bucket_validation_index: 0
         in_memory: false
         target: true
-        image_size: 
-        - 256
-        - 256
+        transforms:
+            _target_: albumentations.Compose
+            _args_:
+                - - _target_: albumentations.LongestMaxSize
+                    max_size:
+                    - 512
+                  - _target_: albumentations.PadIfNeeded
+                    min_height: 512
+                    min_width: 512
+                    border_mode: 0   # it corresponds to cv2.BORDER_CONSTANT
+                  - _target_: albumentations.Flip
+                  - _target_: albumentations.Normalize
+                    mean:
+                    - 0.45
+                    - 0.45
+                    - 0.45
+                    std:
+                    - 0.225
+                    - 0.225
+                    - 0.225
+                  - _target_: albumentations.pytorch.ToTensorV2
 
     validation:
         split: validation
         <<: *common   # reinsert 'train' block content
+        transforms:
+            _target_: albumentations.Compose
+            _args_:
+                - - _target_: albumentations.LongestMaxSize
+                    max_size:
+                    - 512
+                  - _target_: albumentations.PadIfNeeded
+                    min_height: 512
+                    min_width: 512
+                    border_mode: 0   # it corresponds to cv2.BORDER_CONSTANT
+                  - _target_: albumentations.Normalize
+                    mean:
+                    - 0.45
+                    - 0.45
+                    - 0.45
+                    std:
+                    - 0.225
+                    - 0.225
+                    - 0.225
+                  - _target_: albumentations.pytorch.ToTensorV2

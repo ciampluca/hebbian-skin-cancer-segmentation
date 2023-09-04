@@ -39,16 +39,13 @@ class CheckpointManager:
         self.ckpt_dir = Path(ckpt_dir)
         self.ckpt_format = ckpt_format if ckpt_format else self._default_ckpt_format
         self.current_best = collections.defaultdict(lambda: None, current_best)
-        self.metric_modes = metric_modes if metric_modes else self._default_mertic_mode
+        self.metric_modes = metric_modes if metric_modes else self._default_metric_mode
     
     def save(self, ckpt, metrics, epoch):
         
         ckpt_path = self.ckpt_dir / f'ckpt_e{epoch}.pth'
 
-        for metric, metric_info in metrics.items():
-            value = metric_info.get('value', None)
-            threshold = metric_info.get('threshold', None)
-
+        for metric, value in metrics.items():
             mode = self.metric_modes(metric)
             if mode == 'ignore':
                 continue
@@ -60,29 +57,26 @@ class CheckpointManager:
                     torch.save(ckpt, ckpt_path)
 
                 # create a link indicating a best ckpt
-                best_metric_ckpt_name = self.ckpt_format(metric, value, threshold, epoch)
+                best_metric_ckpt_name = self.ckpt_format(metric, value, epoch)
                 best_metric_ckpt_path = self.ckpt_dir / best_metric_ckpt_name
                 if best_metric_ckpt_path.exists():
                     best_metric_ckpt_path.unlink()
                 best_metric_ckpt_path.symlink_to(ckpt_path.name)
 
                 # update current best
-                self.current_best[metric] = {'value': value, 'threshold': threshold, 'epoch': epoch}
+                self.current_best[metric] = {'value': value, 'epoch': epoch}
 
         self.house_keeping()  # deletes orphan checkpoints
         return dict(self.current_best)
     
     @staticmethod
-    def _default_ckpt_format(metric_name, metric_value, metric_thr, epoch):
+    def _default_ckpt_format(metric_name, metric_value, epoch):
         metric_name = metric_name.replace('/', '-')
         return f'best_model_metric_{metric_name}.pth'
     
     @staticmethod
-    def _default_mertic_mode(metric_name):
+    def _default_metric_mode(metric_name):
         if 'macro' not in metric_name:
-            return 'ignore'
-
-        if 'count/err' in metric_name:
             return 'ignore'
         
         if 'loss' in metric_name:

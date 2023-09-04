@@ -6,5 +6,6 @@ defaults:
 name: UNet
 module:
   _target_: models.UNet
+  out_channels: 1
   last_bias: true
 

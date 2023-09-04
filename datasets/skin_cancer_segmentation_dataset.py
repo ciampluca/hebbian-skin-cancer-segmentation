@@ -3,6 +3,7 @@ from pathlib import Path
 from tqdm import tqdm
 from functools import partial
 import random
+import numpy as np
 
 import torch
 from torch.utils.data import Dataset
@@ -23,7 +24,6 @@ class SkinCancerSegmentationDataset(Dataset):
         in_memory=True,
         target=None,
         transforms=None,
-        image_size=(512, 512),
     ):
         """ Dataset constructor.
         Args:
@@ -44,13 +44,14 @@ class SkinCancerSegmentationDataset(Dataset):
 
         self.in_memory = in_memory
 
-        self.image_size = image_size
-
         # get list of images in the given split
         self.image_paths = self._get_images_in_split()
         
         if in_memory:
-            self.data = []
+            self.data = {}
+            self.data['image'] = [self._get_image(image_path) for image_path in self.image_paths]
+            if self.target:
+                self.data['mask'] = [self._get_mask(Path(str(image_path).replace('images', 'targets'))) for image_path in self.image_paths]
 
     def __len__(self):
         return len(self.image_paths)
@@ -84,8 +85,8 @@ class SkinCancerSegmentationDataset(Dataset):
         return image
     
     def _get_mask(self, mask_path):
-        # TODO check, they should be 0-1 binary masks
-        mask = cv2.imread(mask_path.as_posix(), cv2.IMREAD_UNCHANGED)
+        mask = cv2.imread(mask_path.as_posix(), cv2.IMREAD_UNCHANGED).astype(np.float32)
+        mask[mask == 255] = 1.0
 
         return mask
         
@@ -120,8 +121,7 @@ class SkinCancerSegmentationDataset(Dataset):
     def __str__(self):
         s = f'{self.__class__.__name__}: ' \
             f'{self.split} split, ' \
-            f'{len(self)} images, ' \
-            f'image size ({self.image_size[0]}x{self.image_size[1]})'
+            f'{len(self)} images'
         return s
 
 
@@ -150,9 +150,8 @@ def main():
         'split': "train",
         'split_seed': 87,
         'cross_val_bucket_validation_index': 0,
-        'in_memory': False,
+        'in_memory': True,
         'target': True,
-        'image_size': (512, 512),
         'transforms': train_transform,
     }
 
@@ -177,7 +176,7 @@ def main():
             print("Original Size (w-h): {}-{}".format(original_width, original_height))
             image = np.moveaxis(np.array(image), 0, -1)
             Image.fromarray(image).save(debug_dir / 'img_{}'.format(image_id)) 
-            Image.fromarray(np.array(target)).save(debug_dir / 'mask_{}'.format(image_id)) 
+            Image.fromarray(np.array(target*255).astype(np.uint8)).save(debug_dir / 'mask_{}'.format(image_id)) 
 
 if __name__ == "__main__":
     main()

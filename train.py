@@ -113,7 +113,7 @@ def main(cfg):
         train_metrics = train_one_epoch(train_loader, model, optimizer, device, writer, epoch, cfg)
 
         # convert for pandas
-        train_metrics = {(metric, info): v for metric, infos in train_metrics.items() for info, v in infos.items()}
+        train_metrics = {(metric_name, 'value'): value for metric_name, value in train_metrics.items()}
         train_metrics = pd.DataFrame(train_metrics, index=[epoch]).rename_axis('epoch')
         train_log = pd.concat([train_log, train_metrics])
         train_log.to_csv(train_log_path)
@@ -122,13 +122,8 @@ def main(cfg):
         if (epoch + 1) % cfg.optim.val_freq == 0:
             valid_metrics = validate(valid_loader, model, device, epoch, cfg)
 
-            for metric, info in valid_metrics.items():  # log to tensorboard
-                value = info.get('value', None)
+            for metric, value in valid_metrics.items():  # log to tensorboard
                 writer.add_scalar(f'valid/{metric}', value, epoch)
-
-                threshold = info.get('threshold', None)
-                if threshold is not None:
-                    writer.add_scalar(f'valid/{metric}_thr', threshold, epoch)
 
             # save only if best on some metric (via CheckpointManager)
             best_metrics = ckpt_manager.save({
@@ -148,7 +143,7 @@ def main(cfg):
             }, 'last.pth')
 
             # convert for pandas
-            valid_metrics = {(metric, info): v for metric, infos in valid_metrics.items() for info, v in infos.items()}
+            valid_metrics = {(metric_name, 'value'): value for metric_name, value in valid_metrics.items()}
             valid_metrics = pd.DataFrame(valid_metrics, index=[epoch]).rename_axis('epoch')
             valid_log = pd.concat([valid_log, valid_metrics])
             valid_log.to_csv(valid_log_path)

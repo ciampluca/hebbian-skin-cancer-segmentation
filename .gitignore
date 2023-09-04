@@ -133,3 +133,5 @@ dmypy.json
 /.vscode/
 /data/
 /datasets/trash/
+/runs/
+/output_debug/

@@ -6,17 +6,8 @@ defaults:
   - /common/optim: default
 
 optim:
-    batch_size: 4
+    batch_size: 2
     batch_accumulation: 2
     num_workers: 4
 
     epochs: 60
-
-data:
-    train: &common
-        image_size:
-        - 256
-        - 256
-
-    validation:
-        <<: *common   # reinsert 'train' block content

@@ -1,12 +1,18 @@
 # -*- coding: utf-8 -*-
 from functools import partial
 import logging
+import numpy as np
+from pathlib import Path
 
 import torch
+import torchvision
 import hydra
 
 from tqdm import tqdm
 import pandas as pd
+from PIL import Image
+
+from metrics import dice_jaccard
 
 tqdm = partial(tqdm, dynamic_ncols=True)
 
@@ -14,70 +20,33 @@ tqdm = partial(tqdm, dynamic_ncols=True)
 log = logging.getLogger(__name__)
 
 
-def _dice_jaccard_single_class(y_true, y_pred, smooth, axis):
-    intersection = (y_true * y_pred).sum(axis)
-    sum_ = y_true.sum(axis) + y_pred.sum(axis)
-    union = sum_ - intersection
+def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_map, cfg):
+    debug_dir = Path('output_debug')
+    debug_dir.mkdir(exist_ok=True)
 
-    jaccard = (intersection + smooth) / (union + smooth)
-    dice = 2. * (intersection + smooth) / (sum_ + smooth)
-    return dice.mean(), jaccard.mean()
+    image_id = Path(image_id)
+
+    def _scale_and_save(image, path):
+        image = image.movedim(1, -1)
+        image = (255 * image.cpu().numpy().squeeze()).astype(np.uint8)
+        pil_image = Image.fromarray(image).convert("RGB")
+        pil_image.save(path)
+        
+    _scale_and_save(image, debug_dir / image_id)
+
+    n_classes = cfg.model.module.out_channels
+    for i in range(n_classes):
+        _scale_and_save(segmentation_map[i, :, :], debug_dir / f'{image_id.stem}_segm_cls{i}.png')
+        _scale_and_save(target_map[i, :, :], debug_dir / f'{image_id.stem}_target_cls{i}.png')
 
 
-def _atleast_nhwc(x):
-    if x.ndim == 2:
-        x = x[None, ..., None]
-    elif x.ndim == 3:
-        x = x[None, ...]
-    return x
-
-
-def dice_jaccard(y_true, y_pred, smooth=1, thr=None, prefix=''):
-    """
-    Computes Dice and Jaccard coefficients.
-
-    Args:
-        y_true (ndarray): (H,W,C)-shaped groundtruth map with binary values (0, 1)
-        y_pred (ndarray): (H,W,C)-shaped predicted map with values in [0, 1]
-        smooth (int, optional): Smoothing factor to avoid ZeroDivisionError. Defaults to 1.
-        thr (float, optional): Threshold to binarize predictions; if None, the soft version of
-                               the coefficients are computed. Defaults to None.
-
-    Returns:
-        dict: computed metrics organized with the following keys
-          - segm/{dice,jaccard}/micro: Micro-averaged Dice and Jaccard coefficients.
-          - segm/{dice,jaccard}/macro: Macro-averaged Dice and Jaccard coefficients.
-          - segm/{dice,jaccard}/cls0: Dice and Jaccard coefficients for class 0
-          - segm/{dice,jaccard}/cls1: Dice and Jaccard coefficients for class 1
-          - ...
-    """
-    y_pred = _atleast_nhwc(y_pred)
-    y_true = _atleast_nhwc(y_true)
-
-    y_pred = (y_pred >= thr) if thr is not None else y_pred
-
-    micro_dice, micro_jaccard = _dice_jaccard_single_class(y_true, y_pred, smooth, axis=(1, 2, 3))
-    class_dice, class_jaccard = zip(*[
-        _dice_jaccard_single_class(y_true[:, :, :, i], y_pred[:, :, :, i], smooth, axis=(1, 2))
-        for i in range(y_true.shape[-1])
-    ])
-
-    mean_fn = np.mean
-    if isinstance(y_pred, torch.Tensor):
-        mean_fn = lambda x: torch.mean(torch.stack(x))
+def _save_debug_metrics(metrics, epoch):
+    debug_dir = Path('output_debug')
+    debug_dir.mkdir(exist_ok=True)
     
-    macro_dice, macro_jaccard = mean_fn(class_dice), mean_fn(class_jaccard)
-
-    metrics = {
-        f'segm/{prefix}dice/micro': micro_dice.item(),
-        f'segm/{prefix}dice/macro': macro_dice.item(),
-        **{f'segm/{prefix}dice/cls{i}': v.item() for i, v in enumerate(class_dice)},
-        f'segm/{prefix}jaccard/micro': micro_jaccard.item(),
-        f'segm/{prefix}jaccard/macro': macro_jaccard.item(),
-        **{f'segm/{prefix}jaccard/cls{i}': v.item() for i, v in enumerate(class_jaccard)},
-    }
-    
-    return metrics
+    metrics = pd.DataFrame(metrics)
+    csv_file_path = 'validation_metrics_epoch_{}.csv'.format(epoch).format(epoch)
+    metrics.to_csv(debug_dir / Path(csv_file_path), index=False)
 
 
 def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
@@ -91,12 +60,13 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
     n_batches = len(dataloader)
     progress = tqdm(dataloader, desc='TRAIN', leave=False)
     for i, sample in enumerate(progress):
-        frames, labels, _ = sample
-        frames, labels = frames.to(device), labels.to(device)
+        images, labels, image_ids, original_sizes = sample
+        labels = labels.unsqueeze(dim=1)
+        images, labels = images.to(device), labels.to(device)
 
         # computing outputs
-        preds = model(frames)
-        preds_prob = (torch.sigmoid(preds)).item() if criterion.__class__.__name__.endswith("WithLogitsLoss") else preds
+        preds = model(images)
+        preds_prob = (torch.sigmoid(preds)) if criterion.__class__.__name__.endswith("WithLogitsLoss") else preds
 
         # computing loss and backwarding it
         loss = criterion(preds, labels)
@@ -126,11 +96,10 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
                 writer.add_scalar(f'train/{metric}', value, n_iter)
 
     metrics = pd.DataFrame(metrics).mean(axis=0).to_dict()
-    
+
     return metrics
 
 
-# TODO
 @torch.no_grad()
 def validate(dataloader, model, device, epoch, cfg):
     """ Evaluate model on validation data. """
@@ -138,4 +107,43 @@ def validate(dataloader, model, device, epoch, cfg):
     validation_device = cfg.optim.val_device
     criterion = hydra.utils.instantiate(cfg.optim.loss)
 
-    pass
+    metrics = []
+
+    n_images = len(dataloader)
+    progress = tqdm(dataloader, total=n_images, desc='EVAL', leave=False)
+
+    for i, sample in enumerate(progress):
+        images, labels, image_ids, original_sizes = sample
+
+        # Un-batching
+        # TODO not efficient, should be done in parallel
+        for image, label, image_id, original_size in zip(images, labels, image_ids, original_sizes):
+            image, label = torch.unsqueeze(image, dim=0).to(validation_device), label[None, None, ...].to(validation_device)
+
+            # computing outputs
+            pred = model(image)
+            pred_prob = (torch.sigmoid(pred)) if criterion.__class__.__name__.endswith("WithLogitsLoss") else pred
+ 
+            # threshold-free metrics
+            loss = criterion(pred, label)
+            soft_segm_metrics = dice_jaccard(label.movedim(1, -1), pred_prob.movedim(1, -1), prefix='soft_')    # NCHW -> NHWC
+
+            metrics.append({
+                'image_id': image_id,
+                'segm/loss': loss.item(),
+                **soft_segm_metrics,
+            })
+
+            # threshold-dependent metrics
+            # TODO ?
+
+            if cfg.optim.debug and epoch % cfg.optim.debug_freq == 0:
+                _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg)
+
+    if cfg.optim.debug:
+         _save_debug_metrics(metrics, epoch)
+
+    metrics = pd.DataFrame(metrics).set_index('image_id')
+    metrics = metrics.mean(axis=0).to_dict()
+
+    return metrics

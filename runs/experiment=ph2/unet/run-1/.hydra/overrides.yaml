@@ -1,3 +1,0 @@
-- experiment=ph2/unet
-- data.train.cross_val_bucket_validation_index=1
-- data.validation.cross_val_bucket_validation_index=1

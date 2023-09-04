@@ -7,3 +7,4 @@ hydra-core==1.2.0
 omegaconf
 pandas
 tensorboard
+gdown
