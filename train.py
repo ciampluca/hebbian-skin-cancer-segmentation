@@ -109,8 +109,8 @@ def main(cfg):
     progress = trange(start_epoch, cfg.optim.epochs, initial=start_epoch)
     for epoch in progress:
         # train
-        scheduler.step()  # update lr scheduler
         train_metrics = train_one_epoch(train_loader, model, optimizer, device, writer, epoch, cfg)
+        scheduler.step()  # update lr scheduler
 
         # convert for pandas
         train_metrics = {(metric_name, 'value'): value for metric_name, value in train_metrics.items()}

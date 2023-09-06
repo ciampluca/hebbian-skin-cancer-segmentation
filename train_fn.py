@@ -5,7 +5,7 @@ import numpy as np
 from pathlib import Path
 
 import torch
-import torchvision
+import torchvision.transforms.functional as F
 import hydra
 
 from tqdm import tqdm
@@ -20,19 +20,26 @@ tqdm = partial(tqdm, dynamic_ncols=True)
 log = logging.getLogger(__name__)
 
 
-def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_map, cfg):
-    debug_dir = Path('output_debug')
+def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_map, cfg, validation=True):
+    debug_folder_name = 'val_output_debug' if validation else 'train_output_debug'
+    debug_dir = Path(debug_folder_name)
     debug_dir.mkdir(exist_ok=True)
 
     image_id = Path(image_id)
 
-    def _scale_and_save(image, path):
-        image = image.movedim(1, -1)
-        image = (255 * image.cpu().numpy().squeeze()).astype(np.uint8)
+    def _scale_and_save(image, path, denormalize_image=False):
+        if denormalize_image:
+            image = F.normalize(image, mean=[0., 0., 0.], std=[1/0.225, 1/0.225, 1/0.225])
+            image = F.normalize(image, mean=[-0.45, -0.45, -0.45], std=[1., 1., 1.])
+
+        dim_to_move = 1 if image.ndim == 4 else 0 if image.ndim == 3 else None
+        if dim_to_move is not None:
+            image = image.movedim(dim_to_move, -1)
+        image = (255 * image.cpu().detach().numpy().squeeze()).astype(np.uint8)
         pil_image = Image.fromarray(image).convert("RGB")
         pil_image.save(path)
         
-    _scale_and_save(image, debug_dir / image_id)
+    _scale_and_save(image, debug_dir / image_id, denormalize_image=True)
 
     n_classes = cfg.model.module.out_channels
     for i in range(n_classes):
@@ -95,6 +102,10 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
             for metric, value in batch_metrics.items():
                 writer.add_scalar(f'train/{metric}', value, n_iter)
 
+        if cfg.optim.debug and epoch % cfg.optim.debug_freq == 0 and cfg.optim.save_debug_train_images:
+            for image, label, image_id, pred_seg_map in zip(images, labels, image_ids, preds_prob):
+                _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, validation=False)
+
     metrics = pd.DataFrame(metrics).mean(axis=0).to_dict()
 
     return metrics
@@ -134,10 +145,7 @@ def validate(dataloader, model, device, epoch, cfg):
                 **soft_segm_metrics,
             })
 
-            # threshold-dependent metrics
-            # TODO ?
-
-            if cfg.optim.debug and epoch % cfg.optim.debug_freq == 0:
+            if cfg.optim.debug and epoch % cfg.optim.debug_freq == 0 and cfg.optim.save_debug_val_images:
                 _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg)
 
     if cfg.optim.debug:

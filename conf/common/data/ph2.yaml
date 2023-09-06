@@ -2,6 +2,7 @@
 
 data:
     drop_last_batch: True
+    image_size: 512
     
     train: &common
         _target_: datasets.SkinCancerSegmentationDataset
@@ -17,12 +18,17 @@ data:
             _args_:
                 - - _target_: albumentations.LongestMaxSize
                     max_size:
-                    - 512
+                    - ${data.image_size}
                   - _target_: albumentations.PadIfNeeded
-                    min_height: 512
-                    min_width: 512
+                    min_height: ${data.image_size}
+                    min_width: ${data.image_size}
                     border_mode: 0   # it corresponds to cv2.BORDER_CONSTANT
                   - _target_: albumentations.Flip
+                  - _target_: albumentations.ShiftScaleRotate
+                    shift_limit: 0.05
+                    scale_limit: 0.05
+                    rotate_limit: 15
+                    p: 0.5   
                   - _target_: albumentations.Normalize
                     mean:
                     - 0.45
@@ -42,10 +48,10 @@ data:
             _args_:
                 - - _target_: albumentations.LongestMaxSize
                     max_size:
-                    - 512
+                    - ${data.image_size}
                   - _target_: albumentations.PadIfNeeded
-                    min_height: 512
-                    min_width: 512
+                    min_height: ${data.image_size}
+                    min_width: ${data.image_size}
                     border_mode: 0   # it corresponds to cv2.BORDER_CONSTANT
                   - _target_: albumentations.Normalize
                     mean:
