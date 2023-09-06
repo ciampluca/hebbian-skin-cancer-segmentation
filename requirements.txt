@@ -1,6 +1,8 @@
 requests
-tqdm
-torch
+numpy==1.25
+tqdm==4.66.1
+torch==2.0.1
+torchvision==0.15.2
 opencv-python
 albumentations
 hydra-core==1.2.0
@@ -8,3 +10,5 @@ omegaconf
 pandas
 tensorboard
 gdown
+
+

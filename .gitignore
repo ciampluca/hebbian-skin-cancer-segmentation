@@ -135,3 +135,6 @@ dmypy.json
 /datasets/trash/
 /runs/
 /output_debug/
+
+# Private
+dataset_url.txt
