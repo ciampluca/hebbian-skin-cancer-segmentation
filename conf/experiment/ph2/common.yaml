@@ -6,8 +6,8 @@ defaults:
   - /common/optim: default
 
 optim:
-    batch_size: 4
-    batch_accumulation: 2
+    batch_size: 16
+    batch_accumulation: 1
     num_workers: 4
 
     epochs: 100

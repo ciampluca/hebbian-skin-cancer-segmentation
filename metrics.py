@@ -37,8 +37,6 @@ def dice_jaccard(y_true, y_pred, smooth=1, thr=None, prefix=''):
         dict: computed metrics organized with the following keys
           - segm/{dice,jaccard}/micro: Micro-averaged Dice and Jaccard coefficients.
           - segm/{dice,jaccard}/macro: Macro-averaged Dice and Jaccard coefficients.
-          - segm/{dice,jaccard}/cls0: Dice and Jaccard coefficients for class 0
-          - segm/{dice,jaccard}/cls1: Dice and Jaccard coefficients for class 1
           - ...
     """
     y_pred = _atleast_nhwc(y_pred)
@@ -47,24 +45,10 @@ def dice_jaccard(y_true, y_pred, smooth=1, thr=None, prefix=''):
     y_pred = (y_pred >= thr) if thr is not None else y_pred
 
     micro_dice, micro_jaccard = _dice_jaccard_single_class(y_true, y_pred, smooth, axis=(1, 2, 3))
-    class_dice, class_jaccard = zip(*[
-        _dice_jaccard_single_class(y_true[:, :, :, i], y_pred[:, :, :, i], smooth, axis=(1, 2))
-        for i in range(y_true.shape[-1])
-    ])
-
-    mean_fn = np.mean
-    if isinstance(y_pred, torch.Tensor):
-        mean_fn = lambda x: torch.mean(torch.stack(x))
-    
-    macro_dice, macro_jaccard = mean_fn(class_dice), mean_fn(class_jaccard)
 
     metrics = {
         f'segm/{prefix}dice/micro': micro_dice.item(),
-        f'segm/{prefix}dice/macro': macro_dice.item(),
-        **{f'segm/{prefix}dice/cls{i}': v.item() for i, v in enumerate(class_dice)},
         f'segm/{prefix}jaccard/micro': micro_jaccard.item(),
-        f'segm/{prefix}jaccard/macro': macro_jaccard.item(),
-        **{f'segm/{prefix}jaccard/cls{i}': v.item() for i, v in enumerate(class_jaccard)},
     }
     
     return metrics

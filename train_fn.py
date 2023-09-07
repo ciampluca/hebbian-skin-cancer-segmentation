@@ -84,8 +84,8 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
 
         batch_metrics = {
             'loss': loss.item(),
-            'soft_dice': coefs['segm/dice/macro'],
-            'soft_jaccard': coefs['segm/jaccard/macro'],
+            'dice': coefs['segm/dice/micro'],
+            'jaccard': coefs['segm/jaccard/micro'],
         }
         metrics.append(batch_metrics)
 
@@ -137,12 +137,12 @@ def validate(dataloader, model, device, epoch, cfg):
  
             # threshold-free metrics
             loss = criterion(pred, label)
-            soft_segm_metrics = dice_jaccard(label.movedim(1, -1), pred_prob.movedim(1, -1), prefix='soft_')    # NCHW -> NHWC
+            segm_metrics = dice_jaccard(label.movedim(1, -1), pred_prob.movedim(1, -1))    # NCHW -> NHWC
 
             metrics.append({
                 'image_id': image_id,
                 'segm/loss': loss.item(),
-                **soft_segm_metrics,
+                **segm_metrics,
             })
 
             if cfg.optim.debug and epoch % cfg.optim.debug_freq == 0 and cfg.optim.save_debug_val_images:
