@@ -131,7 +131,7 @@ dmypy.json
 
 # Custom
 /.vscode/
-/data/
+/data/PH2
 /datasets/trash/
 /runs/
 /output_debug/
