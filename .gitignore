@@ -133,10 +133,8 @@ dmypy.json
 .tool-versions
 .idea
 /.vscode/
-/data/
+/data/PH2
 /datasets/trash/
 /runs/
 /output_debug/
-
-# Private
 dataset_url.txt
