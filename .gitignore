@@ -130,6 +130,8 @@ dmypy.json
 
 
 # Custom
+.tool-versions
+.idea
 /.vscode/
 /data/
 /datasets/trash/
