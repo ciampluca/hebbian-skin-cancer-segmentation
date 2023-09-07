@@ -3,7 +3,7 @@ import torch.nn as nn
 
 from hebb.hebbian_update_rule import SoftWinnerTakesAll
 from hebb.unit_types import DotUnit
-from hebbian_layer_helpers import to_2dvector
+from hebb.hebbian_layer_helpers import to_2dvector
 
 
 class HebbianConv2d(nn.Module):
@@ -59,6 +59,8 @@ class HebbianConv2d(nn.Module):
             requires_grad=True
         ) if bias else None
 
+        self.__delta_w = torch.zeros_like(self.__weight)
+
         self.__unit_type = unit_type
         self.__hebbian_update_rule = hebbian_update_rule
         self.__hebbian_mode = hebbian_mode
@@ -66,8 +68,6 @@ class HebbianConv2d(nn.Module):
                                         self.dilation,
                                         padding=self.padding,
                                         stride=self.stride)
-
-        self.register_buffer('delta_w', torch.empty_like(self.weight))
 
         self.patchwise = patchwise
 
@@ -78,8 +78,8 @@ class HebbianConv2d(nn.Module):
                     torch.tensor(input_size) +
                     2 * self.__padding -
                     self.__dilation * (self.__kernel_size - 1) - 1
-            )/self.__stride + 1
-        )
+            ).type(torch.float32)/self.__stride + 1
+        ).type(torch.int32)
 
     def forward(self, x):
         input_size = x.size()
@@ -150,3 +150,13 @@ class HebbianConv2d(nn.Module):
     @property
     def padding(self):
         return tuple(self.__padding.tolist())
+
+    @property
+    def weight(self):
+        return torch.nn.Parameter(
+            self.__weight.data.reshape(self.out_channels, self.in_channels, *self.kernel_size).clone()
+        )
+
+    @weight.setter
+    def weight(self, w):
+        self.__weight.data[:, :] = w.reshape(self.out_channels, self.in_channels * torch.prod(self.__kernel_size))

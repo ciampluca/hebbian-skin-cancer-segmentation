@@ -2,7 +2,7 @@ import torch
 from hebb.hebbian_update_rule import SoftWinnerTakesAll
 
 from hebb.unit_types import DotUnit
-from hebbian_layer_helpers import to_2dvector
+from hebb.hebbian_layer_helpers import to_2dvector
 
 
 class HebbianConvTranspose2d(torch.nn.Module):
