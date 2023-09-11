@@ -76,9 +76,6 @@ class CheckpointManager:
     
     @staticmethod
     def _default_metric_mode(metric_name):
-        if 'macro' not in metric_name:
-            return 'ignore'
-        
         if 'loss' in metric_name:
             return 'min'
         

@@ -10,5 +10,6 @@ omegaconf
 pandas
 tensorboard
 gdown
+matplotlib
 
 

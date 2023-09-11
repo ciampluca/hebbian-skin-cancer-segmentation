@@ -20,10 +20,10 @@ tqdm = partial(tqdm, dynamic_ncols=True)
 log = logging.getLogger(__name__)
 
 
-def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_map, cfg, validation=True):
-    debug_folder_name = 'val_output_debug' if validation else 'train_output_debug'
+def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_map, cfg, split="validation", outdir=None):
+    debug_folder_name = 'train_output_debug' if split == "train" else 'val_output_debug' if split == "validation" else Path(outdir / "test_output_debug")
     debug_dir = Path(debug_folder_name)
-    debug_dir.mkdir(exist_ok=True)
+    debug_dir.mkdir(parents=True, exist_ok=True)
 
     image_id = Path(image_id)
 
@@ -67,7 +67,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
     n_batches = len(dataloader)
     progress = tqdm(dataloader, desc='TRAIN', leave=False)
     for i, sample in enumerate(progress):
-        images, labels, image_ids, original_sizes = sample
+        images, labels, image_ids, _ = sample
         labels = labels.unsqueeze(dim=1)
         images, labels = images.to(device), labels.to(device)
 
@@ -84,8 +84,8 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
 
         batch_metrics = {
             'loss': loss.item(),
-            'dice': coefs['segm/dice/micro'],
-            'jaccard': coefs['segm/jaccard/micro'],
+            'dice': coefs['segm/dice'],
+            'jaccard': coefs['segm/jaccard'],
         }
         metrics.append(batch_metrics)
 
@@ -104,7 +104,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
 
         if cfg.optim.debug and epoch % cfg.optim.debug_freq == 0 and cfg.optim.save_debug_train_images:
             for image, label, image_id, pred_seg_map in zip(images, labels, image_ids, preds_prob):
-                _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, validation=False)
+                _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train")
 
     metrics = pd.DataFrame(metrics).mean(axis=0).to_dict()
 
@@ -124,11 +124,11 @@ def validate(dataloader, model, device, epoch, cfg):
     progress = tqdm(dataloader, total=n_images, desc='EVAL', leave=False)
 
     for i, sample in enumerate(progress):
-        images, labels, image_ids, original_sizes = sample
+        images, labels, image_ids, _ = sample
 
         # Un-batching
         # TODO not efficient, should be done in parallel
-        for image, label, image_id, original_size in zip(images, labels, image_ids, original_sizes):
+        for image, label, image_id in zip(images, labels, image_ids):
             image, label = torch.unsqueeze(image, dim=0).to(validation_device), label[None, None, ...].to(validation_device)
 
             # computing outputs
@@ -146,7 +146,7 @@ def validate(dataloader, model, device, epoch, cfg):
             })
 
             if cfg.optim.debug and epoch % cfg.optim.debug_freq == 0 and cfg.optim.save_debug_val_images:
-                _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg)
+                _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg, split="validation")
 
     if cfg.optim.debug:
          _save_debug_metrics(metrics, epoch)
@@ -155,3 +155,45 @@ def validate(dataloader, model, device, epoch, cfg):
     metrics = metrics.mean(axis=0).to_dict()
 
     return metrics
+
+
+@torch.no_grad()
+def predict(dataloader, model, device, cfg, outdir, debug=0, csv_file_name='preds.csv'):
+    """ Make predictions on data. """
+    model.eval()
+    criterion = hydra.utils.instantiate(cfg.optim.loss)
+
+    metrics = []
+
+    n_images = len(dataloader)
+    progress = tqdm(dataloader, total=n_images, desc='EVAL', leave=False)
+
+    for i, sample in enumerate(progress):
+        images, labels, image_ids, _ = sample
+
+        # Un-batching
+        # TODO not efficient, should be done in parallel
+        for image, label, image_id in zip(images, labels, image_ids):
+            image, label = torch.unsqueeze(image, dim=0).to(device), label[None, None, ...].to(device)
+
+            # computing outputs
+            pred = model(image)
+            pred_prob = (torch.sigmoid(pred)) if criterion.__class__.__name__.endswith("WithLogitsLoss") else pred
+
+            # threshold-free metrics
+            segm_metrics = dice_jaccard(label.movedim(1, -1), pred_prob.movedim(1, -1))    # NCHW -> NHWC
+
+            metrics.append({
+                'image_id': image_id,
+                **segm_metrics,
+            })
+
+            if outdir and debug:
+                _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg, split="test", outdir=outdir)
+
+    metrics = pd.DataFrame(metrics).set_index('image_id')
+    metrics = pd.DataFrame(metrics)
+
+    if outdir:
+        outdir.mkdir(parents=True, exist_ok=True)
+        metrics.to_csv(outdir / csv_file_name)
