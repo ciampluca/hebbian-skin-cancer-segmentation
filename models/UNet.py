@@ -5,19 +5,21 @@ from torch import nn
 import torch.nn.functional as F
 from torchvision.transforms.functional import resize
 
+from utils import get_init_param_by_name
+
 
 class UNet(nn.Module):
-    def __init__(self, cfg):
+    def __init__(self, cfg, **kwargs):
         super(UNet, self).__init__()
         self.net = UNetModel(
-            in_channels=getattr(cfg.model, 'in_channels', 3),
-            out_channels=getattr(cfg.model, 'out_channels', 1),
-            depth=getattr(cfg.model, 'depth', 5),
-            wf=getattr(cfg.model, 'wf', 6),
-            padding=getattr(cfg.model, 'padding', True),
-            batch_norm=getattr(cfg.model, 'batch_norm', True),
-            up_mode=getattr(cfg.model, 'up_mode', 'upconv'),
-            last_bias=getattr(cfg.model, 'last_bias', True),
+            in_channels=get_init_param_by_name('in_channels', kwargs, cfg.model, 3),
+            out_channels=get_init_param_by_name('out_channels', kwargs, cfg.model, 1),
+            depth=get_init_param_by_name('depth', kwargs, cfg.model, 5),
+            wf=get_init_param_by_name('wf', kwargs, cfg.model, 6),
+            padding=get_init_param_by_name('padding', kwargs, cfg.model, True),
+            batch_norm=get_init_param_by_name('batch_norm', kwargs, cfg.model, True),
+            up_mode=get_init_param_by_name('up_mode', kwargs, cfg.model, 'upconv'),
+            last_bias=get_init_param_by_name('last_bias', kwargs, cfg.model, True),
         )
     
     def forward(self, x):

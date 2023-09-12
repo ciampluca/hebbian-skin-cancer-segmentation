@@ -9,17 +9,19 @@ from hebb import *
 from hebb.unit_types import *
 from hebb.hebbian_update_rule import *
 
+from utils import get_init_param_by_name
+
 
 default_hebb_params = dict(unit_type=DotUnit(), hebbian_update_rule=SoftWinnerTakesAll(0.02), alpha=0)
 
 class HUNet(nn.Module):
-    def __init__(self, cfg):
+    def __init__(self, cfg, **kwargs):
         super(HUNet, self).__init__()
         
         hebb_params = default_hebb_params
         
         if hasattr(cfg.model, 'hebb'):
-            unit_type = getattr(cfg.model.hebb, 'unit_type', 'DotUnit')
+            unit_type = get_init_param_by_name('unit_type', kwargs, cfg.model.hebb, 'DotUnit'),
             if unit_type == 'DotUnit':
                 unit_type = DotUnit()
             elif unit_type == 'RadialBasis':
@@ -27,9 +29,9 @@ class HUNet(nn.Module):
             else:
                 raise NotImplementedError("Unit type {} not available".format(unit_type))
             
-            hebbian_update_rule = getattr(cfg.model.hebb, 'hebbian_update_rule', 'SoftWinnerTakesAll')
+            hebbian_update_rule = get_init_param_by_name('hebbian_update_rule', kwargs, cfg.model.hebb, 'SoftWinnerTakesAll')
             if hebbian_update_rule == 'SoftWinnerTakesAll':
-                inverse_temperature = getattr(cfg.model.hebb, 'inverse_temperature', 0.02)
+                inverse_temperature = get_init_param_by_name('inverse_temperature', kwargs, cfg.model.hebb, 0.02)
                 hebbian_update_rule = SoftWinnerTakesAll(inverse_temperature)
             elif hebbian_update_rule == 'HebbianPCA':
                 hebbian_update_rule = HebbianPCA()
@@ -39,19 +41,19 @@ class HUNet(nn.Module):
             hebb_params = dict(
                 unit_type=unit_type,
                 hebbian_update_rule=hebbian_update_rule,
-                alpha=getattr(cfg.model.hebb, 'alpha', 0.02),
+                alpha=get_init_param_by_name('alpha', kwargs, cfg.model.hebb, 0),
             )
         
         self.net = HUNetModel(
-            in_channels=getattr(cfg.model, 'in_channels', 3),
-            out_channels=getattr(cfg.model, 'out_channels', 1),
-            depth=getattr(cfg.model, 'depth', 5),
-            wf=getattr(cfg.model, 'wf', 6),
-            padding=getattr(cfg.model, 'padding', True),
-            batch_norm=getattr(cfg.model, 'batch_norm', True),
-            up_mode=getattr(cfg.model, 'up_mode', 'upconv'),
+            in_channels=get_init_param_by_name('in_channels', kwargs, cfg.model, 3),
+            out_channels=get_init_param_by_name('out_channels', kwargs, cfg.model, 1),
+            depth=get_init_param_by_name('depth', kwargs, cfg.model, 5),
+            wf=get_init_param_by_name('wf', kwargs, cfg.model, 6),
+            padding=get_init_param_by_name('padding', kwargs, cfg.model, True),
+            batch_norm=get_init_param_by_name('batch_norm', kwargs, cfg.model, True),
+            up_mode=get_init_param_by_name('up_mode', kwargs, cfg.model, 'upconv'),
             hebb_params=hebb_params,
-            last_bias=getattr(cfg.model, 'last_bias', True),
+            last_bias=get_init_param_by_name('last_bias', kwargs, cfg.model, True),
         )
     
     def forward(self, x):

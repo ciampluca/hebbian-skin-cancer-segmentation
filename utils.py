@@ -100,3 +100,7 @@ class CheckpointManager:
         unused_ckpts = ckpts - symlinks
         for unused_ckpt in unused_ckpts:
             unused_ckpt.unlink()
+
+
+def get_init_param_by_name(param_name, param_dict, cfg, default):
+    return param_dict.get(param_name, getattr(param_name, cfg, default))

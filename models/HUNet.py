@@ -6,35 +6,36 @@ import torch.nn.functional as F
 from torchvision.transforms.functional import resize
 
 from hebb.legacy import *
+from utils import get_init_param_by_name
 
 
 default_hebb_params = dict(w_nrm=True, mode='swta', k=0.02, patchwise=True, contrast=1., uniformity=False, alpha=0)
 
 class HUNet(nn.Module):
-    def __init__(self, cfg):
+    def __init__(self, cfg, **kwargs):
         super(HUNet, self).__init__()
         hebb_params = default_hebb_params
         if hasattr(cfg.model, 'hebb'):
             hebb_params = dict(
-                w_nrm=getattr(cfg.model.hebb, 'w_nrm', True),
-                mode=getattr(cfg.model.hebb, 'mode', 'swta'),
-                k=getattr(cfg.model.hebb, 'k', 0.02),
-                patchwise=getattr(cfg.model.hebb, 'patchwise', True),
-                contrast=getattr(cfg.model.hebb, 'contrast', 1.),
-                uniformity=getattr(cfg.model.hebb, 'uniformity', False),
-                alpha=getattr(cfg.model.hebb, 'alpha', 0)
+                w_nrm=get_init_param_by_name('w_nrm', kwargs, cfg.model.hebb, True),
+                mode=get_init_param_by_name('mode', kwargs, cfg.model.hebb, 'swta'),
+                k=get_init_param_by_name('k', kwargs, cfg.model.hebb, 0.02),
+                patchwise=get_init_param_by_name('patchwise', kwargs, cfg.model.hebb, True),
+                contrast=get_init_param_by_name('contrast', kwargs, cfg.model.hebb, 1),
+                uniformity=get_init_param_by_name('uniformity', kwargs, cfg.model.hebb, False),
+                alpha=get_init_param_by_name('alpha', kwargs, cfg.model.hebb, 0)
             )
         
         self.net = HUNetModel(
-            in_channels=getattr(cfg.model, 'in_channels', 3),
-            out_channels=getattr(cfg.model, 'out_channels', 1),
-            depth=getattr(cfg.model, 'depth', 5),
-            wf=getattr(cfg.model, 'wf', 6),
-            padding=getattr(cfg.model, 'padding', True),
-            batch_norm=getattr(cfg.model, 'batch_norm', True),
-            up_mode=getattr(cfg.model, 'up_mode', 'upconv'),
+            in_channels=get_init_param_by_name('in_channels', kwargs, cfg.model, 3),
+            out_channels=get_init_param_by_name('out_channels', kwargs, cfg.model, 1),
+            depth=get_init_param_by_name('depth', kwargs, cfg.model, 5),
+            wf=get_init_param_by_name('wf', kwargs, cfg.model, 6),
+            padding=get_init_param_by_name('padding', kwargs, cfg.model, True),
+            batch_norm=get_init_param_by_name('batch_norm', kwargs, cfg.model, True),
+            up_mode=get_init_param_by_name('up_mode', kwargs, cfg.model, 'upconv'),
             hebb_params=hebb_params,
-            last_bias=getattr(cfg.model, 'last_bias', True),
+            last_bias=get_init_param_by_name('last_bias', kwargs, cfg.model, True),
         )
     
     def forward(self, x):
