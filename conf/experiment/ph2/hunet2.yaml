@@ -2,7 +2,7 @@
 
 defaults:
  - ph2/common
- - /common/model: unet
+ - /common/model: hunet2
 
 model:
   hebb:
