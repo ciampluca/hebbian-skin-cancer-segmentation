@@ -10,7 +10,7 @@ def normalize(x, dim=None):
 	return x / nrm
 
 
-class HebbConv2d(nn.Module):
+class HebbianConv2d(nn.Module):
 	"""
 	A 2d convolutional layer that learns through Hebbian plasticity
 	"""
@@ -22,7 +22,7 @@ class HebbConv2d(nn.Module):
 	def __init__(self, in_channels, out_channels, kernel_size, stride=1,
 	             w_nrm=True, act=nn.Identity(),
 	             mode=MODE_SWTA, k=0.02, patchwise=True,
-	             contrast=1., uniformity=False):
+	             contrast=1., uniformity=False, alpha=0.):
 		"""
 
 		:param out_channels: output channels of the convolutional kernel
@@ -37,6 +37,7 @@ class HebbConv2d(nn.Module):
 		and then aggregated
 		:param contrast: coefficient that rescales negative compared to positive updates in contrastive-type learning
 		:param uniformity: whether to use uniformity weighting in contrastive-type learning.
+		:param alpha: weighting coefficient between hebbian and backprop updates (0 means fully backprop, 1 means fully hebbian).
 		
 		"""
 		
@@ -52,12 +53,14 @@ class HebbConv2d(nn.Module):
 		self.w_nrm = w_nrm
 		self.bias = nn.Parameter(torch.zeros(self.out_channels), requires_grad=True)
 		self.act = act
-		self.register_buffer('delta_w', torch.empty_like(self.weight))
+		self.register_buffer('delta_w', torch.zeros_like(self.weight))
 
 		self.k = k
 		self.patchwise = patchwise
 		self.contrast = contrast
 		self.uniformity = uniformity
+		
+		self.alpha = alpha
 
 	def apply_weights(self, x, w):
 		"""
@@ -70,7 +73,7 @@ class HebbConv2d(nn.Module):
 		w = self.weight
 		if self.w_nrm: w = normalize(w, dim=(1, 2, 3))
 		y = self.act(self.apply_weights(x, w))
-		if self.training: self.update(x, y)
+		if self.training and self.alpha != 0: self.update(x, y)
 		return y
 
 	def update(self, x, y):
@@ -89,12 +92,12 @@ class HebbConv2d(nn.Module):
 			if self.patchwise:
 				r = (y * self.k).softmax(dim=1).permute(1, 0, 2, 3).reshape(y.shape[1], -1)
 				dec = r.sum(1, keepdim=True) * self.weight.reshape(self.weight.shape[0], -1)
-				self.delta_w[:, :, :, :] = (r.matmul(x_unf) - dec).reshape_as(self.weight)
+				self.delta_w += (r.matmul(x_unf) - dec).reshape_as(self.weight)
 			else:
 				r = (y * self.k).softmax(dim=1).permute(2, 3, 1, 0)
 				krn = torch.eye(len(self.weight[0]), device=x.device, dtype=x.dtype).view(len(self.weight[0]), self.weight.shape[1], *self.kernel_size)
 				dec = torch.conv_transpose2d((r.sum(dim=-1, keepdim=True) * self.weight.reshape(1, 1, self.weight.shape[0], -1)).permute(2, 3, 0, 1), krn, stride=self.stride)
-				self.delta_w[:, :, :, :] = (r.permute(2, 3, 0, 1).reshape(r.shape[2], -1).matmul(x_unf) - F.unfold(dec, kernel_size=self.kernel_size, stride=self.stride).sum(dim=-1)).reshape_as(self.weight)
+				self.delta_w += (r.permute(2, 3, 0, 1).reshape(r.shape[2], -1).matmul(x_unf) - F.unfold(dec, kernel_size=self.kernel_size, stride=self.stride).sum(dim=-1)).reshape_as(self.weight)
 		
 		if self.mode == self.MODE_HPCA:
 			# Logic for hpca-type learning
@@ -104,12 +107,12 @@ class HebbConv2d(nn.Module):
 				r = y.permute(1, 0, 2, 3).reshape(y.shape[1], -1)
 				l = (torch.arange(self.weight.shape[0], device=x.device, dtype=x.dtype).unsqueeze(0).repeat(self.weight.shape[0], 1) <= torch.arange(self.weight.shape[0], device=x.device, dtype=x.dtype).unsqueeze(1)).to(dtype=x.dtype)
 				dec = (r.matmul(r.transpose(-2, -1)) * l).matmul(self.weight.view(self.weight.shape[0], -1))
-				self.delta_w[:, :, :, :] = (r.matmul(x_unf) - dec).reshape_as(self.weight)
+				self.delta_w += (r.matmul(x_unf) - dec).reshape_as(self.weight)
 			else:
 				r = y.permute(2, 3, 1, 0)
 				l = (torch.arange(self.weight.shape[0], device=x.device, dtype=x.dtype).unsqueeze(0).repeat(self.weight.shape[0], 1) <= torch.arange(self.weight.shape[0], device=x.device, dtype=x.dtype).unsqueeze(1)).to(dtype=x.dtype)
 				dec = torch.conv_transpose2d((r.matmul(r.transpose(-2, -1)) * l.unsqueeze(0).unsqueeze(1)).permute(3, 2, 0, 1), self.weight, stride=self.stride)
-				self.delta_w[:, :, :, :] = (r.permute(2, 3, 0, 1).reshape(r.shape[2], -1).matmul(x_unf) - F.unfold(dec, kernel_size=self.kernel_size, stride=self.stride).sum(dim=-1)).reshape_as(self.weight)
+				self.delta_w += (r.permute(2, 3, 0, 1).reshape(r.shape[2], -1).matmul(x_unf) - F.unfold(dec, kernel_size=self.kernel_size, stride=self.stride).sum(dim=-1)).reshape_as(self.weight)
 		
 		if self.mode == self.MODE_CONTRASTIVE:
 			y = normalize(y, dim=1)
@@ -136,11 +139,12 @@ class HebbConv2d(nn.Module):
 			L = L.sum()
 			self.zero_grad()
 			L.backward()
-			self.delta_w[:, :, :, :] = self.weight.grad.clone().detach()
+			self.delta_w += self.weight.grad.clone().detach()
 			self.zero_grad()
 		
-	def local_update(self, alpha=1):
+	def local_update(self):
 		"""
+		
 		This function transfers a previously computed weight update, stored in buffer self.delta_w, to the gradient
 		self.weight.grad of the weigth parameter.
 		
@@ -148,17 +152,17 @@ class HebbConv2d(nn.Module):
 		update as optimization direction. Local updates can also be combined with end-to-end updates by calling this
 		function between loss.backward() and optimizer.step(). loss.backward will store the end-to-end gradient in
 		self.weight.grad, and this function combines this value with self.delta_w as
-		self.weight.grad = self.weight.grad - alpha * self.delta_w
+		self.weight.grad = (1 - alpha) * self.weight.grad - alpha * self.delta_w
 		Parameter alpha determines the scale of the local update compared to the end-to-end gradient in the combination.
 		
 		"""
 		
-		if self.weight.grad is None: self.weight.grad = -alpha * self.delta_w
-		else: self.weight.grad -= alpha * self.delta_w
+		if self.weight.grad is None: self.weight.grad = -self.alpha * self.delta_w
+		else: self.weight.grad = (1 - self.alpha) * self.weight.grad - self.alpha * self.delta_w
 		self.delta_w.zero_()
 
 
-class HebbConvTranspose2d(HebbConv2d):
+class HebbianConvTranspose2D(HebbianConv2d):
 	"""
 	A 2d convolutional layer that learns through Hebbian plasticity
 	"""
@@ -222,7 +226,7 @@ class HebbConvTranspose2d(HebbConv2d):
 			r = r.permute(0, 2, 1).reshape(-1, self.out_channels, self.kernel_size[0]*self.kernel_size[1]).permute(2, 1, 0)
 			dec = r.sum(2, keepdim=True) * self.weight.permute(2, 3, 1, 0).reshape(-1, self.out_channels, self.in_channels)
 			if self.patchwise: dec = dec.sum(dim=0, keepdim=True)
-			self.delta_w[:, :, :, :] = (r.matmul(x.permute(0, 2, 3, 1).reshape(1, -1, x.size(1))) - dec).permute(2, 1, 0).reshape_as(self.weight)
+			self.delta_w += (r.matmul(x.permute(0, 2, 3, 1).reshape(1, -1, x.size(1))) - dec).permute(2, 1, 0).reshape_as(self.weight)
 		
 		if self.mode == self.MODE_HPCA_T:
 			# Logic for hpca-type learning in transpose convolutional layers
@@ -232,6 +236,6 @@ class HebbConvTranspose2d(HebbConv2d):
 			l = (torch.arange(self.out_channels, device=x.device, dtype=x.dtype).unsqueeze(0).repeat(self.out_channels, 1) <= torch.arange(self.out_channels, device=x.device, dtype=x.dtype).unsqueeze(1)).to(dtype=x.dtype)
 			dec = (r.matmul(r.transpose(-2, -1)) * l.unsqueeze(0)).matmul(self.weight.permute(2, 3, 1, 0).reshape(-1, self.out_channels, self.in_channels))
 			if self.patchwise: dec = dec.sum(dim=0, keepdim=True)
-			self.delta_w[:, :, :, :] = (r.matmul(x.permute(0, 2, 3, 1).reshape(1, -1, x.size(1))) - dec).permute(2, 1, 0).reshape_as(self.weight)
+			self.delta_w += (r.matmul(x.permute(0, 2, 3, 1).reshape(1, -1, x.size(1))) - dec).permute(2, 1, 0).reshape_as(self.weight)
 		
 		

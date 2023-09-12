@@ -5,24 +5,41 @@ from torch import nn
 import torch.nn.functional as F
 from torchvision.transforms.functional import resize
 
-from hebb.legacy import *
+from hebb import *
+from hebb.unit_types import *
+from hebb.hebbian_update_rule import *
 
 
-default_hebb_params = dict(w_nrm=True, mode='swta', k=0.02, patchwise=True, contrast=1., uniformity=False, alpha=0)
+default_hebb_params = dict(unit_type=DotUnit(), hebbian_update_rule=SoftWinnerTakesAll(0.02), alpha=0)
 
 class HUNet(nn.Module):
     def __init__(self, cfg):
         super(HUNet, self).__init__()
+        
         hebb_params = default_hebb_params
+        
         if hasattr(cfg.model, 'hebb'):
+            unit_type = getattr(cfg.model.hebb, 'unit_type', 'DotUnit')
+            if unit_type == 'DotUnit':
+                unit_type = DotUnit()
+            elif unit_type == 'RadialBasis':
+                unit_type = RadialBasis()
+            else:
+                raise NotImplementedError("Unit type {} not available".format(unit_type))
+            
+            hebbian_update_rule = getattr(cfg.model.hebb, 'hebbian_update_rule', 'SoftWinnerTakesAll')
+            if hebbian_update_rule == 'SoftWinnerTakesAll':
+                inverse_temperature = getattr(cfg.model.hebb, 'inverse_temperature', 0.02)
+                hebbian_update_rule = SoftWinnerTakesAll(inverse_temperature)
+            elif hebbian_update_rule == 'HebbianPCA':
+                hebbian_update_rule = HebbianPCA()
+            else:
+                raise NotImplementedError("Hebbian update rule {} not available".format(hebbian_update_rule))
+            
             hebb_params = dict(
-                w_nrm=getattr(cfg.model.hebb, 'w_nrm', True),
-                mode=getattr(cfg.model.hebb, 'mode', 'swta'),
-                k=getattr(cfg.model.hebb, 'k', 0.02),
-                patchwise=getattr(cfg.model.hebb, 'patchwise', True),
-                contrast=getattr(cfg.model.hebb, 'contrast', 1.),
-                uniformity=getattr(cfg.model.hebb, 'uniformity', False),
-                alpha=getattr(cfg.model.hebb, 'alpha', 0)
+                unit_type=unit_type,
+                hebbian_update_rule=hebbian_update_rule,
+                alpha=getattr(cfg.model.hebb, 'alpha', 0.02),
             )
         
         self.net = HUNetModel(
@@ -39,12 +56,6 @@ class HUNet(nn.Module):
     
     def forward(self, x):
         return self.net(x)
-    
-    def state_dict(self, destination, prefix, keep_vars):
-        return self.net.state_dict(destination, prefix, keep_vars)
-    
-    def load_state_dict(self, state_dict, strict):
-        return self.net.load_state_dict(state_dict, strict)
 
 class HUNetModel(nn.Module):
     
@@ -102,7 +113,8 @@ class HUNetModel(nn.Module):
                 HUNetUpBlock(prev_channels, 2 ** (wf + i), up_mode, padding, batch_norm, hebb_params=self.hebb_params)
             )
             prev_channels = 2 ** (wf + i)
-
+        
+        self.hebb_params['unit_type'] = DotUnit(act=nn.Identity())
         self.last = HebbianConv2d(prev_channels, out_channels, kernel_size=1, **self.hebb_params)
         if not last_bias: self.last.bias.requires_grad = False
 
@@ -169,7 +181,7 @@ class HUNetUpBlock(nn.Module):
         hebb_params = hebb_params if hebb_params is not None else default_hebb_params
         
         if up_mode == 'upconv':
-            self.up = HebbianConvTranspose2D(in_size, out_size, kernel_size=2, stride=2, **hebb_params)
+            self.up = HebbianConvTranspose2d(in_size, out_size, kernel_size=2, stride=2, **hebb_params)
         elif up_mode == 'upsample':
             self.up = nn.Sequential(
                 nn.Upsample(mode='bilinear', scale_factor=2),

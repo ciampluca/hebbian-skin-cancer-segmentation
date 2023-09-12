@@ -10,9 +10,10 @@ class HebbianConvTranspose2d(torch.nn.Module):
                  stride=1, padding=0, output_padding=0, groups=1,
                  bias=True,
                  dilation=1, padding_mode='zeros', device=None, dtype=None,
-                 hebbian_mode=True,
                  unit_type=DotUnit(),
-                 hebbian_update_rule=SoftWinnerTakesAll(0.02), patchwise=True):
+                 hebbian_update_rule=SoftWinnerTakesAll(0.02),
+                 patchwise=True,
+                 alpha=0):
         """
         Hebbian transposed convolution implemented in terms of dot product over sliding windows
         It can work in two modes:
@@ -31,9 +32,9 @@ class HebbianConvTranspose2d(torch.nn.Module):
         :param padding_mode: Only supports "zeros",
         :param device: Whether to keep the paramteres on a GPU accelerator
         :param dtype: Type of parameters
-        :param hebbian_mode: Whether to work with hebbian updates
         :param hebbian_update_rule: Type of hebbian update. Update rules are defined in hebb.hebbian_update_rule
         :param patchwise: Whether to use patchsize update. Currently only patchsize update is implemented
+        :param alpha: weighting coefficient between hebbian and backprop updates (0 means fully backprop, 1 means fully hebbian).
 
         Usage in a train loop:
 
@@ -65,7 +66,6 @@ class HebbianConvTranspose2d(torch.nn.Module):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
-        self.__hebbian_mode = hebbian_mode
 
         if padding_mode != 'zeros':
             raise NotImplemented("Only padding mode zeros is supported")
@@ -73,7 +73,6 @@ class HebbianConvTranspose2d(torch.nn.Module):
         if groups != 1:
             raise NotImplementedError("Groups different from 1 not implemented")
 
-        self.patchwise = patchwise
         self.__hebbian_update_rule = hebbian_update_rule
 
         self.__kernel_size = to_2dvector(kernel_size, 'kernel_size')
@@ -119,6 +118,9 @@ class HebbianConvTranspose2d(torch.nn.Module):
                                         stride=1)
 
         self.__unit_type = unit_type
+        
+        self.patchwise = patchwise
+        self.alpha = alpha
 
     def __calc_output_size(self, input_size: tuple):
         # ignore output_padding
@@ -145,7 +147,7 @@ class HebbianConvTranspose2d(torch.nn.Module):
         # Evalueate transposed convolution
         unfolded_x = self.__unfold(self.__upscale(x))
 
-        if self.hebbian_mode:
+        if self.alpha != 0:
             # In hebbian mode bias is not used and delta_weights are updated according to hebbian rule
             unfolded_y = self.__unit_type(unfolded_x, self.__weight)
 
@@ -174,14 +176,14 @@ class HebbianConvTranspose2d(torch.nn.Module):
         else:
             raise NotImplementedError("Non-patchwise learning is not implemented")
 
-    def local_update(self, alpha=1):
-        if not self.__hebbian_mode:
-            raise RuntimeError("Cannot do hebbian_update when not in hebbian_mode")
+    def local_update(self):
+        if self.alpha == 0:
+            return
 
         if self.__weight.grad is None:
-            self.__weight.grad = -alpha * self.__delta_w
+            self.__weight.grad = - self.alpha * self.__delta_w
         else:
-            self.__weight.grad -= alpha * self.__delta_w
+            self.__weight.grad = (1 - self.alpha) * self.__weight.grad - self.alpha * self.__delta_w
 
         self.__delta_w.zero_()
 

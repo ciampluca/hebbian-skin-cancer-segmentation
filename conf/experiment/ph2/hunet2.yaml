@@ -1,0 +1,12 @@
+# @package _global_
+
+defaults:
+ - ph2/common
+ - /common/model: unet
+
+model:
+  hebb:
+    unit_type: 'DotUnit'
+    mode: 'SoftWinnerTakesAll'
+    inverse_temperature: 0.02
+    alpha: 0

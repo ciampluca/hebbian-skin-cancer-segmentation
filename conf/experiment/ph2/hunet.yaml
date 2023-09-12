@@ -1,0 +1,15 @@
+# @package _global_
+
+defaults:
+ - ph2/common
+ - /common/model: unet
+
+model:
+  hebb:
+    w_nrm: True
+    mode: 'swta'
+    k: 0.02
+    patchwise: True
+    contrast: 1.
+    uniformity: False
+    alpha: 0

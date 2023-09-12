@@ -93,6 +93,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
         progress.set_postfix(postfix)
 
         if (i + 1) % cfg.optim.batch_accumulation == 0:
+            if hasattr(model, 'local_update'): model.local_update()
             optimizer.step()
             optimizer.zero_grad()
 

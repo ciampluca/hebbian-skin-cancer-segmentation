@@ -52,8 +52,7 @@ def main(cfg):
 
     # create model
     torch.hub.set_dir(cfg.model.cache_folder)
-    skip_weights_loading = cfg.optim.resume or cfg.model.pretrained
-    model = hydra.utils.instantiate(cfg.model.module, skip_weights_loading=skip_weights_loading)
+    model = hydra.utils.instantiate(cfg.model.module, cfg)
     # move model to device
     model.to(device)
     model_param_string = ', '.join(f'{k}={v}' for k, v in cfg.model.module.items() if not k.startswith('_'))

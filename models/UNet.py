@@ -7,6 +7,23 @@ from torchvision.transforms.functional import resize
 
 
 class UNet(nn.Module):
+    def __init__(self, cfg):
+        super(UNet, self).__init__()
+        self.net = UNetModel(
+            in_channels=getattr(cfg.model, 'in_channels', 3),
+            out_channels=getattr(cfg.model, 'out_channels', 1),
+            depth=getattr(cfg.model, 'depth', 5),
+            wf=getattr(cfg.model, 'wf', 6),
+            padding=getattr(cfg.model, 'padding', True),
+            batch_norm=getattr(cfg.model, 'batch_norm', True),
+            up_mode=getattr(cfg.model, 'up_mode', 'upconv'),
+            last_bias=getattr(cfg.model, 'last_bias', True),
+        )
+    
+    def forward(self, x):
+        return self.net(x)
+
+class UNetModel(nn.Module):
 
     def __init__(
             self,
@@ -18,7 +35,6 @@ class UNet(nn.Module):
             batch_norm=True,
             up_mode='upconv',
             last_bias=True,
-            skip_weights_loading=True
     ):
         """
         Implementation of
@@ -42,7 +58,7 @@ class UNet(nn.Module):
                            learned upsampling.
                            'upsample' will use bilinear upsampling.
         """
-        super(UNet, self).__init__()
+        super(UNetModel, self).__init__()
         
         assert up_mode in ('upconv', 'upsample')
         self.padding = padding
@@ -151,7 +167,7 @@ def main():
     device = 'cpu'
     
     input = torch.rand(8, 3, 256, 256).to(device)
-    model = UNet(out_channels=1, last_bias=False).to(device)
+    model = UNetModel(out_channels=1, last_bias=False).to(device)
     print(model)
     output = model(input)
 

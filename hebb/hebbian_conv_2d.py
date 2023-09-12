@@ -15,10 +15,10 @@ class HebbianConv2d(nn.Module):
                  stride=1, padding=0, groups=1,
                  bias=True,
                  dilation=1, padding_mode='zeros', device=None, dtype=None,
-                 hebbian_mode=True,
                  unit_type=DotUnit(),
                  hebbian_update_rule=SoftWinnerTakesAll(0.02),
-                 patchwise=True):
+                 patchwise=True,
+                 alpha=0):
         """
 
         :param out_channels: output channels of the convolutional kernel
@@ -27,6 +27,8 @@ class HebbianConv2d(nn.Module):
         :param stride: stride of the convolutional kernel (int or tuple)
         :param patchwise: whether updates for each convolutional patch should be computed separately,
         and then aggregated
+        :param alpha: weighting coefficient between hebbian and backprop updates (0 means fully backprop, 1 means fully hebbian).
+		
 
         """
 
@@ -63,13 +65,13 @@ class HebbianConv2d(nn.Module):
 
         self.__unit_type = unit_type
         self.__hebbian_update_rule = hebbian_update_rule
-        self.__hebbian_mode = hebbian_mode
         self.__unfold = torch.nn.Unfold(self.kernel_size,
                                         self.dilation,
                                         padding=self.padding,
                                         stride=self.stride)
 
         self.patchwise = patchwise
+        self.alpha = alpha
 
     def __calc_output_size(self, input_size: tuple):
         # ignore output_padding
@@ -90,7 +92,7 @@ class HebbianConv2d(nn.Module):
         if tensor_dim == 3:
             x = torch.unsqueeze(x, 0)
 
-            # Calculate output shape for 3D and 4D tensors
+        # Calculate output shape for 3D and 4D tensors
         output_shape = torch.Size((
             x.size()[0],
             self.out_channels,
@@ -98,7 +100,7 @@ class HebbianConv2d(nn.Module):
         ))
 
         unfolded_x = self.__unfold(x)
-        if self.__hebbian_mode:
+        if self.alpha != 0:
             unfolded_y = self.__unit_type(unfolded_x, self.__weight)
 
             if self.training:
@@ -111,27 +113,29 @@ class HebbianConv2d(nn.Module):
             self.__delta_w[:, :] += self.__hebbian_update_rule(x, y, self.__weight)
         else:
             raise NotImplementedError("Non-patchwise learning is not implemented")
-
-    def local_update(self, alpha=1):
+    
+    def local_update(self):
         """
+        
         This function transfers a previously computed weight update, stored in buffer self.delta_w, to the gradient
         self.weight.grad of the weigth parameter.
-
+        
         This function should be called before optimizer.step(), so that the optimizer will use the locally computed
         update as optimization direction. Local updates can also be combined with end-to-end updates by calling this
         function between loss.backward() and optimizer.step(). loss.backward will store the end-to-end gradient in
         self.weight.grad, and this function combines this value with self.delta_w as
-        self.weight.grad = self.weight.grad - alpha * self.delta_w
+        self.weight.grad = (1 - alpha) * self.weight.grad - alpha * self.delta_w
         Parameter alpha determines the scale of the local update compared to the end-to-end gradient in the combination.
-
+        
         """
-        if not self.__hebbian_mode:
-            raise RuntimeError("Cannot do hebbian_update when not in hebbian_mode")
-
+        
+        if self.alpha == 0:
+            return
+        
         if self.__weight.grad is None:
-            self.__weight.grad = -alpha * self.__delta_w
+            self.__weight.grad = - self.alpha * self.__delta_w
         else:
-            self.__weight.grad -= alpha * self.__delta_w
+            self.__weight.grad = (1 - self.alpha) * self.__weight.grad - self.alpha * self.__delta_w
 
         self.__delta_w.zero_()
 
