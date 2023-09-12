@@ -40,6 +40,10 @@ class HUNet(nn.Module):
     def forward(self, x):
         return self.net(x)
     
+    def local_update(self):
+        for m in self.modules():
+            if hasattr(m, 'local_update'): m.local_update()
+    
     def state_dict(self, destination, prefix, keep_vars):
         return self.net.state_dict(destination, prefix, keep_vars)
     
@@ -131,10 +135,6 @@ class HUNetModel(nn.Module):
             output = resize(output, (h, w))
         
         return output
-    
-    def local_update(self):
-        for m in self.modules():
-            if hasattr(m, 'local_update'): m.local_update()
 
 
 class HUNetConvBlock(nn.Module):
