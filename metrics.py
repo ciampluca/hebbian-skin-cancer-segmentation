@@ -35,8 +35,7 @@ def dice_jaccard(y_true, y_pred, smooth=1, thr=None, prefix=''):
 
     Returns:
         dict: computed metrics organized with the following keys
-          - segm/{dice,jaccard}/micro: Micro-averaged Dice and Jaccard coefficients.
-          - segm/{dice,jaccard}/macro: Macro-averaged Dice and Jaccard coefficients.
+          - segm/{dice,jaccard}: Micro-averaged Dice and Jaccard coefficients.
           - ...
     """
     y_pred = _atleast_nhwc(y_pred)
@@ -47,8 +46,8 @@ def dice_jaccard(y_true, y_pred, smooth=1, thr=None, prefix=''):
     micro_dice, micro_jaccard = _dice_jaccard_single_class(y_true, y_pred, smooth, axis=(1, 2, 3))
 
     metrics = {
-        f'segm/{prefix}dice/micro': micro_dice.item(),
-        f'segm/{prefix}jaccard/micro': micro_jaccard.item(),
+        f'segm/{prefix}dice': micro_dice.item(),
+        f'segm/{prefix}jaccard': micro_jaccard.item(),
     }
     
     return metrics
