@@ -14,9 +14,9 @@ from utils import get_init_param_by_name
 
 default_hebb_params = dict(unit_type=DotUnit(), hebbian_update_rule=SoftWinnerTakesAll(0.02), alpha=0)
 
-class HUNet(nn.Module):
+class HUNet2(nn.Module):
     def __init__(self, cfg, **kwargs):
-        super(HUNet, self).__init__()
+        super(HUNet2, self).__init__()
         
         hebb_params = default_hebb_params
         
@@ -44,7 +44,7 @@ class HUNet(nn.Module):
                 alpha=get_init_param_by_name('alpha', kwargs, cfg.model.hebb, 0),
             )
         
-        self.net = HUNetModel(
+        self.net = HUNet2Model(
             in_channels=get_init_param_by_name('in_channels', kwargs, cfg.model, 3),
             out_channels=get_init_param_by_name('out_channels', kwargs, cfg.model, 1),
             depth=get_init_param_by_name('depth', kwargs, cfg.model, 5),
@@ -69,7 +69,7 @@ class HUNet(nn.Module):
     def load_state_dict(self, state_dict, strict):
         return self.net.load_state_dict(state_dict, strict)
     
-class HUNetModel(nn.Module):
+class HUNet2Model(nn.Module):
     
     def __init__(
             self,
@@ -105,7 +105,7 @@ class HUNetModel(nn.Module):
                            learned upsampling.
                            'upsample' will use bilinear upsampling.
         """
-        super(HUNetModel, self).__init__()
+        super(HUNet2Model, self).__init__()
         
         assert up_mode in ('upconv', 'upsample')
         self.hebb_params = hebb_params if hebb_params is not None else default_hebb_params
@@ -220,7 +220,7 @@ def main():
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     
     input = torch.rand(1, 3, 32, 32).to(device)
-    model = HUNetModel(out_channels=1, last_bias=False).to(device)
+    model = HUNet2Model(out_channels=1, last_bias=False).to(device)
     print(model)
     output = model(input)
 
