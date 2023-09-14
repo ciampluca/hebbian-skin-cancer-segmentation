@@ -103,4 +103,4 @@ class CheckpointManager:
 
 
 def get_init_param_by_name(param_name, param_dict, cfg, default):
-    return param_dict.get(param_name, getattr(param_name, cfg, default))
+    return param_dict.get(param_name, getattr(cfg, param_name, default))

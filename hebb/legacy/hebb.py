@@ -171,7 +171,7 @@ class HebbianConvTranspose2D(HebbianConv2d):
 	MODE_HPCA_T = 'hpca_t'
 
 	def __init__(self, in_channels, out_channels, kernel_size, stride=1, w_nrm=True, act=nn.Identity(),
-	             mode=MODE_SWTA_T, k=0.02, patchwise=False, contrast=1., uniformity=False):
+	             mode=MODE_SWTA_T, k=0.02, patchwise=False, contrast=1., uniformity=False, alpha=0.):
 		"""
 		
 		:param out_channels: output channels of the convolutional kernel
@@ -188,7 +188,7 @@ class HebbianConvTranspose2D(HebbianConv2d):
 		:param uniformity: whether to use uniformity weighting in contrastive-type learning.
 		"""
 		
-		super().__init__(in_channels, out_channels, kernel_size, stride, w_nrm, act, mode, k, patchwise, contrast, uniformity)
+		super().__init__(in_channels, out_channels, kernel_size, stride, w_nrm, act, mode, k, patchwise, contrast, uniformity, alpha)
 		with torch.no_grad():
 			self.weight.transpose_(0, 1)
 			self.delta_w.transpose_(0, 1)
