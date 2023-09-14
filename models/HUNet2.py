@@ -21,7 +21,7 @@ class HUNet2(nn.Module):
         hebb_params = default_hebb_params
         
         if hasattr(cfg.model, 'hebb'):
-            unit_type = get_init_param_by_name('unit_type', kwargs, cfg.model.hebb, 'DotUnit'),
+            unit_type = get_init_param_by_name('unit_type', kwargs, cfg.model.hebb, 'DotUnit')
             if unit_type == 'DotUnit':
                 unit_type = DotUnit()
             elif unit_type == 'RadialBasis':
@@ -166,11 +166,11 @@ class HUNetConvBlock(nn.Module):
         
         padding = int(padding)
         block.append(nn.ZeroPad2d(padding))
-        block.append(HebbianConv2d(in_size, out_size, kernel_size=3, act=nn.ReLU(), **hebb_params))
+        block.append(HebbianConv2d(in_size, out_size, kernel_size=3, **hebb_params))
         if batch_norm:
             block.append(nn.BatchNorm2d(out_size))
         block.append(nn.ZeroPad2d(padding))
-        block.append(HebbianConv2d(out_size, out_size, kernel_size=3, act=nn.ReLU(), **hebb_params))
+        block.append(HebbianConv2d(out_size, out_size, kernel_size=3, **hebb_params))
         if batch_norm:
             block.append(nn.BatchNorm2d(out_size))
 

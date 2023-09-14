@@ -11,7 +11,7 @@ EXPS=(
     # PH2 Dataset
     #################################
     #ph2/unet
-    ph2/hunet
+    ph2/hunet2
 )
 
 # Train & Evaluate (k-cross validation)
