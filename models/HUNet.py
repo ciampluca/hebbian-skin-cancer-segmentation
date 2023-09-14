@@ -42,13 +42,13 @@ class HUNet(nn.Module):
         return self.net(x)
     
     def local_update(self):
-        for m in self.modules():
+        for m in self.net.modules():
             if hasattr(m, 'local_update'): m.local_update()
     
-    def state_dict(self, destination, prefix, keep_vars):
-        return self.net.state_dict(destination, prefix, keep_vars)
+    def state_dict(self):
+        return self.net.state_dict()
     
-    def load_state_dict(self, state_dict, strict):
+    def load_state_dict(self, state_dict, strict = ...):
         return self.net.load_state_dict(state_dict, strict)
 
 class HUNetModel(nn.Module):

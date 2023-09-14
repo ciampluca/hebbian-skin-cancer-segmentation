@@ -24,7 +24,13 @@ class UNet(nn.Module):
     
     def forward(self, x):
         return self.net(x)
-
+    
+    def state_dict(self):
+        return self.net.state_dict()
+    
+    def load_state_dict(self, state_dict, strict = ...):
+        return self.net.load_state_dict(state_dict, strict)
+    
 class UNetModel(nn.Module):
 
     def __init__(
