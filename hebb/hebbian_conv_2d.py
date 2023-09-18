@@ -61,7 +61,7 @@ class HebbianConv2d(nn.Module):
             requires_grad=True
         ) if bias else None
 
-        self.__delta_w = torch.zeros_like(self.__weight)
+        self.register_buffer('__delta_w', torch.zeros_like(self.__weight))
 
         self.__unit_type = unit_type
         self.__hebbian_update_rule = hebbian_update_rule
@@ -107,13 +107,15 @@ class HebbianConv2d(nn.Module):
                 self.__update_delta_w(unfolded_x, unfolded_y)
             return unfolded_y.reshape(output_shape)
         return self.__unit_type(unfolded_x, self.__weight, self.__bias).reshape(output_shape)
-
+    
+    @ torch.no_grad()
     def __update_delta_w(self, x, y):
         if self.patchwise:
             self.__delta_w[:, :] += self.__hebbian_update_rule(x, y, self.__weight)
         else:
             raise NotImplementedError("Non-patchwise learning is not implemented")
     
+    @torch.no_grad()
     def local_update(self):
         """
         

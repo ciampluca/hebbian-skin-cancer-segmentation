@@ -75,7 +75,8 @@ class HebbianConv2d(nn.Module):
 		y = self.act(self.apply_weights(x, w))
 		if self.training and self.alpha != 0: self.update(x, y)
 		return y
-
+	
+	@torch.no_grad()
 	def update(self, x, y):
 		"""
 		This function implements the logic that computes local plasticity rules from input x and output y. The
@@ -141,7 +142,8 @@ class HebbianConv2d(nn.Module):
 			L.backward()
 			self.delta_w += self.weight.grad.clone().detach()
 			self.zero_grad()
-		
+	
+	@torch.no_grad()
 	def local_update(self):
 		"""
 		

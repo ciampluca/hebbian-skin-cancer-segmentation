@@ -100,7 +100,7 @@ class HebbianConvTranspose2d(torch.nn.Module):
             requires_grad=True
         ) if bias else None
 
-        self.__delta_w = torch.zeros_like(self.__weight)
+        self.register_buffer('delta_w', torch.zeros_like(self.weight))
 
         self.__upscale = torch.nn.ConvTranspose2d(
             in_channels=in_channels,
@@ -170,12 +170,14 @@ class HebbianConvTranspose2d(torch.nn.Module):
         else:
             return unpadded_result[:, :, self.__padding[0]:-self.__padding[-0], self.__padding[1]:-self.__padding[-1]]
 
+    @ torch.no_grad()
     def __update_delta_w(self, x, y):
         if self.patchwise:
             self.__delta_w[:, :] += self.__hebbian_update_rule(x, y, self.__weight)
         else:
             raise NotImplementedError("Non-patchwise learning is not implemented")
-
+    
+    @torch.no_grad()
     def local_update(self):
         if self.alpha == 0:
             return
