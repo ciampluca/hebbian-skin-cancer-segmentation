@@ -8,7 +8,7 @@ model:
   hebb:
     unit_type: 'DotUnit'
     mode: 'SoftWinnerTakesAll'
-    alpha: 0
+    alpha: 1
 
 optim:
   batch_size: 4
