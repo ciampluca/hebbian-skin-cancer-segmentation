@@ -100,7 +100,7 @@ class HebbianConvTranspose2d(torch.nn.Module):
             requires_grad=True
         ) if bias else None
 
-        self.register_buffer('delta_w', torch.zeros_like(self.weight))
+        self.register_buffer('__delta_w', torch.zeros_like(self.weight))
 
         self.__upscale = torch.nn.ConvTranspose2d(
             in_channels=in_channels,
