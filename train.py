@@ -23,7 +23,8 @@ trange = partial(trange, dynamic_ncols=True)
 def main(cfg):
     from omegaconf import OmegaConf; print(OmegaConf.to_yaml(cfg))
     
-    log.info(f"Run path: {Path.cwd()}")
+    run_path = Path.cwd()
+    log.info(f"Run path: {run_path}")
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg.gpu)
     device = torch.device(f'cuda' if cfg.gpu is not None else 'cpu')
@@ -63,12 +64,16 @@ def main(cfg):
     scheduler = hydra.utils.instantiate(cfg.optim.lr_scheduler, optimizer)
 
     # optionally load pre-trained weights
-    if cfg.model.pretrained and cfg.model.resume is not None:
+    if cfg.model.pretrained:
         if cfg.model.pretrained.startswith('http://') or cfg.model.pretrained.startswith('https://'):
             pre_trained_model = torch.hub.load_state_dict_from_url(
                 cfg.model.pretrained, map_location=device, model_dir=cfg.model.cache_folder)
         else:
-            pre_trained_model = torch.load(cfg.model.pretrained, map_location=device)
+            checkpoint_config_path = Path(str(run_path).replace('_ft', ""))
+            best_models_folder = checkpoint_config_path / 'best_models'
+            metric_name = cfg.model.pretrained
+            ckpt_path = best_models_folder / f'best_model_metric_segm-{metric_name}.pth'
+            pre_trained_model = torch.load(ckpt_path, map_location=device)
         model.load_state_dict(pre_trained_model['model'])
         log.info(f"[PRETRAINED]: {cfg.model.pretrained}")
         

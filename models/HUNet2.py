@@ -31,7 +31,7 @@ class HUNet2(nn.Module):
             
             hebbian_update_rule = get_init_param_by_name('hebbian_update_rule', kwargs, cfg.model.hebb, 'SoftWinnerTakesAll')
             if hebbian_update_rule == 'SoftWinnerTakesAll':
-                inverse_temperature = get_init_param_by_name('inverse_temperature', kwargs, cfg.model.hebb, 0.02)
+                inverse_temperature = get_init_param_by_name('k', kwargs, cfg.model.hebb, 0.02)
                 hebbian_update_rule = SoftWinnerTakesAll(inverse_temperature)
             elif hebbian_update_rule == 'HebbianPCA':
                 hebbian_update_rule = HebbianPCA()
@@ -127,6 +127,7 @@ class HUNet2Model(nn.Module):
             prev_channels = 2 ** (wf + i)
         
         self.hebb_params['unit_type'] = DotUnit(act=nn.Identity())
+        self.hebb_params['alpha'] = 0
         self.last = HebbianConv2d(prev_channels, out_channels, kernel_size=1, **self.hebb_params)
         if not last_bias: self.last.bias.requires_grad = False
 

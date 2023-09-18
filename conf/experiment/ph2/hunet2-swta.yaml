@@ -8,5 +8,8 @@ model:
   hebb:
     unit_type: 'DotUnit'
     mode: 'SoftWinnerTakesAll'
-    inverse_temperature: 0.02
     alpha: 0
+
+optim:
+  batch_size: 4
+  batch_accumulation: 4

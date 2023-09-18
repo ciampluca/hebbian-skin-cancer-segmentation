@@ -108,6 +108,7 @@ class HUNetModel(nn.Module):
             )
             prev_channels = 2 ** (wf + i)
 
+        self.hebb_params['alpha'] = 0
         self.last = HebbianConv2d(prev_channels, out_channels, kernel_size=1, **self.hebb_params)
         if not last_bias: self.last.bias.requires_grad = False
 

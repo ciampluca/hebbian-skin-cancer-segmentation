@@ -2,3 +2,5 @@
 
 pretrained: null
 cache_folder: ${hydra:runtime.cwd}/model_zoo
+hebb: 
+  k: 1
