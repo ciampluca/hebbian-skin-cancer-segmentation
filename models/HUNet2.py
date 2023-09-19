@@ -23,7 +23,8 @@ class HUNet2(nn.Module):
         if hasattr(cfg.model, 'hebb'):
             unit_type = get_init_param_by_name('unit_type', kwargs, cfg.model.hebb, 'DotUnit')
             if unit_type == 'DotUnit':
-                unit_type = DotUnit()
+                w_nrm = get_init_param_by_name('w_nrm', kwargs, cfg.model.hebb, True)
+                unit_type = DotUnit(weight_normalize=w_nrm)
             elif unit_type == 'RadialBasis':
                 unit_type = RadialBasis()
             else:

@@ -6,8 +6,11 @@ defaults:
 
 model:
   hebb:
-    unit_type: 'DotUnit'
-    mode: 'HebbianPCA'
+    w_nrm: False
+    mode: 'hpca'
+    patchwise: True
+    contrast: 1.
+    uniformity: False
     alpha: 0
   pretrained: dice    # [dice, jaccard, loss]
 
