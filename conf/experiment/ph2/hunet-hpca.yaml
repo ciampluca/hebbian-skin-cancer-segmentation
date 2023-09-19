@@ -1,0 +1,15 @@
+# @package _global_
+
+defaults:
+ - ph2/common
+ - /common/model: hunet
+
+model:
+  hebb:
+    unit_type: 'DotUnit'
+    mode: 'HebbianPCA'
+    alpha: 1
+
+optim:
+  batch_size: 4
+  batch_accumulation: 4
