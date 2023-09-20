@@ -28,6 +28,6 @@ done
 # Test 
 for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do
     for EXP in ${EXPS[@]}; do
-        CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/run-$REP --data-root data/PH2 --in-memory True --device cpu
+        CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-1/run-$REP --data-root data/PH2 --in-memory True --device cpu
     done
 done

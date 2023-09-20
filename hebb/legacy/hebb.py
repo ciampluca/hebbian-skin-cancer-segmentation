@@ -107,7 +107,7 @@ class HebbianConv2d(nn.Module):
 			if self.patchwise:
 				r = y.permute(1, 0, 2, 3).reshape(y.shape[1], -1)
 				l = (torch.arange(self.weight.shape[0], device=x.device, dtype=x.dtype).unsqueeze(0).repeat(self.weight.shape[0], 1) <= torch.arange(self.weight.shape[0], device=x.device, dtype=x.dtype).unsqueeze(1)).to(dtype=x.dtype)
-				dec = (r.matmul(r.transpose(-2, -1)) * l).matmul(self.weight.view(self.weight.shape[0], -1))
+				dec = (r.matmul(r.transpose(-2, -1)) * l).matmul(self.weight.reshape(self.weight.shape[0], -1))
 				self.delta_w += (r.matmul(x_unf) - dec).reshape_as(self.weight)
 			else:
 				r = y.permute(2, 3, 1, 0)
