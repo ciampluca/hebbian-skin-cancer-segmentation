@@ -10,8 +10,8 @@ BrainMRI_DIR="${DATASET_ROOT}/BrainMRI"
 BrainMRI_URL="./BrainMRI_url.txt"
 
 
+echo "Downloading, extracting, and preparing: BrainMRI dataset"
 if [[ ! -e "${BrainMRI_DIR}" ]]; then
-    echo "Downloading, extracting, and preparing: BrainMRI dataset"
     while read -r line
     do
       gdown "${line}" -O ${DATASET_ROOT}

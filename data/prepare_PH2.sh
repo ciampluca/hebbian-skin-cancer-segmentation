@@ -10,8 +10,8 @@ PH2_DIR="${DATASET_ROOT}/PH2"
 PH2_URL="./PH2_url.txt"
 
 
+echo "Downloading, extracting, and preparing: PH2 dataset"
 if [[ ! -e "${PH2_DIR}" ]]; then
-    echo "Downloading, extracting, and preparing: PH2 dataset"
     while read -r line
     do
       gdown "${line}" -O ${DATASET_ROOT}

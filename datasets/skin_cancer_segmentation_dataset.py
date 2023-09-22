@@ -58,7 +58,7 @@ class SkinCancerSegmentationDataset(Dataset):
     
     def _get_images_in_split(self):
         root_image = Path(self.root / 'images')
-        image_paths = root_image.rglob('*.[b][m][p]')
+        image_paths = root_image.rglob('*.[bt][mi][pf]')
         image_paths = sorted(image_paths)
 
         if self.split == 'all':
@@ -146,11 +146,11 @@ def main():
     ])
 
     train_dataset_params = {
-        'root': "data/PH2",
+        'root': "data/BrainMRI",
         'split': "train",
         'split_seed': 87,
         'cross_val_bucket_validation_index': 0,
-        'in_memory': True,
+        'in_memory': False,
         'target': True,
         'transforms': train_transform,
     }
