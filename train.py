@@ -68,13 +68,23 @@ def main(cfg):
         if cfg.model.pretrained.startswith('http://') or cfg.model.pretrained.startswith('https://'):
             pre_trained_model = torch.hub.load_state_dict_from_url(
                 cfg.model.pretrained, map_location=device, model_dir=cfg.model.cache_folder)
-        else:
+        elif cfg.model.pretrained.startswith('best://'):
             checkpoint_config_path = Path(str(run_path).replace('_ft', ""))
             best_models_folder = checkpoint_config_path / 'best_models'
-            metric_name = cfg.model.pretrained
+            metric_name = cfg.model.pretrained.split('best://', 1)[1]
             ckpt_path = best_models_folder / f'best_model_metric_segm-{metric_name}.pth'
             pre_trained_model = torch.load(ckpt_path, map_location=device)
+        elif cfg.model.pretrained.startswith('last://'):
+            checkpoint_config_path = Path(str(run_path).replace('_ft', ""))
+            ckpt_file_name = cfg.model.pretrained.split('last://', 1)[1]
+            ckpt_path = checkpoint_config_path / f'{ckpt_file_name}.pth'
+            pre_trained_model = torch.load(ckpt_path, map_location=device)
+        else:
+            ckpt_path = cfg.model.pretrained
+            pre_trained_model = torch.load(ckpt_path, map_location=device)
         model.load_state_dict(pre_trained_model['model'])
+        if cfg.model.reset_clf and hasattr(model, 'reset_clf'):
+            model.reset_clf()
         log.info(f"[PRETRAINED]: {cfg.model.pretrained}")
         
     start_epoch = 0

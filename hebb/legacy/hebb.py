@@ -69,15 +69,18 @@ class HebbianConv2d(nn.Module):
 		
 		return torch.conv2d(x, w, bias=self.bias, stride=self.stride)
 	
-	def forward(self, x):
+	def compute_activation(self, x):
 		w = self.weight
 		if self.w_nrm: w = normalize(w, dim=(1, 2, 3))
 		y = self.act(self.apply_weights(x, w))
-		if self.training and self.alpha != 0: self.update(x, y)
 		return y
 	
-	@torch.no_grad()
-	def update(self, x, y):
+	def forward(self, x):
+		y = self.compute_activation(x)
+		if self.training and self.alpha != 0: self.compute_update(x, y)
+		return y
+	
+	def compute_update(self, x, y):
 		"""
 		This function implements the logic that computes local plasticity rules from input x and output y. The
 		resulting weight update is stored in buffer self.delta_w for later use.
@@ -87,35 +90,38 @@ class HebbianConv2d(nn.Module):
 			raise NotImplementedError("Learning mode {} unavailable for {} layer".format(self.mode, self.__class__.__name__))
 		
 		if self.mode == self.MODE_SWTA:
-			# Logic for swta-type learning
-			x_unf = F.unfold(x, kernel_size=self.kernel_size, stride=self.stride)
-			x_unf = x_unf.permute(0, 2, 1).reshape(-1, x_unf.size(1))
-			if self.patchwise:
-				r = (y * self.k).softmax(dim=1).permute(1, 0, 2, 3).reshape(y.shape[1], -1)
-				dec = r.sum(1, keepdim=True) * self.weight.reshape(self.weight.shape[0], -1)
-				self.delta_w += (r.matmul(x_unf) - dec).reshape_as(self.weight)
-			else:
-				r = (y * self.k).softmax(dim=1).permute(2, 3, 1, 0)
-				krn = torch.eye(len(self.weight[0]), device=x.device, dtype=x.dtype).view(len(self.weight[0]), self.weight.shape[1], *self.kernel_size)
-				dec = torch.conv_transpose2d((r.sum(dim=-1, keepdim=True) * self.weight.reshape(1, 1, self.weight.shape[0], -1)).permute(2, 3, 0, 1), krn, stride=self.stride)
-				self.delta_w += (r.permute(2, 3, 0, 1).reshape(r.shape[2], -1).matmul(x_unf) - F.unfold(dec, kernel_size=self.kernel_size, stride=self.stride).sum(dim=-1)).reshape_as(self.weight)
-		
+			with torch.no_grad():
+				# Logic for swta-type learning
+				x_unf = F.unfold(x, kernel_size=self.kernel_size, stride=self.stride)
+				x_unf = x_unf.permute(0, 2, 1).reshape(-1, x_unf.size(1))
+				if self.patchwise:
+					r = (y * self.k).softmax(dim=1).permute(1, 0, 2, 3).reshape(y.shape[1], -1)
+					dec = r.sum(1, keepdim=True) * self.weight.reshape(self.weight.shape[0], -1)
+					self.delta_w += (r.matmul(x_unf) - dec).reshape_as(self.weight)
+				else:
+					r = (y * self.k).softmax(dim=1).permute(2, 3, 1, 0)
+					krn = torch.eye(len(self.weight[0]), device=x.device, dtype=x.dtype).view(len(self.weight[0]), self.weight.shape[1], *self.kernel_size)
+					dec = torch.conv_transpose2d((r.sum(dim=-1, keepdim=True) * self.weight.reshape(1, 1, self.weight.shape[0], -1)).permute(2, 3, 0, 1), krn, stride=self.stride)
+					self.delta_w += (r.permute(2, 3, 0, 1).reshape(r.shape[2], -1).matmul(x_unf) - F.unfold(dec, kernel_size=self.kernel_size, stride=self.stride).sum(dim=-1)).reshape_as(self.weight)
+			
 		if self.mode == self.MODE_HPCA:
-			# Logic for hpca-type learning
-			x_unf = F.unfold(x, kernel_size=self.kernel_size, stride=self.stride)
-			x_unf = x_unf.permute(0, 2, 1).reshape(-1, x_unf.size(1))
-			if self.patchwise:
-				r = y.permute(1, 0, 2, 3).reshape(y.shape[1], -1)
-				l = (torch.arange(self.weight.shape[0], device=x.device, dtype=x.dtype).unsqueeze(0).repeat(self.weight.shape[0], 1) <= torch.arange(self.weight.shape[0], device=x.device, dtype=x.dtype).unsqueeze(1)).to(dtype=x.dtype)
-				dec = (r.matmul(r.transpose(-2, -1)) * l).matmul(self.weight.view(self.weight.shape[0], -1))
-				self.delta_w += (r.matmul(x_unf) - dec).reshape_as(self.weight)
-			else:
-				r = y.permute(2, 3, 1, 0)
-				l = (torch.arange(self.weight.shape[0], device=x.device, dtype=x.dtype).unsqueeze(0).repeat(self.weight.shape[0], 1) <= torch.arange(self.weight.shape[0], device=x.device, dtype=x.dtype).unsqueeze(1)).to(dtype=x.dtype)
-				dec = torch.conv_transpose2d((r.matmul(r.transpose(-2, -1)) * l.unsqueeze(0).unsqueeze(1)).permute(3, 2, 0, 1), self.weight, stride=self.stride)
-				self.delta_w += (r.permute(2, 3, 0, 1).reshape(r.shape[2], -1).matmul(x_unf) - F.unfold(dec, kernel_size=self.kernel_size, stride=self.stride).sum(dim=-1)).reshape_as(self.weight)
-		
+			with torch.no_grad():
+				# Logic for hpca-type learning
+				x_unf = F.unfold(x, kernel_size=self.kernel_size, stride=self.stride)
+				x_unf = x_unf.permute(0, 2, 1).reshape(-1, x_unf.size(1))
+				if self.patchwise:
+					r = y.permute(1, 0, 2, 3).reshape(y.shape[1], -1)
+					l = (torch.arange(self.weight.shape[0], device=x.device, dtype=x.dtype).unsqueeze(0).repeat(self.weight.shape[0], 1) <= torch.arange(self.weight.shape[0], device=x.device, dtype=x.dtype).unsqueeze(1)).to(dtype=x.dtype)
+					dec = (r.matmul(r.transpose(-2, -1)) * l).matmul(self.weight.reshape(self.weight.shape[0], -1))
+					self.delta_w += (r.matmul(x_unf) - dec).reshape_as(self.weight)
+				else:
+					r = y.permute(2, 3, 1, 0)
+					l = (torch.arange(self.weight.shape[0], device=x.device, dtype=x.dtype).unsqueeze(0).repeat(self.weight.shape[0], 1) <= torch.arange(self.weight.shape[0], device=x.device, dtype=x.dtype).unsqueeze(1)).to(dtype=x.dtype)
+					dec = torch.conv_transpose2d((r.matmul(r.transpose(-2, -1)) * l.unsqueeze(0).unsqueeze(1)).permute(3, 2, 0, 1), self.weight, stride=self.stride)
+					self.delta_w += (r.permute(2, 3, 0, 1).reshape(r.shape[2], -1).matmul(x_unf) - F.unfold(dec, kernel_size=self.kernel_size, stride=self.stride).sum(dim=-1)).reshape_as(self.weight)
+			
 		if self.mode == self.MODE_CONTRASTIVE:
+			y = self.compute_activation(x.clone().detach())
 			y = normalize(y, dim=1)
 			y_unf = F.unfold(y, _pair(3), padding=_pair(1))
 			y_unf = y_unf.permute(0, 2, 1).reshape(y_unf.size(0), y_unf.size(2), y.size(1), 9)
@@ -125,30 +131,32 @@ class HebbianConv2d(nn.Module):
 			
 			# Uniformity weighting, if required
 			if self.uniformity:
-				x = normalize(x, dim=1)
-				x_unf = F.unfold(x, _pair(3), padding=_pair(1))
-				x_unf = x_unf.permute(0, 2, 1).reshape(x_unf.size(0), x_unf.size(2), x.size(1), 9)
-				uniformity_map = (x_unf.sum(-1).reshape(-1, x.size(1)) * x.permute(0, 2, 3, 1).reshape(-1, x.size(1))).sum(dim=-1, keepdim=True)
-				uniformity_map = self.apply_weights(uniformity_map.reshape(x.size(0), 1, x.size(1), x.size(2)), torch.ones([1, 1, *self.kernel_size], device=x.device, dtype=x.dtype)).reshape(-1, 1)
-				L *= uniformity_map
+				with torch.no_grad():
+					x = normalize(x, dim=1)
+					x_unf = F.unfold(x, _pair(3), padding=_pair(1))
+					x_unf = x_unf.permute(0, 2, 1).reshape(x_unf.size(0), x_unf.size(2), x.size(1), 9)
+					uniformity_map = (x_unf.sum(-1).reshape(-1, x.size(1)) * x.permute(0, 2, 3, 1).reshape(-1, x.size(1))).sum(dim=-1, keepdim=True)
+					uniformity_map = self.apply_weights(uniformity_map.reshape(x.size(0), 1, x.size(1), x.size(2)), torch.ones([1, 1, *self.kernel_size], device=x.device, dtype=x.dtype)).reshape(-1, 1)
+				L = L * uniformity_map
 			
 			# Negative contribution
 			idx = torch.randperm(y_unf.size(0), device=y_unf.device)
-			L += self.contrast * y_unf[idx].sum(-1).reshape(-1, y.size(1)) * y.permute(0, 2, 3, 1).reshape(-1, y.size(1))
+			L = L + self.contrast * y_unf[idx].sum(-1).reshape(-1, y.size(1)) * y.permute(0, 2, 3, 1).reshape(-1, y.size(1))
 			
 			# Compute update
 			L = L.sum()
-			self.zero_grad()
+			prev_grad = self.weight.grad
+			self.weight.grad = None
 			L.backward()
 			self.delta_w += self.weight.grad.clone().detach()
-			self.zero_grad()
+			self.weight.grad = prev_grad
 	
 	@torch.no_grad()
 	def local_update(self):
 		"""
 		
 		This function transfers a previously computed weight update, stored in buffer self.delta_w, to the gradient
-		self.weight.grad of the weigth parameter.
+		self.weight.grad of the weight parameter.
 		
 		This function should be called before optimizer.step(), so that the optimizer will use the locally computed
 		update as optimization direction. Local updates can also be combined with end-to-end updates by calling this
@@ -203,7 +211,7 @@ class HebbianConvTranspose2D(HebbianConv2d):
 		
 		return torch.conv_transpose2d(x, w, bias=self.bias, stride=self.stride)
 
-	def update(self, x, y):
+	def compute_update(self, x, y):
 		"""
 		This function implements the logic that computes local plasticity rules from input x and output y. The
 		resulting weight update is stored in buffer self.delta_w for later use.
@@ -215,11 +223,11 @@ class HebbianConvTranspose2D(HebbianConv2d):
 		if self.mode in [self.MODE_SWTA, self.MODE_HPCA]:
 			# In case of swta-type or hpca-type learning, use the learning rules for ordinary convolution,
 			# but exchanging x and y
-			super().update(y, x)
+			super().compute_update(y, x)
 		
 		if self.mode in [self.MODE_CONTRASTIVE]:
 			# Reuse update from base conv class
-			super().update(x, y)
+			super().compute_update(x, y)
 		
 		if self.mode == self.MODE_SWTA_T:
 			# Logic for swta-type learning in transpose convolutional layers

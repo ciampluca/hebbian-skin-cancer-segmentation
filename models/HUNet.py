@@ -49,7 +49,10 @@ class HUNet(nn.Module):
         return self.net.state_dict()
     
     def load_state_dict(self, state_dict, strict = ...):
-        return self.net.load_state_dict(state_dict, strict)
+        self.net.load_state_dict(state_dict, strict)
+    
+    def reset_clf(self):
+        self.net.reset_clf()
 
 class HUNetModel(nn.Module):
     
@@ -108,10 +111,16 @@ class HUNetModel(nn.Module):
             )
             prev_channels = 2 ** (wf + i)
 
-        self.hebb_params['alpha'] = 0
-        self.last = HebbianConv2d(prev_channels, out_channels, kernel_size=1, **self.hebb_params)
-        if not last_bias: self.last.bias.requires_grad = False
-
+        self.last_bias = last_bias
+        repl_params = {'alpha': 0}
+        self.last_hebb_params = {k: v if k not in repl_params else repl_params[k] for k, v in self.hebb_params.items()}
+        self.last = HebbianConv2d(prev_channels, out_channels, kernel_size=1, **adjust_hebb_params(self.last_hebb_params))
+        if not self.last_bias: self.last.bias.requires_grad = False
+    
+    def reset_clf(self):
+        self.last = HebbianConv2d(self.last.in_channels, self.last.out_channels, kernel_size=1, **self.last_hebb_params)
+        if not self.last_bias: self.last.bias.requires_grad = False
+    
     def forward(self, x):
         h, w = x.shape[-2:]
         need_resize = (h % 32) or (w % 32)
@@ -148,11 +157,11 @@ class HUNetConvBlock(nn.Module):
         
         padding = int(padding)
         block.append(nn.ZeroPad2d(padding))
-        block.append(HebbianConv2d(in_size, out_size, kernel_size=3, act=nn.ReLU(), **hebb_params))
+        block.append(HebbianConv2d(in_size, out_size, kernel_size=3, act=nn.ReLU(), **adjust_hebb_params(hebb_params)))
         if batch_norm:
             block.append(nn.BatchNorm2d(out_size))
         block.append(nn.ZeroPad2d(padding))
-        block.append(HebbianConv2d(out_size, out_size, kernel_size=3, act=nn.ReLU(), **hebb_params))
+        block.append(HebbianConv2d(out_size, out_size, kernel_size=3, act=nn.ReLU(), **adjust_hebb_params(hebb_params)))
         if batch_norm:
             block.append(nn.BatchNorm2d(out_size))
 
@@ -175,7 +184,7 @@ class HUNetUpBlock(nn.Module):
         elif up_mode == 'upsample':
             self.up = nn.Sequential(
                 nn.Upsample(mode='bilinear', scale_factor=2),
-                HebbianConv2d(in_size, out_size, kernel_size=1, **hebb_params),
+                HebbianConv2d(in_size, out_size, kernel_size=1, **adjust_hebb_params(hebb_params)),
             )
 
         self.conv_block = HUNetConvBlock(in_size, out_size, padding, batch_norm, hebb_params=hebb_params)
@@ -195,6 +204,13 @@ class HUNetUpBlock(nn.Module):
 
         return out
 
+# Adjusts hebbian params to work in the downsampling path. For example, if we are using hpca_t or swta_t mode, this
+# means that the transpose convolutional layers use this mode. However, normal convolutions should still use hpca or swta.
+def adjust_hebb_params(hebb_params):
+    adj_hebb_params = hebb_params.copy()
+    if adj_hebb_params['mode'] in ('hpca_t', 'swta_t'):
+        adj_hebb_params['mode'] = adj_hebb_params['mode'].replace('_t', '')
+    return adj_hebb_params
 
 
 # Test code

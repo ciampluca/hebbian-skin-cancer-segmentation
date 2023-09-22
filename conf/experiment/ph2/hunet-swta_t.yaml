@@ -6,16 +6,13 @@ defaults:
 
 model:
   hebb:
-    w_nrm: False
-    mode: 'hpca'
+    w_nrm: True
+    mode: 'swta_t'
     patchwise: True
     contrast: 1.
     uniformity: False
-    alpha: 0
-  pretrained: last://last    # best://[dice, jaccard, loss]
-  reset_clf: true
+    alpha: 1
 
 optim:
   batch_size: 4
   batch_accumulation: 4
-

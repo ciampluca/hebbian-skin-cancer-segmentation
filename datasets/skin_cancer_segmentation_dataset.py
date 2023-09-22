@@ -24,6 +24,7 @@ class SkinCancerSegmentationDataset(Dataset):
         in_memory=True,
         target=None,
         transforms=None,
+        smpleff_regime=1.,
     ):
         """ Dataset constructor.
         Args:
@@ -41,11 +42,15 @@ class SkinCancerSegmentationDataset(Dataset):
         self.cross_val_bucket_validation_index = cross_val_bucket_validation_index
         self.target = target
         self.transforms = transforms
+        self.smpleff_regime = smpleff_regime
 
         self.in_memory = in_memory
 
         # get list of images in the given split
         self.image_paths = self._get_images_in_split()
+        if self.split == 'train':
+            num_imgs = int(self.smpleff_regime * len(self.image_paths))
+            self.image_paths = self.image_paths[:num_imgs]
         
         if in_memory:
             self.data = {}

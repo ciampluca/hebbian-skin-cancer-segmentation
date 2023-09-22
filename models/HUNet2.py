@@ -70,6 +70,9 @@ class HUNet2(nn.Module):
     def load_state_dict(self, state_dict, strict = ...):
         return self.net.load_state_dict(state_dict, strict)
     
+    def reset_clf(self):
+        self.net.reset_clf()
+    
 class HUNet2Model(nn.Module):
     
     def __init__(
@@ -127,11 +130,16 @@ class HUNet2Model(nn.Module):
             )
             prev_channels = 2 ** (wf + i)
         
-        self.hebb_params['unit_type'] = DotUnit(act=nn.Identity())
-        self.hebb_params['alpha'] = 0
-        self.last = HebbianConv2d(prev_channels, out_channels, kernel_size=1, **self.hebb_params)
-        if not last_bias: self.last.bias.requires_grad = False
-
+        self.last_bias = last_bias
+        repl_params = {'alpha': 0, 'unit_type': DotUnit(act=nn.Identity())}
+        self.last_hebb_params = {k: v if k not in repl_params else repl_params[k] for k, v in self.hebb_params.items()}
+        self.last = HebbianConv2d(prev_channels, out_channels, kernel_size=1, **self.last_hebb_params)
+        if not self.last_bias: self.last.bias.requires_grad = False
+    
+    def reset_clf(self):
+        self.last = HebbianConv2d(self.last.in_channels, self.last.out_channels, kernel_size=1, **self.last_hebb_params)
+        if not self.last_bias: self.last.bias.requires_grad = False
+    
     def forward(self, x):
         h, w = x.shape[-2:]
         need_resize = (h % 32) or (w % 32)
