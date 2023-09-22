@@ -1,0 +1,65 @@
+# @package _global_
+
+data:
+    drop_last_batch: True
+    image_size: 512
+    
+    train: &common
+        _target_: datasets.SkinCancerSegmentationDataset
+        root: ${hydra:runtime.cwd}/data/BrainMRI
+        split: train
+        split_seed: 87
+        cross_val_num_buckets: 5
+        cross_val_bucket_validation_index: 0
+        in_memory: false
+        target: true
+        transforms:
+            _target_: albumentations.Compose
+            _args_:
+                - - _target_: albumentations.LongestMaxSize
+                    max_size:
+                    - ${data.image_size}
+                  - _target_: albumentations.PadIfNeeded
+                    min_height: ${data.image_size}
+                    min_width: ${data.image_size}
+                    border_mode: 0   # it corresponds to cv2.BORDER_CONSTANT
+                  - _target_: albumentations.Flip
+                  - _target_: albumentations.ShiftScaleRotate
+                    shift_limit: 0.05
+                    scale_limit: 0.05
+                    rotate_limit: 15
+                    p: 0.5   
+                  - _target_: albumentations.Normalize
+                    mean:
+                    - 0.45
+                    - 0.45
+                    - 0.45
+                    std:
+                    - 0.225
+                    - 0.225
+                    - 0.225
+                  - _target_: albumentations.pytorch.ToTensorV2
+
+    validation:
+        split: validation
+        <<: *common   # reinsert 'train' block content
+        transforms:
+            _target_: albumentations.Compose
+            _args_:
+                - - _target_: albumentations.LongestMaxSize
+                    max_size:
+                    - ${data.image_size}
+                  - _target_: albumentations.PadIfNeeded
+                    min_height: ${data.image_size}
+                    min_width: ${data.image_size}
+                    border_mode: 0   # it corresponds to cv2.BORDER_CONSTANT
+                  - _target_: albumentations.Normalize
+                    mean:
+                    - 0.45
+                    - 0.45
+                    - 0.45
+                    std:
+                    - 0.225
+                    - 0.225
+                    - 0.225
+                  - _target_: albumentations.pytorch.ToTensorV2

@@ -1,0 +1,20 @@
+# @package _global_
+
+defaults:
+ - brainMRI/common
+ - /common/model: hunet
+
+model:
+  hebb:
+    w_nrm: True
+    mode: 'swta'
+    patchwise: True
+    contrast: 1.
+    uniformity: False
+    alpha: 0
+  pretrained: dice    # [dice, jaccard, loss]
+
+optim:
+  batch_size: 4
+  batch_accumulation: 4
+
