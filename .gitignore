@@ -137,4 +137,6 @@ dmypy.json
 /datasets/trash/
 /runs/
 /output_debug/
-dataset_url.txt
+PH2_url.txt
+BrainMRI_url.txt
+/data/BrainMRI

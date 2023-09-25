@@ -37,7 +37,7 @@ def main(args):
     log.info(f'[TEST] {test_dataset}')
 
     # create model and move to device
-    model = hydra.utils.instantiate(cfg.model.module, skip_weights_loading=True)
+    model = hydra.utils.instantiate(cfg.model.module, cfg)
     model.to(device)
     
     # resume from a saved checkpoint
