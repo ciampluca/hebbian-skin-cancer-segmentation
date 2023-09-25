@@ -230,22 +230,24 @@ class HebbianConvTranspose2D(HebbianConv2d):
 			super().compute_update(x, y)
 		
 		if self.mode == self.MODE_SWTA_T:
-			# Logic for swta-type learning in transpose convolutional layers
-			r = (y * self.k).softmax(dim=1)
-			r = F.unfold(r, kernel_size=self.kernel_size, stride=self.stride)
-			r = r.permute(0, 2, 1).reshape(-1, self.out_channels, self.kernel_size[0]*self.kernel_size[1]).permute(2, 1, 0)
-			dec = r.sum(2, keepdim=True) * self.weight.permute(2, 3, 1, 0).reshape(-1, self.out_channels, self.in_channels)
-			if self.patchwise: dec = dec.sum(dim=0, keepdim=True)
-			self.delta_w += (r.matmul(x.permute(0, 2, 3, 1).reshape(1, -1, x.size(1))) - dec).permute(2, 1, 0).reshape_as(self.weight)
+			with torch.no_grad():
+				# Logic for swta-type learning in transpose convolutional layers
+				r = (y * self.k).softmax(dim=1)
+				r = F.unfold(r, kernel_size=self.kernel_size, stride=self.stride)
+				r = r.permute(0, 2, 1).reshape(-1, self.out_channels, self.kernel_size[0]*self.kernel_size[1]).permute(2, 1, 0)
+				dec = r.sum(2, keepdim=True) * self.weight.permute(2, 3, 1, 0).reshape(-1, self.out_channels, self.in_channels)
+				if self.patchwise: dec = dec.sum(dim=0, keepdim=True)
+				self.delta_w += (r.matmul(x.permute(0, 2, 3, 1).reshape(1, -1, x.size(1))) - dec).permute(2, 1, 0).reshape_as(self.weight)
 		
 		if self.mode == self.MODE_HPCA_T:
-			# Logic for hpca-type learning in transpose convolutional layers
-			r = y
-			r = F.unfold(r, kernel_size=self.kernel_size, stride=self.stride)
-			r = r.permute(0, 2, 1).reshape(-1, self.out_channels, self.kernel_size[0]*self.kernel_size[1]).permute(2, 1, 0)
-			l = (torch.arange(self.out_channels, device=x.device, dtype=x.dtype).unsqueeze(0).repeat(self.out_channels, 1) <= torch.arange(self.out_channels, device=x.device, dtype=x.dtype).unsqueeze(1)).to(dtype=x.dtype)
-			dec = (r.matmul(r.transpose(-2, -1)) * l.unsqueeze(0)).matmul(self.weight.permute(2, 3, 1, 0).reshape(-1, self.out_channels, self.in_channels))
-			if self.patchwise: dec = dec.sum(dim=0, keepdim=True)
-			self.delta_w += (r.matmul(x.permute(0, 2, 3, 1).reshape(1, -1, x.size(1))) - dec).permute(2, 1, 0).reshape_as(self.weight)
+			with torch.no_grad():
+				# Logic for hpca-type learning in transpose convolutional layers
+				r = y
+				r = F.unfold(r, kernel_size=self.kernel_size, stride=self.stride)
+				r = r.permute(0, 2, 1).reshape(-1, self.out_channels, self.kernel_size[0]*self.kernel_size[1]).permute(2, 1, 0)
+				l = (torch.arange(self.out_channels, device=x.device, dtype=x.dtype).unsqueeze(0).repeat(self.out_channels, 1) <= torch.arange(self.out_channels, device=x.device, dtype=x.dtype).unsqueeze(1)).to(dtype=x.dtype)
+				dec = (r.matmul(r.transpose(-2, -1)) * l.unsqueeze(0)).matmul(self.weight.permute(2, 3, 1, 0).reshape(-1, self.out_channels, self.in_channels))
+				if self.patchwise: dec = dec.sum(dim=0, keepdim=True)
+				self.delta_w += (r.matmul(x.permute(0, 2, 3, 1).reshape(1, -1, x.size(1))) - dec).permute(2, 1, 0).reshape_as(self.weight)
 		
 		

@@ -6,7 +6,7 @@ gpu: 0
 
 hydra:
   run:
-    dir: runs/${hydra.job.override_dirname}/inv_temp-${model.hebb.k}/run-${data.train.cross_val_bucket_validation_index}_regime-${data.train.smpleff_regime}
+    dir: runs/${hydra.job.override_dirname}/inv_temp-${model.hebb.k}/regime-${data.train.smpleff_regime}/run-${data.train.cross_val_bucket_validation_index}
   sweep:
     dir: runs
     subdir: ${hydra.job.override_dirname}
