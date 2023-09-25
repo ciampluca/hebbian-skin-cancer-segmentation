@@ -10,7 +10,8 @@ model:
     w_nrm: True
     mode: 'SoftWinnerTakesAll'
     alpha: 0
-  pretrained: dice    # [dice, jaccard, loss]
+  pretrained: last://last    # best://[dice, jaccard, loss]
+  reset_clf: true
 
 optim:
   batch_size: 4

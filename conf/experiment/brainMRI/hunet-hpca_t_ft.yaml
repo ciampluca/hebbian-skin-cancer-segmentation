@@ -6,8 +6,8 @@ defaults:
 
 model:
   hebb:
-    w_nrm: True
-    mode: 'swta'
+    w_nrm: False
+    mode: 'hpca_t'
     patchwise: True
     contrast: 1.
     uniformity: False

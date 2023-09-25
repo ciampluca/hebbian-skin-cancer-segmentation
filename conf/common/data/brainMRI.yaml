@@ -13,6 +13,7 @@ data:
         cross_val_bucket_validation_index: 0
         in_memory: false
         target: true
+        smpleff_regime: 1.
         transforms:
             _target_: albumentations.Compose
             _args_:
