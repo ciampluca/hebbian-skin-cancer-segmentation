@@ -1,0 +1,20 @@
+# @package _global_
+
+defaults:
+  - /common: default
+  - /common/data: isic2016
+  - /common/optim: default
+
+optim:
+    batch_size: 4
+    batch_accumulation: 1
+    num_workers: 4
+
+    epochs: 100
+
+data:
+    image_size: 256
+    train: &common
+        in_memory: true
+    validation:
+        <<: *common   # reinsert 'train' block content

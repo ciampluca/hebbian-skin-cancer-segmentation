@@ -63,7 +63,7 @@ class SkinCancerSegmentationDataset(Dataset):
     
     def _get_images_in_split(self):
         root_image = Path(self.root / 'images')
-        image_paths = root_image.rglob('*.[bt][mi][pf]')
+        image_paths = root_image.rglob('*.[btjp][mipn][pfjg]')
         image_paths = sorted(image_paths)
 
         if self.split == 'all':
@@ -90,8 +90,9 @@ class SkinCancerSegmentationDataset(Dataset):
         return image
     
     def _get_mask(self, mask_path):
-        mask = cv2.imread(mask_path.as_posix(), cv2.IMREAD_UNCHANGED).astype(np.float32)
-        mask[mask == 255] = 1.0
+        mask = cv2.imread(mask_path.as_posix(), cv2.IMREAD_GRAYSCALE).astype(np.float32)
+        mask[mask != 255] = 0.
+        mask[mask == 255] = 1.
 
         return mask
         
@@ -151,7 +152,7 @@ def main():
     ])
 
     train_dataset_params = {
-        'root': "data/BrainMRI",
+        'root': "data/DRIVE",
         'split': "train",
         'split_seed': 87,
         'cross_val_bucket_validation_index': 0,

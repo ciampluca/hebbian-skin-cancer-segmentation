@@ -1,0 +1,5 @@
+# @package _global_
+
+defaults:
+ - isic2016/common
+ - /common/model: unet
