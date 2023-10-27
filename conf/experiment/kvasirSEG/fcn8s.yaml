@@ -1,0 +1,5 @@
+# @package _global_
+
+defaults:
+ - kvasirSEG/common
+ - /common/model: fcn8s

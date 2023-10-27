@@ -11,5 +11,6 @@ pandas
 tensorboard
 gdown
 matplotlib
+fcn
 
 

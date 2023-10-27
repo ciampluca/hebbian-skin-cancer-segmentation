@@ -1,0 +1,10 @@
+# @package model
+
+defaults:
+  - common
+
+name: FCN16s
+module:
+  _target_: models.FCN16s
+  out_channels: 1
+

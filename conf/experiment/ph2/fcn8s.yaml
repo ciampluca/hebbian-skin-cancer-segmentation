@@ -1,0 +1,5 @@
+# @package _global_
+
+defaults:
+ - ph2/common
+ - /common/model: fcn8s

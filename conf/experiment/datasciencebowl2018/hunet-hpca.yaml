@@ -1,0 +1,18 @@
+# @package _global_
+
+defaults:
+ - datasciencebowl2018/common
+ - /common/model: hunet
+
+model:
+  hebb:
+    w_nrm: False
+    mode: 'hpca'
+    patchwise: True
+    contrast: 1.
+    uniformity: False
+    alpha: 1
+
+optim:
+  batch_size: 4
+  batch_accumulation: 4

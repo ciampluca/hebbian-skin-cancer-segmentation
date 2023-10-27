@@ -1,0 +1,5 @@
+# @package _global_
+
+defaults:
+ - datasciencebowl2018/common
+ - /common/model: fcn8s
