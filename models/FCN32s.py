@@ -14,12 +14,6 @@ class FCN32s(nn.Module):
         self.net = FCN32s(
             in_channels=get_init_param_by_name('in_channels', kwargs, cfg.model, 3),
             out_channels=get_init_param_by_name('out_channels', kwargs, cfg.model, 1),
-            depth=get_init_param_by_name('depth', kwargs, cfg.model, 5),
-            wf=get_init_param_by_name('wf', kwargs, cfg.model, 6),
-            padding=get_init_param_by_name('padding', kwargs, cfg.model, True),
-            batch_norm=get_init_param_by_name('batch_norm', kwargs, cfg.model, True),
-            up_mode=get_init_param_by_name('up_mode', kwargs, cfg.model, 'upconv'),
-            last_bias=get_init_param_by_name('last_bias', kwargs, cfg.model, True),
         )
     
     def forward(self, x):

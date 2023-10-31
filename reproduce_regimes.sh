@@ -7,7 +7,7 @@ set -e
 REPS=5
 START_REP=0
 GPU=0
-INV_TEMP=1.0        # to be set accordingly
+INV_TEMP=1        # to be set accordingly
 REGIMES=(
     0.01
     0.02
@@ -114,26 +114,28 @@ done
 # Test 
 for R in ${REGIMES[@]}; do
     for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do
-        case $EXP in 
-            ph2*)
-                CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$INV_TEMP/regime-$R/run-$REP --data-root data/PH2 --in-memory True
-                ;;
-            isic2016*)
-                CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$INV_TEMP/regime-$R/run-$REP --data-root data/ISIC2016 --in-memory True
-                ;;
-            kvasirSEG*)
-                CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$INV_TEMP/regime-$R/run-$REP --data-root data/KvasirSEG --in-memory True
-                ;;
-            datasciencebowl2018*)
-                CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$INV_TEMP/regime-$R/run-$REP --data-root data/DataScienceBowl2018 --in-memory True
-                ;;
-            # brainMRI*)
-            #     CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$INV_TEMP/regime-$R/run-$REP --data-root data/BrainMRI --in-memory False
-            #     ;;
-            # drive*)
-            #     CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$INV_TEMP/regime-$R/run-$REP --data-root data/DRIVE --in-memory True
-            #     ;;
-        esac
+        for EXP in ${EXPS[@]}; do
+            case $EXP in 
+                ph2*)
+                    CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$INV_TEMP/regime-$R/run-$REP --data-root data/PH2 --in-memory True
+                    ;;
+                isic2016*)
+                    CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$INV_TEMP/regime-$R/run-$REP --data-root data/ISIC2016 --in-memory True
+                    ;;
+                kvasirSEG*)
+                    CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$INV_TEMP/regime-$R/run-$REP --data-root data/KvasirSEG --in-memory True
+                    ;;
+                datasciencebowl2018*)
+                    CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$INV_TEMP/regime-$R/run-$REP --data-root data/DataScienceBowl2018 --in-memory True
+                    ;;
+                # brainMRI*)
+                #     CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$INV_TEMP/regime-$R/run-$REP --data-root data/BrainMRI --in-memory False
+                #     ;;
+                # drive*)
+                #     CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$INV_TEMP/regime-$R/run-$REP --data-root data/DRIVE --in-memory True
+                #     ;;
+            esac
+        done
     done
 done
 
