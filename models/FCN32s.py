@@ -11,7 +11,7 @@ from utils import get_init_param_by_name
 class FCN32s(nn.Module):
     def __init__(self, cfg, **kwargs):
         super(FCN32s, self).__init__()
-        self.net = FCN32s(
+        self.net = FCN32sModel(
             in_channels=get_init_param_by_name('in_channels', kwargs, cfg.model, 3),
             out_channels=get_init_param_by_name('out_channels', kwargs, cfg.model, 1),
         )
