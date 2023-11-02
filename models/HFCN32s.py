@@ -56,7 +56,7 @@ class HFCN32sModel(nn.Module):
         self.hebb_params = hebb_params
         
         # conv1
-        self.conv1_1 = self._get_conv_layer(in_channels, 64, 3, padding=100)
+        self.conv1_1 = self._get_conv_layer(in_channels, 64, 3, padding=1)
         self.relu1_1 = nn.ReLU(inplace=True)
         self.conv1_2 = self._get_conv_layer(64, 64, 3, padding=1)
         self.relu1_2 = nn.ReLU(inplace=True)

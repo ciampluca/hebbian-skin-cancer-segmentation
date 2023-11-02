@@ -13,29 +13,21 @@ EXPS=(
     # PH2 Dataset
     #################################
     ph2/unet
-    ph2/fcn8s
-    ph2/fcn16s
     ph2/fcn32s
     #################################
     # ISIC2016 Dataset
     #################################
     isic2016/unet
-    isic2016/fcn8s
-    isic2016/fcn16s
     isic2016/fcn32s
     #################################
     # KvasirSEG Dataset
     #################################
     kvasirSEG/unet
-    kvasirSEG/fcn8s
-    kvasirSEG/fcn16s
     kvasirSEG/fcn32s
     #################################
     # DataScienceBowl2018 Dataset
     #################################
     datasciencebowl2018/unet
-    datasciencebowl2018/fcn8s
-    datasciencebowl2018/fcn16s
     datasciencebowl2018/fcn32s
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#
@@ -43,15 +35,11 @@ EXPS=(
     # BrainMRI Dataset
     #################################
     # brainMRI/unet
-    # brainMRI/fcn8s
-    # brainMRI/fcn16s
     # brainMRI/fcn32s
     #################################
     # DRIVE Dataset
     #################################
     # drive/unet
-    # drive/fcn8s
-    # drive/fcn16s
     # drive/fcn32s
 )
 

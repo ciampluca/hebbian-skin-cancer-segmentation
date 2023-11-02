@@ -27,7 +27,7 @@ REGIMES=(
     0.10
     0.25
     0.50
-    1.0     # it should be the same of the one in reproduce_hebbian script
+    #1.0     # it should be the same of the one in reproduce_hebbian script
 )
 
 EXPS=(

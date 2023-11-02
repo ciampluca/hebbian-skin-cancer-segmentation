@@ -27,7 +27,7 @@ EXPS=(
     ph2/hunet-hpca_t_ft
     #ph2/hunet2-hpca_ft
     #ph2/hunet2-hpca_t_ft
-    ph2/hunet-swta_ft
+    ph2/hunet-swta
     ph2/hunet-swta_ft
     ph2/hunet-swta_t
     ph2/hunet-swta_t_ft
@@ -42,7 +42,7 @@ EXPS=(
     isic2016/hunet-hpca_t_ft
     #isic2016/hunet2-hpca_ft
     #isic2016/hunet2-hpca_t_ft
-    isic2016/hunet-swta_ft
+    isic2016/hunet-swta
     isic2016/hunet-swta_ft
     isic2016/hunet-swta_t
     isic2016/hunet-swta_t_ft
@@ -57,7 +57,7 @@ EXPS=(
     kvasirSEG/hunet-hpca_t_ft
     #kvasirSEG/hunet2-hpca_ft
     #kvasirSEG/hunet2-hpca_t_ft
-    kvasirSEG/hunet-swta_ft
+    kvasirSEG/hunet-swta
     kvasirSEG/hunet-swta_ft
     kvasirSEG/hunet-swta_t
     kvasirSEG/hunet-swta_t_ft
@@ -72,7 +72,7 @@ EXPS=(
     datasciencebowl2018/hunet-hpca_t_ft
     #datasciencebowl2018/hunet2-hpca_ft
     #datasciencebowl2018/hunet2-hpca_t_ft
-    datasciencebowl2018/hunet-swta_ft
+    datasciencebowl2018/hunet-swta
     datasciencebowl2018/hunet-swta_ft
     datasciencebowl2018/hunet-swta_t
     datasciencebowl2018/hunet-swta_t_ft
@@ -89,7 +89,7 @@ EXPS=(
     # brainMRI/hunet-hpca_t_ft
     # #brainMRI/hunet2-hpca_ft
     # #brainMRI/hunet2-hpca_t_ft
-    # brainMRI/hunet-swta_ft
+    # brainMRI/hunet-swta
     # brainMRI/hunet-swta_ft
     # brainMRI/hunet-swta_t
     # brainMRI/hunet-swta_t_ft
@@ -98,18 +98,18 @@ EXPS=(
     #################################
     # DRIVE Dataset
     #################################
-    drive/hunet-hpca
-    drive/hunet-hpca_ft
-    drive/hunet-hpca_t
-    drive/hunet-hpca_t_ft
-    #drive/hunet2-hpca_ft
-    #drive/hunet2-hpca_t_ft
-    drive/hunet-swta_ft
-    drive/hunet-swta_ft
-    drive/hunet-swta_t
-    drive/hunet-swta_t_ft
-    #drive/hunet2-swta_ft
-    #drive/hunet2-hpca_ft
+    # drive/hunet-hpca
+    # drive/hunet-hpca_ft
+    # drive/hunet-hpca_t
+    # drive/hunet-hpca_t_ft
+    # #drive/hunet2-hpca_ft
+    # #drive/hunet2-hpca_t_ft
+    # drive/hunet-swta
+    # drive/hunet-swta_ft
+    # drive/hunet-swta_t
+    # drive/hunet-swta_t_ft
+    # #drive/hunet2-swta_ft
+    # #drive/hunet2-hpca_ft
 )
 
 # Train & Evaluate (k-cross validation)

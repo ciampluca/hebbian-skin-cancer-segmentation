@@ -92,7 +92,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
         postfix = {metric: f'{value:.3f}' for metric, value in batch_metrics.items()}
         progress.set_postfix(postfix)
 
-        if (i + 1) % cfg.optim.batch_accumulation == 0:
+        if (i + 1) % cfg.optim.batch_accumulation == 0 or (i + 1) == n_batches:
             if hasattr(model, 'local_update'): model.local_update()
             optimizer.step()
             optimizer.zero_grad()

@@ -56,7 +56,7 @@ class FCN32sModel(nn.Module):
 
         super(FCN32sModel, self).__init__()
         # conv1
-        self.conv1_1 = self._get_conv_layer(in_channels, 64, 3, padding=100)
+        self.conv1_1 = self._get_conv_layer(in_channels, 64, 3, padding=1)
         self.relu1_1 = nn.ReLU(inplace=True)
         self.conv1_2 = self._get_conv_layer(64, 64, 3, padding=1)
         self.relu1_2 = nn.ReLU(inplace=True)
@@ -115,7 +115,7 @@ class FCN32sModel(nn.Module):
     def _get_conv_layer(self, in_channels, out_channels, kernel_size, stride=1, padding=0):
         return nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size, stride=stride, padding=padding),
-            #nn.BatchNorm2d(out_channels)
+            nn.BatchNorm2d(out_channels)
         )
     
     def _initialize_weights(self):
