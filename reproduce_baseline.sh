@@ -1,8 +1,10 @@
 #!/bin/bash
 
+# This script trains and evaluates standard semantic segmentation models used as baselines
+
 set -e
 
-REPS=5
+REPS=1
 START_REP=0
 GPU=0
 
@@ -54,11 +56,11 @@ EXPS=(
 )
 
 # Train & Evaluate (k-cross validation)
-# for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do    # Multiple repetitions of the same experiment, varying the validation bucket
-#     for EXP in ${EXPS[@]}; do
-#         CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP
-#     done
-# done
+for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do    # Multiple repetitions of the same experiment, varying the validation bucket
+    for EXP in ${EXPS[@]}; do
+        CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP
+    done
+done
 
 
 # Test 
@@ -66,23 +68,17 @@ for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do
     for EXP in ${EXPS[@]}; do
         case $EXP in 
             ph2*)
-                CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-1.0/regime-1.0/run-$REP --data-root data/PH2 --in-memory True
-                ;;
+                CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-1/regime-1.0/run-$REP --data-root data/PH2 --in-memory True;;
             isic2016*)
-                CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-1.0/regime-1.0/run-$REP --data-root data/ISIC2016 --in-memory True
-                ;;
+                CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-1/regime-1.0/run-$REP --data-root data/ISIC2016 --in-memory True;;
             kvasirSEG*)
-                CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-1.0/regime-1.0/run-$REP --data-root data/KvasirSEG --in-memory True
-                ;;
+                CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-1/regime-1.0/run-$REP --data-root data/KvasirSEG --in-memory True;;
             datasciencebowl2018*)
-                CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-1.0/regime-1.0/run-$REP --data-root data/DataScienceBowl2018 --in-memory True
-                ;;
+                CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-1/regime-1.0/run-$REP --data-root data/DataScienceBowl2018 --in-memory True;;
             # brainMRI*)
-            #     CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-1.0/regime-1.0/run-$REP --data-root data/BrainMRI --in-memory False
-            #     ;;
+            #     CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-1/regime-1.0/run-$REP --data-root data/BrainMRI --in-memory False;;
             # drive*)
-            #     CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-1.0/regime-1.0/run-$REP --data-root data/DRIVE --in-memory True
-            #     ;;
+            #     CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-1/regime-1.0/run-$REP --data-root data/DRIVE --in-memory True;;
         esac
     done
 done

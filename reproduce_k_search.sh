@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# This script aims to search the best inv-temp hyperparameter concerning the Hebbian models belonging to the SWTA paradigm
+
 set -e
 
 REPS=1
@@ -89,23 +91,17 @@ for K in ${K_VALUES[@]}; do
         for EXP in ${EXPS[@]}; do
             case $EXP in 
                 ph2*)
-                    CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root data/PH2 --in-memory True
-                    ;;
+                    CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root data/PH2 --in-memory True;;
                 isic2016*)
-                    CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root data/ISIC2016 --in-memory True
-                    ;;
+                    CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root data/ISIC2016 --in-memory True;;
                 kvasirSEG*)
-                    CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root data/KvasirSEG --in-memory True
-                    ;;
+                    CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root data/KvasirSEG --in-memory True;;
                 datasciencebowl2018*)
-                    CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root data/DataScienceBowl2018 --in-memory True
-                    ;;
+                    CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root data/DataScienceBowl2018 --in-memory True;;
                 # brainMRI*)
-                #     CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root data/BrainMRI --in-memory False
-                #     ;;
+                #     CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root data/BrainMRI --in-memory False;;
                 # drive*)
-                #     CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root data/DRIVE --in-memory True
-                #     ;;
+                #     CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py runs/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root data/DRIVE --in-memory True;;
             esac
         done
     done
