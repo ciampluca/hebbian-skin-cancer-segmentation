@@ -5,15 +5,33 @@ import torch
 import torch.nn as nn
 import fcn
 
+from .HUNet import adjust_hebb_params
+from hebb.legacy import *
 from utils import get_init_param_by_name
 
 
-class FCN32s(nn.Module):
+default_hebb_params = dict(w_nrm=True, mode='swta', k=0.02, patchwise=True, contrast=1., uniformity=False, alpha=0)
+
+
+class HFCN32s(nn.Module):
     def __init__(self, cfg, **kwargs):
-        super(FCN32s, self).__init__()
-        self.net = FCN32sModel(
+        super(HFCN32s, self).__init__()
+        hebb_params = default_hebb_params
+        if hasattr(cfg.model, 'hebb'):
+            hebb_params = dict(
+                w_nrm=get_init_param_by_name('w_nrm', kwargs, cfg.model.hebb, True),
+                mode=get_init_param_by_name('mode', kwargs, cfg.model.hebb, 'swta'),
+                k=get_init_param_by_name('k', kwargs, cfg.model.hebb, 0.02),
+                patchwise=get_init_param_by_name('patchwise', kwargs, cfg.model.hebb, True),
+                contrast=get_init_param_by_name('contrast', kwargs, cfg.model.hebb, 1),
+                uniformity=get_init_param_by_name('uniformity', kwargs, cfg.model.hebb, False),
+                alpha=get_init_param_by_name('alpha', kwargs, cfg.model.hebb, 0)
+            )
+        
+        self.net = HFCN32sModel(
             in_channels=get_init_param_by_name('in_channels', kwargs, cfg.model, 3),
             out_channels=get_init_param_by_name('out_channels', kwargs, cfg.model, 1),
+            hebb_params=hebb_params
         )
     
     def forward(self, x):
@@ -26,35 +44,17 @@ class FCN32s(nn.Module):
         return self.net.load_state_dict(state_dict, strict)
 
 
-class FCN32sModel(nn.Module):
-
-    pretrained_model = \
-        osp.expanduser('~/data/models/pytorch/fcn32s_from_caffe.pth')
-
-    @classmethod
-    def download(cls):
-        return fcn.data.cached_download(
-            url='https://drive.google.com/uc?id=11k2Q0bvRQgQbT6-jYWeh6nmAsWlSCY3f',  # NOQA
-            path=cls.pretrained_model,
-            md5='d3eb467a80e7da0468a20dfcbc13e6c8',
-        )
-
+class HFCN32sModel(nn.Module):
     def __init__(
             self,
             in_channels=3, 
-            out_channels=1
+            out_channels=1,
+            hebb_params=default_hebb_params
     ):
-        """
-        Implementation of Fully Convolutional Networks for Semantic Segmentation (Long et al., 2015)
-        (Ronneberger et al., 2015)
-        https://www.cv-foundation.org/openaccess/content_cvpr_2015/html/Long_Fully_Convolutional_Networks_2015_CVPR_paper.html
-        inspired from https://github.com/wkentaro/pytorch-fcn/tree/main
-        Args:
-            in_channels (int): number of input channels
-            out_channels (int): number of output channels
-        """
-
-        super(FCN32sModel, self).__init__()
+        super(HFCN32sModel, self).__init__()
+        
+        self.hebb_params = hebb_params
+        
         # conv1
         self.conv1_1 = self._get_conv_layer(in_channels, 64, 3, padding=100)
         self.relu1_1 = nn.ReLU(inplace=True)
@@ -107,24 +107,24 @@ class FCN32sModel(nn.Module):
         self.drop7 = nn.Dropout2d()
 
         self.score_fr = self._get_conv_layer(4096, out_channels, 1)
-        self.upscore = nn.ConvTranspose2d(out_channels, out_channels, 64, stride=32,
-                                          bias=False)
+        self.upscore = nn.ConvTranspose2d(out_channels, out_channels, 64, stride=32, bias=False) # Non-hebbian, because this is just the final layer.
 
         self._initialize_weights()
     
     def _get_conv_layer(self, in_channels, out_channels, kernel_size, stride=1, padding=0):
         return nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size, stride=stride, padding=padding),
-            #nn.BatchNorm2d(out_channels)
+            nn.ZeroPad2d(padding),
+            HebbianConv2d(in_channels, out_channels, kernel_size, stride=stride, **adjust_hebb_params(self.hebb_params)),
+            nn.BatchNorm2d(out_channels)
         )
     
     def _initialize_weights(self):
         for m in self.modules():
-            if isinstance(m, nn.Conv2d):
+            if isinstance(m, (nn.Conv2d, HebbianConv2d)):
                 m.weight.data.zero_()
                 if m.bias is not None:
                     m.bias.data.zero_()
-            if isinstance(m, nn.ConvTranspose2d):
+            if isinstance(m, (nn.ConvTranspose2d, HebbianConvTranspose2d)):
                 assert m.kernel_size[0] == m.kernel_size[1]
                 initial_weight = self._get_upsampling_weight(
                     m.in_channels, m.out_channels, m.kernel_size[0])
@@ -191,7 +191,7 @@ def main():
     device = 'cpu'
     
     input = torch.rand(8, 3, 256, 256).to(device)
-    model = FCN32sModel(out_channels=1).to(device)
+    model = HFCN32sModel(out_channels=1).to(device)
     print(model)
     output = model(input)
 

@@ -100,7 +100,7 @@ class HebbianConvTranspose2d(torch.nn.Module):
             requires_grad=True
         ) if bias else None
 
-        self.register_buffer('__delta_w', torch.zeros_like(self.weight))
+        self.register_buffer('delta_w', torch.zeros_like(self.weight))
 
         self.__upscale = torch.nn.ConvTranspose2d(
             in_channels=in_channels,
@@ -173,7 +173,7 @@ class HebbianConvTranspose2d(torch.nn.Module):
     @ torch.no_grad()
     def __update_delta_w(self, x, y):
         if self.patchwise:
-            self.__delta_w[:, :] += self.__hebbian_update_rule(x, y, self.__weight)
+            self.delta_w[:, :] += self.__hebbian_update_rule(x, y, self.__weight)
         else:
             raise NotImplementedError("Non-patchwise learning is not implemented")
     
@@ -183,11 +183,11 @@ class HebbianConvTranspose2d(torch.nn.Module):
             return
 
         if self.__weight.grad is None:
-            self.__weight.grad = - self.alpha * self.__delta_w
+            self.__weight.grad = - self.alpha * self.delta_w
         else:
-            self.__weight.grad = (1 - self.alpha) * self.__weight.grad - self.alpha * self.__delta_w
+            self.__weight.grad = (1 - self.alpha) * self.__weight.grad - self.alpha * self.delta_w
 
-        self.__delta_w.zero_()
+        self.delta_w.zero_()
 
     # ----------------------------- #
     # Getters and Setters

@@ -181,7 +181,7 @@ class HUNetUpBlock(nn.Module):
         hebb_params = hebb_params if hebb_params is not None else default_hebb_params
         
         if up_mode == 'upconv':
-            self.up = HebbianConvTranspose2D(in_size, out_size, kernel_size=2, stride=2, **hebb_params)
+            self.up = HebbianConvTranspose2d(in_size, out_size, kernel_size=2, stride=2, **hebb_params)
         elif up_mode == 'upsample':
             self.up = nn.Sequential(
                 nn.Upsample(mode='bilinear', scale_factor=2),

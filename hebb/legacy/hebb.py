@@ -172,7 +172,7 @@ class HebbianConv2d(nn.Module):
 		self.delta_w.zero_()
 
 
-class HebbianConvTranspose2D(HebbianConv2d):
+class HebbianConvTranspose2d(HebbianConv2d):
 	"""
 	A 2d convolutional layer that learns through Hebbian plasticity
 	"""
