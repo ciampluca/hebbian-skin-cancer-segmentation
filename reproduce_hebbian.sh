@@ -10,12 +10,12 @@ REPS=1
 START_REP=0
 GPU=0
 
-INV_TEMP_PH2=1        # to be set accordingly, used by SWTA 
-INV_TEMP_ISIC2016=1        # to be set accordingly, used by SWTA 
-INV_TEMP_KvasirSEG=1        # to be set accordingly, used by SWTA 
-INV_TEMP_DataScienceBowl2018=1        # to be set accordingly, used by SWTA 
-INV_TEMP_BrainMRI=1        # to be set accordingly, used by SWTA 
-INV_TEMP_DRIVE=1        # to be set accordingly, used by SWTA  
+INV_TEMP_PH2=5        # to be set accordingly, used by SWTA
+INV_TEMP_ISIC2016=2        # to be set accordingly, used by SWTA
+INV_TEMP_KvasirSEG=5        # to be set accordingly, used by SWTA
+INV_TEMP_DataScienceBowl2018=10        # to be set accordingly, used by SWTA
+INV_TEMP_BrainMRI=1        # to be set accordingly, used by SWTA
+INV_TEMP_DRIVE=1        # to be set accordingly, used by SWTA
 
 EXPS=(
     #################################

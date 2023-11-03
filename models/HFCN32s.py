@@ -1,9 +1,4 @@
-import os.path as osp
 import numpy as np
-
-import torch
-import torch.nn as nn
-import fcn
 
 from .HUNet import adjust_hebb_params
 from hebb.legacy import *
@@ -56,7 +51,7 @@ class HFCN32sModel(nn.Module):
         self.hebb_params = hebb_params
         
         # conv1
-        self.conv1_1 = self._get_conv_layer(in_channels, 64, 3, padding=1)
+        self.conv1_1 = self._get_conv_layer(in_channels, 64, 3, padding=100)
         self.relu1_1 = nn.ReLU(inplace=True)
         self.conv1_2 = self._get_conv_layer(64, 64, 3, padding=1)
         self.relu1_2 = nn.ReLU(inplace=True)
@@ -106,10 +101,10 @@ class HFCN32sModel(nn.Module):
         self.relu7 = nn.ReLU(inplace=True)
         self.drop7 = nn.Dropout2d()
 
-        self.score_fr = self._get_conv_layer(4096, out_channels, 1)
-        self.upscore = nn.ConvTranspose2d(out_channels, out_channels, 64, stride=32, bias=False) # Non-hebbian, because this is just the final layer.
+        self.score_fr = self._get_conv_layer(4096, 256, 1)
+        self.upscore = nn.ConvTranspose2d(256, out_channels, 64, stride=32, bias=False) # Non-hebbian, because this is just the final layer.
 
-        self._initialize_weights()
+        #self._initialize_weights()
     
     def _get_conv_layer(self, in_channels, out_channels, kernel_size, stride=1, padding=0):
         return nn.Sequential(
@@ -121,7 +116,7 @@ class HFCN32sModel(nn.Module):
     def _initialize_weights(self):
         for m in self.modules():
             if isinstance(m, (nn.Conv2d, HebbianConv2d)):
-                m.weight.data.zero_()
+                m.weight.data.kaiming_normal_()
                 if m.bias is not None:
                     m.bias.data.zero_()
             if isinstance(m, (nn.ConvTranspose2d, HebbianConvTranspose2d)):
@@ -178,10 +173,11 @@ class HFCN32sModel(nn.Module):
         h = self.drop7(h)
 
         h = self.score_fr(h)
-
         h = self.upscore(h)
-        h = h[:, :, 19:19 + x.size()[2], 19:19 + x.size()[3]].contiguous()
-
+        
+        crop_start_x = h.shape[2] // 2 - x.shape[2] // 2
+        crop_start_y = h.shape[3] // 2 - x.shape[3] // 2
+        h = h[:, :, crop_start_x:crop_start_x + x.shape[2], crop_start_y:crop_start_y + x.shape[3]]
         return h
 
 
