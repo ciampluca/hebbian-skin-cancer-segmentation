@@ -1,5 +1,0 @@
-# @package _global_
-
-defaults:
- - kvasirSEG/common
- - /common/model: fcn16s

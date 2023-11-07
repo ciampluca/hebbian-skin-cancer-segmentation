@@ -14,3 +14,8 @@ model:
 optim:
   batch_size: 4
   batch_accumulation: 4
+
+  epochs: 150
+
+  lr_scheduler:
+    milestones: [50, 75, 120, 150]

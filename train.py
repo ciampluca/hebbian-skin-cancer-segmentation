@@ -16,6 +16,7 @@ from train_fn import train_one_epoch, validate
 from utils import seed_everything, seed_worker, CheckpointManager
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 tqdm = partial(tqdm, dynamic_ncols=True)
 trange = partial(trange, dynamic_ncols=True)
 

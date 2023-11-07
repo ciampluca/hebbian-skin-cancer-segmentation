@@ -1,0 +1,9 @@
+# @package model
+
+defaults:
+  - common
+
+name: HFCN32s
+module:
+  _target_: models.HFCN32s
+  out_channels: 1

@@ -1,0 +1,21 @@
+# @package _global_
+
+defaults:
+ - ph2/common
+ - /common/model: hfcn32s
+
+model:
+  hebb:
+    w_nrm: True
+    mode: 'swta_t'
+    patchwise: True
+    contrast: 1.
+    uniformity: False
+    alpha: 0
+  pretrained: last://last    # best://[dice, jaccard, loss]
+  reset_clf: true
+
+optim:
+  batch_size: 4
+  batch_accumulation: 4
+
