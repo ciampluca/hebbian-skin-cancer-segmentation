@@ -6,7 +6,7 @@ data:
     
     train: &common
         _target_: datasets.SkinCancerSegmentationDataset
-        root: ${hydra:runtime.cwd}/data/DRIVE
+        root: ${hydra:runtime.cwd}/data/DataScienceBowl2018
         split: train
         split_seed: 87
         cross_val_num_buckets: 5
