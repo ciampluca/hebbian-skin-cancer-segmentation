@@ -4,7 +4,7 @@
 
 set -e
 
-REPS=1
+REPS=3
 START_REP=0
 GPU=0
 

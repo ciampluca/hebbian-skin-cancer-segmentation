@@ -7,7 +7,7 @@
 
 set -e
 
-REPS=1
+REPS=3
 START_REP=0
 GPU=0
 
@@ -20,10 +20,10 @@ INV_TEMP_KvasirSEG=5        # to be set accordingly, used by SWTA
 INV_TEMP_DataScienceBowl2018=10        # to be set accordingly, used by SWTA
 
 REGIMES=(
-    #0.05
-    #0.1
-    #0.25
-    #0.5
+    0.05
+    0.1
+    0.25
+    0.5
     0.75
     #1.0     # it should be the same of the one in reproduce_hebbian script
 )
@@ -36,67 +36,67 @@ EXPS=(
     ph2/fcn32s
     ph2/hunet-hpca_ft
     ph2/hunet-hpca_t_ft
-    # ph2/hfcn32s-hpca_ft
-    # ph2/hfcn32s-hpca_t_ft
-    # #ph2/hunet2-hpca_ft
-    # #ph2/hunet2-hpca_t_ft
-    # ph2/hunet-swta_ft
-    # ph2/hunet-swta_t_ft
-    # ph2/hfcn32s-swta_ft
-    # ph2/hfcn32s-swta_t_ft
-    # #ph2/hunet2-swta_ft
-    # #ph2/hunet2-hpca_ft
+    ph2/hfcn32s-hpca_ft
+    ph2/hfcn32s-hpca_t_ft
+    #ph2/hunet2-hpca_ft
+    #ph2/hunet2-hpca_t_ft
+    ph2/hunet-swta_ft
+    ph2/hunet-swta_t_ft
+    ph2/hfcn32s-swta_ft
+    ph2/hfcn32s-swta_t_ft
+    #ph2/hunet2-swta_ft
+    #ph2/hunet2-hpca_ft
     #################################
     # ISIC2016 Dataset
     #################################
-    # isic2016/unet
-    # isic2016/fcn32s
-    # isic2016/hunet-hpca_ft
-    # isic2016/hunet-hpca_t_ft
-    # isic2016/hfcn32s-hpca_ft
-    # isic2016/hfcn32s-hpca_t_ft
-    # #isic2016/hunet2-hpca_ft
-    # #isic2016/hunet2-hpca_t_ft
-    # isic2016/hunet-swta_ft
-    # isic2016/hunet-swta_t_ft
-    # isic2016/hfcn32s-swta_ft
-    # isic2016/hfcn32s-swta_t_ft
-    # #isic2016/hunet2-swta_ft
-    # #isic2016/hunet2-hpca_ft
+    isic2016/unet
+    isic2016/fcn32s
+    isic2016/hunet-hpca_ft
+    isic2016/hunet-hpca_t_ft
+    isic2016/hfcn32s-hpca_ft
+    isic2016/hfcn32s-hpca_t_ft
+    #isic2016/hunet2-hpca_ft
+    #isic2016/hunet2-hpca_t_ft
+    isic2016/hunet-swta_ft
+    isic2016/hunet-swta_t_ft
+    isic2016/hfcn32s-swta_ft
+    isic2016/hfcn32s-swta_t_ft
+    #isic2016/hunet2-swta_ft
+    #isic2016/hunet2-hpca_ft
     #################################
     # KvasirSEG Dataset
     #################################
-    # kvasirSEG/unet
-    # kvasirSEG/fcn32s
-    # kvasirSEG/hunet-hpca_ft
-    # kvasirSEG/hunet-hpca_t_ft
-    # kvasirSEG/hfcn32s-hpca_ft
-    # kvasirSEG/hfcn32s-hpca_t_ft
-    # #kvasirSEG/hunet2-hpca_ft
-    # #kvasirSEG/hunet2-hpca_t_ft
-    # kvasirSEG/hunet-swta_ft
-    # kvasirSEG/hunet-swta_t_ft
-    # kvasirSEG/hfcn32s-swta_ft
-    # kvasirSEG/hfcn32s-swta_t_ft
-    # #kvasirSEG/hunet2-swta_ft
-    # #kvasirSEG/hunet2-hpca_ft
+    kvasirSEG/unet
+    kvasirSEG/fcn32s
+    kvasirSEG/hunet-hpca_ft
+    kvasirSEG/hunet-hpca_t_ft
+    kvasirSEG/hfcn32s-hpca_ft
+    kvasirSEG/hfcn32s-hpca_t_ft
+    #kvasirSEG/hunet2-hpca_ft
+    #kvasirSEG/hunet2-hpca_t_ft
+    kvasirSEG/hunet-swta_ft
+    kvasirSEG/hunet-swta_t_ft
+    kvasirSEG/hfcn32s-swta_ft
+    kvasirSEG/hfcn32s-swta_t_ft
+    #kvasirSEG/hunet2-swta_ft
+    #kvasirSEG/hunet2-hpca_ft
     #################################
     # DataScienceBowl2018 Dataset
     #################################
-    # datasciencebowl2018/unet
-    # datasciencebowl2018/fcn32s
-    # datasciencebowl2018/hunet-hpca_ft
-    # datasciencebowl2018/hunet-hpca_t_ft
-    # datasciencebowl2018/hfcn32s-hpca_ft
-    # datasciencebowl2018/hfcn32s-hpca_t_ft
-    # #datasciencebowl2018/hunet2-hpca_ft
-    # #datasciencebowl2018/hunet2-hpca_t_ft
-    # datasciencebowl2018/hunet-swta_ft
-    # datasciencebowl2018/hunet-swta_t_ft
-    # datasciencebowl2018/hfcn32s-swta_ft
-    # datasciencebowl2018/hfcn32s-swta_t_ft
-    # #datasciencebowl2018/hunet2-swta_ft
-    # #datasciencebowl2018/hunet2-hpca_ft
+    datasciencebowl2018/unet
+    datasciencebowl2018/fcn32s
+    datasciencebowl2018/hunet-hpca_ft
+    datasciencebowl2018/hunet-hpca_t_ft
+    datasciencebowl2018/hfcn32s-hpca_ft
+    datasciencebowl2018/hfcn32s-hpca_t_ft
+    #datasciencebowl2018/hunet2-hpca_ft
+    #datasciencebowl2018/hunet2-hpca_t_ft
+    datasciencebowl2018/hunet-swta_ft
+    datasciencebowl2018/hunet-swta_t_ft
+    datasciencebowl2018/hfcn32s-swta_ft
+    datasciencebowl2018/hfcn32s-swta_t_ft
+    #datasciencebowl2018/hunet2-swta_ft
+    #datasciencebowl2018/hunet2-hpca_ft
 )
 
 # Train & Evaluate (k-cross validation)

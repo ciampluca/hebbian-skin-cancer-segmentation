@@ -6,7 +6,7 @@
 
 set -e
 
-REPS=1
+REPS=3
 START_REP=0
 GPU=0
 
@@ -22,20 +22,20 @@ EXPS=(
     #################################
     # PH2 Dataset
     #################################
-    # ph2/hunet-hpca
-    # ph2/hunet-hpca_ft
-    # ph2/hunet-hpca_t
-    # ph2/hunet-hpca_t_ft
-    # ph2/hfcn32s-hpca
-    # ph2/hfcn32s-hpca_ft
-    # ph2/hfcn32s-hpca_t
-    # ph2/hfcn32s-hpca_t_ft
-    # #ph2/hunet2-hpca_ft
-    # #ph2/hunet2-hpca_t_ft
-    # ph2/hunet-swta
-    # ph2/hunet-swta_ft
-    # ph2/hunet-swta_t
-    # ph2/hunet-swta_t_ft
+    ph2/hunet-hpca
+    ph2/hunet-hpca_ft
+    ph2/hunet-hpca_t
+    ph2/hunet-hpca_t_ft
+    ph2/hfcn32s-hpca
+    ph2/hfcn32s-hpca_ft
+    ph2/hfcn32s-hpca_t
+    ph2/hfcn32s-hpca_t_ft
+    #ph2/hunet2-hpca_ft
+    #ph2/hunet2-hpca_t_ft
+    ph2/hunet-swta
+    ph2/hunet-swta_ft
+    ph2/hunet-swta_t
+    ph2/hunet-swta_t_ft
     ph2/hfcn32s-swta
     ph2/hfcn32s-swta_ft
     ph2/hfcn32s-swta_t
@@ -45,70 +45,70 @@ EXPS=(
     #################################
     # ISIC2016 Dataset
     #################################
-    # isic2016/hunet-hpca
-    # isic2016/hunet-hpca_ft
-    # isic2016/hunet-hpca_t
-    # isic2016/hunet-hpca_t_ft
-    # isic2016/hfcn32s-hpca
-    # isic2016/hfcn32s-hpca_ft
-    # isic2016/hfcn32s-hpca_t
-    # isic2016/hfcn32s-hpca_t_ft
+    isic2016/hunet-hpca
+    isic2016/hunet-hpca_ft
+    isic2016/hunet-hpca_t
+    isic2016/hunet-hpca_t_ft
+    isic2016/hfcn32s-hpca
+    isic2016/hfcn32s-hpca_ft
+    isic2016/hfcn32s-hpca_t
+    isic2016/hfcn32s-hpca_t_ft
     #isic2016/hunet2-hpca_ft
     #isic2016/hunet2-hpca_t_ft
-    # isic2016/hunet-swta
-    # isic2016/hunet-swta_ft
-    # isic2016/hunet-swta_t
-    # isic2016/hunet-swta_t_ft
-    # isic2016/hfcn32s-swta
-    # isic2016/hfcn32s-swta_ft
-    # isic2016/hfcn32s-swta_t
-    # isic2016/hfcn32s-swta_t_ft
+    isic2016/hunet-swta
+    isic2016/hunet-swta_ft
+    isic2016/hunet-swta_t
+    isic2016/hunet-swta_t_ft
+    isic2016/hfcn32s-swta
+    isic2016/hfcn32s-swta_ft
+    isic2016/hfcn32s-swta_t
+    isic2016/hfcn32s-swta_t_ft
     #isic2016/hunet2-swta_ft
     #isic2016/hunet2-hpca_ft
     #################################
     # KvasirSEG Dataset
     #################################
-    # kvasirSEG/hunet-hpca
-    # kvasirSEG/hunet-hpca_ft
-    # kvasirSEG/hunet-hpca_t
-    # kvasirSEG/hunet-hpca_t_ft
-    # kvasirSEG/hfcn32s-hpca
-    # kvasirSEG/hfcn32s-hpca_ft
-    # kvasirSEG/hfcn32s-hpca_t
-    # kvasirSEG/hfcn32s-hpca_t_ft
+    kvasirSEG/hunet-hpca
+    kvasirSEG/hunet-hpca_ft
+    kvasirSEG/hunet-hpca_t
+    kvasirSEG/hunet-hpca_t_ft
+    kvasirSEG/hfcn32s-hpca
+    kvasirSEG/hfcn32s-hpca_ft
+    kvasirSEG/hfcn32s-hpca_t
+    kvasirSEG/hfcn32s-hpca_t_ft
     #kvasirSEG/hunet2-hpca_ft
     #kvasirSEG/hunet2-hpca_t_ft
-    # kvasirSEG/hunet-swta
-    # kvasirSEG/hunet-swta_ft
-    # kvasirSEG/hunet-swta_t
-    # kvasirSEG/hunet-swta_t_ft
-    # kvasirSEG/hfcn32s-swta
-    # kvasirSEG/hfcn32s-swta_ft
-    # kvasirSEG/hfcn32s-swta_t
-    # kvasirSEG/hfcn32s-swta_t_ft
+    kvasirSEG/hunet-swta
+    kvasirSEG/hunet-swta_ft
+    kvasirSEG/hunet-swta_t
+    kvasirSEG/hunet-swta_t_ft
+    kvasirSEG/hfcn32s-swta
+    kvasirSEG/hfcn32s-swta_ft
+    kvasirSEG/hfcn32s-swta_t
+    kvasirSEG/hfcn32s-swta_t_ft
     #kvasirSEG/hunet2-swta_ft
     #kvasirSEG/hunet2-hpca_ft
     #################################
     # DataScienceBowl2018 Dataset
     #################################
-    # datasciencebowl2018/hunet-hpca
-    # datasciencebowl2018/hunet-hpca_ft
-    # datasciencebowl2018/hunet-hpca_t
-    # datasciencebowl2018/hunet-hpca_t_ft
-    # datasciencebowl2018/hfcn32s-hpca
-    # datasciencebowl2018/hfcn32s-hpca_ft
-    # datasciencebowl2018/hfcn32s-hpca_t
-    # datasciencebowl2018/hfcn32s-hpca_t_ft
+    datasciencebowl2018/hunet-hpca
+    datasciencebowl2018/hunet-hpca_ft
+    datasciencebowl2018/hunet-hpca_t
+    datasciencebowl2018/hunet-hpca_t_ft
+    datasciencebowl2018/hfcn32s-hpca
+    datasciencebowl2018/hfcn32s-hpca_ft
+    datasciencebowl2018/hfcn32s-hpca_t
+    datasciencebowl2018/hfcn32s-hpca_t_ft
     #datasciencebowl2018/hunet2-hpca_ft
     #datasciencebowl2018/hunet2-hpca_t_ft
-    # datasciencebowl2018/hunet-swta
-    # datasciencebowl2018/hunet-swta_ft
-    # datasciencebowl2018/hunet-swta_t
-    # datasciencebowl2018/hunet-swta_t_ft
-    # datasciencebowl2018/hfcn32s-swta
-    # datasciencebowl2018/hfcn32s-swta_ft
-    # datasciencebowl2018/hfcn32s-swta_t
-    # datasciencebowl2018/hfcn32s-swta_t_ft
+    datasciencebowl2018/hunet-swta
+    datasciencebowl2018/hunet-swta_ft
+    datasciencebowl2018/hunet-swta_t
+    datasciencebowl2018/hunet-swta_t_ft
+    datasciencebowl2018/hfcn32s-swta
+    datasciencebowl2018/hfcn32s-swta_ft
+    datasciencebowl2018/hfcn32s-swta_t
+    datasciencebowl2018/hfcn32s-swta_t_ft
     #datasciencebowl2018/hunet2-swta_ft
     #datasciencebowl2018/hunet2-hpca_ft
 )

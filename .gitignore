@@ -149,3 +149,6 @@ dmypy.json
 /data/DataScienceBowl2018
 /data/ISIC2016
 papers_unsupervised_segmentation.txt
+domande_per_lagani.txt
+interesting_papers.txt
+/scripts/
