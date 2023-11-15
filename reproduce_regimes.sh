@@ -33,7 +33,9 @@ EXPS=(
     # PH2 Dataset
     #################################
     ph2/unet
+    ph2/vae_unet_ft
     ph2/fcn32s
+    ph2/vae_fcn32s_ft
     ph2/hunet-hpca_ft
     ph2/hunet-hpca_t_ft
     ph2/hfcn32s-hpca_ft

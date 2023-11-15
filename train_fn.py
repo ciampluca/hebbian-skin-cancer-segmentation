@@ -20,7 +20,7 @@ tqdm = partial(tqdm, dynamic_ncols=True)
 log = logging.getLogger(__name__)
 
 
-def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_map, cfg, split="validation", outdir=None):
+def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_map, seg_rgb=False, split="validation", outdir=None):
     debug_folder_name = 'train_output_debug' if split == "train" else 'val_output_debug' if split == "validation" else Path(outdir / "test_output_debug")
     debug_dir = Path(debug_folder_name)
     debug_dir.mkdir(parents=True, exist_ok=True)
@@ -40,11 +40,14 @@ def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_
         pil_image.save(path)
         
     _scale_and_save(image, debug_dir / image_id, denormalize_image=True)
-
-    n_classes = cfg.model.module.out_channels
-    for i in range(n_classes):
-        _scale_and_save(segmentation_map[i, :, :], debug_dir / f'{image_id.stem}_segm_cls{i}.png')
-        _scale_and_save(target_map[i, :, :], debug_dir / f'{image_id.stem}_target_cls{i}.png')
+    
+    if seg_rgb:
+         _scale_and_save(segmentation_map.movedim(1, -1), debug_dir / f'{image_id.stem}_reconstr.png', denormalize_image=True)
+    else:
+        n_classes = segmentation_map.shape[0]
+        for i in range(n_classes):
+            _scale_and_save(segmentation_map[i, :, :], debug_dir / f'{image_id.stem}_segm_cls{i}.png')
+            _scale_and_save(target_map[i, :, :], debug_dir / f'{image_id.stem}_target_cls{i}.png')
 
 
 def _save_debug_metrics(metrics, epoch):
@@ -80,13 +83,14 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
         loss.backward()
 
         # NCHW -> NHWC
-        coefs = dice_jaccard(labels.movedim(1, -1), preds_prob.movedim(1, -1))
-
-        batch_metrics = {
-            'loss': loss.item(),
-            'dice': coefs['segm/dice'],
-            'jaccard': coefs['segm/jaccard'],
-        }
+        batch_metrics = {'loss': loss.item()}
+        if criterion.__class__.__name__ != 'ElboMetric':
+            coefs = dice_jaccard(labels.movedim(1, -1), preds_prob.movedim(1, -1))
+            batch_metrics = {
+                'loss': loss.item(),
+                'dice': coefs['segm/dice'],
+                'jaccard': coefs['segm/jaccard'],
+            }
         metrics.append(batch_metrics)
 
         postfix = {metric: f'{value:.3f}' for metric, value in batch_metrics.items()}
@@ -138,7 +142,9 @@ def validate(dataloader, model, device, epoch, cfg):
  
             # threshold-free metrics
             loss = criterion(pred, label)
-            segm_metrics = dice_jaccard(label.movedim(1, -1), pred_prob.movedim(1, -1))    # NCHW -> NHWC
+            segm_metrics = {}
+            if criterion.__class__.__name__ != 'ElboMetric':
+                segm_metrics = dice_jaccard(label.movedim(1, -1), pred_prob.movedim(1, -1))    # NCHW -> NHWC
 
             metrics.append({
                 'image_id': image_id,
@@ -182,7 +188,9 @@ def predict(dataloader, model, device, cfg, outdir, debug=0, csv_file_name='pred
             pred_prob = (torch.sigmoid(pred)) if criterion.__class__.__name__.endswith("WithLogitsLoss") else pred
 
             # threshold-free metrics
-            segm_metrics = dice_jaccard(label.movedim(1, -1), pred_prob.movedim(1, -1))    # NCHW -> NHWC
+            segm_metrics = {}
+            if criterion.__class__.__name__ != 'ElboMetric':
+                segm_metrics = dice_jaccard(label.movedim(1, -1), pred_prob.movedim(1, -1))    # NCHW -> NHWC
 
             metrics.append({
                 'image_id': image_id,
@@ -190,7 +198,8 @@ def predict(dataloader, model, device, cfg, outdir, debug=0, csv_file_name='pred
             })
 
             if outdir and debug:
-                _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg, split="test", outdir=outdir)
+                seg_rgb = criterion.__class__.__name__ == 'ElboMetric'
+                _save_image_and_segmentation_maps(image, image_id, pred_prob, label, seg_rgb=seg_rgb, split="test", outdir=outdir)
 
     metrics = pd.DataFrame(metrics).set_index('image_id')
     metrics = pd.DataFrame(metrics)

@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import torch.nn.functional as F
 
 
 def _dice_jaccard_single_class(y_true, y_pred, smooth, axis):
@@ -51,3 +52,15 @@ def dice_jaccard(y_true, y_pred, smooth=1, thr=None, prefix=''):
     }
     
     return metrics
+
+class ElboMetric:
+    def __init__(self, beta=1):
+        self.beta = beta
+    
+    def __call__(self, outputs, targets):
+        reconstr = outputs['reconstr']
+        mu = outputs['mu']
+        log_var = outputs['log_var']
+        reconstr_loss = F.mse_loss(reconstr, targets)
+        kld_loss = torch.mean(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim=1), dim=0)
+        return reconstr_loss + self.beta * kld_loss

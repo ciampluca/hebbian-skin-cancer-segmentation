@@ -38,6 +38,9 @@ class HFCN32s(nn.Module):
     def load_state_dict(self, state_dict, strict = ...):
         return self.net.load_state_dict(state_dict, strict)
 
+    def reset_clf(self, out_channels):
+        self.net.reset_clf(out_channels)
+
 
 class HFCN32sModel(nn.Module):
     def __init__(
@@ -140,7 +143,11 @@ class HFCN32sModel(nn.Module):
                         dtype=np.float64)
         weight[range(in_channels), range(out_channels), :, :] = filt
         return torch.from_numpy(weight).float()
-
+    
+    def reset_clf(self, out_channels):
+        device = self.last.weight.device
+        self.last = nn.ConvTranspose2d(256, out_channels, 64, stride=32, bias=False).to(device)
+    
     def forward(self, x):
         h = x
         h = self.relu1_1(self.conv1_1(h))

@@ -20,6 +20,7 @@ class UNet(nn.Module):
             batch_norm=get_init_param_by_name('batch_norm', kwargs, cfg.model, True),
             up_mode=get_init_param_by_name('up_mode', kwargs, cfg.model, 'upconv'),
             last_bias=get_init_param_by_name('last_bias', kwargs, cfg.model, True),
+            latent_sampling=get_init_param_by_name('latent_sampling', kwargs, cfg.model, False),
         )
     
     def forward(self, x):
@@ -30,6 +31,9 @@ class UNet(nn.Module):
     
     def load_state_dict(self, state_dict, strict = ...):
         return self.net.load_state_dict(state_dict, strict)
+    
+    def reset_clf(self, out_channels):
+        self.net.reset_clf(out_channels)
     
 class UNetModel(nn.Module):
 
@@ -43,6 +47,7 @@ class UNetModel(nn.Module):
             batch_norm=True,
             up_mode='upconv',
             last_bias=True,
+            latent_sampling=False,
     ):
         """
         Implementation of
@@ -78,16 +83,26 @@ class UNetModel(nn.Module):
                 UNetConvBlock(prev_channels, 2 ** (wf + i), padding, batch_norm)
             )
             prev_channels = 2 ** (wf + i)
-
+        
+        self.latent_sampling = latent_sampling
+        if self.latent_sampling:
+            self.mu = nn.Conv2d(prev_channels, prev_channels, kernel_size=1)
+            self.var = nn.Conv2d(prev_channels, prev_channels, kernel_size=1)
+        
         self.up_path = nn.ModuleList()
         for i in reversed(range(depth - 1)):
             self.up_path.append(
                 UNetUpBlock(prev_channels, 2 ** (wf + i), up_mode, padding, batch_norm)
             )
             prev_channels = 2 ** (wf + i)
-
-        self.last = nn.Conv2d(prev_channels, out_channels, kernel_size=1, bias=last_bias)
-
+        
+        self.last_bias = last_bias
+        self.last = nn.Conv2d(prev_channels, out_channels, kernel_size=1, bias=self.last_bias)
+    
+    def reset_clf(self, out_channels):
+        device = self.last.weight.device
+        self.last = nn.Conv2d(self.last.in_channels, out_channels, kernel_size=1, bias=self.last_bias).to(device)
+    
     def forward(self, x):
         h, w = x.shape[-2:]
         need_resize = (h % 32) or (w % 32)
@@ -103,7 +118,15 @@ class UNetModel(nn.Module):
             if i != len(self.down_path) - 1:
                 blocks.append(x)
                 x = F.max_pool2d(x, 2)
-
+        
+        if self.latent_sampling:
+            # Sampling
+            mu = self.mu(x)
+            log_var = self.var(x)
+            std = torch.exp(0.5 * log_var)
+            eps = torch.randn_like(std)
+            x =  eps * std + mu
+        
         for i, up in enumerate(self.up_path):
             x = up(x, blocks[-i - 1])
 
@@ -111,6 +134,9 @@ class UNetModel(nn.Module):
 
         if need_resize:
             output = resize(output, (h, w))
+        
+        if self.latent_sampling:
+            output = {'mu': mu, 'log_var': log_var, 'reconstr': output}
         
         return output
 

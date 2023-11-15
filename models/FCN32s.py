@@ -1,9 +1,7 @@
-import os.path as osp
 import numpy as np
 
 import torch
 import torch.nn as nn
-import fcn
 
 from utils import get_init_param_by_name
 
@@ -14,6 +12,7 @@ class FCN32s(nn.Module):
         self.net = FCN32sModel(
             in_channels=get_init_param_by_name('in_channels', kwargs, cfg.model, 3),
             out_channels=get_init_param_by_name('out_channels', kwargs, cfg.model, 1),
+            latent_sampling=get_init_param_by_name('latent_sampling', kwargs, cfg.model, False),
         )
     
     def forward(self, x):
@@ -24,25 +23,17 @@ class FCN32s(nn.Module):
     
     def load_state_dict(self, state_dict, strict = ...):
         return self.net.load_state_dict(state_dict, strict)
+    
+    def reset_clf(self, out_channels):
+        self.net.reset_clf(out_channels)
 
 
 class FCN32sModel(nn.Module):
-
-    pretrained_model = \
-        osp.expanduser('~/data/models/pytorch/fcn32s_from_caffe.pth')
-
-    @classmethod
-    def download(cls):
-        return fcn.data.cached_download(
-            url='https://drive.google.com/uc?id=11k2Q0bvRQgQbT6-jYWeh6nmAsWlSCY3f',  # NOQA
-            path=cls.pretrained_model,
-            md5='d3eb467a80e7da0468a20dfcbc13e6c8',
-        )
-
     def __init__(
             self,
             in_channels=3, 
-            out_channels=1
+            out_channels=1,
+            latent_sampling=False,
     ):
         """
         Implementation of Fully Convolutional Networks for Semantic Segmentation (Long et al., 2015)
@@ -95,7 +86,12 @@ class FCN32sModel(nn.Module):
         self.conv5_3 = self._get_conv_layer(512, 512, 3, padding=1)
         self.relu5_3 = nn.ReLU(inplace=True)
         self.pool5 = nn.MaxPool2d(2, stride=2, ceil_mode=True)  # 1/32
-
+        
+        self.latent_sampling = latent_sampling
+        if self.latent_sampling:
+            self.mu = nn.Conv2d(512, 512, kernel_size=1)
+            self.var = nn.Conv2d(512, 512, kernel_size=1)
+        
         # fc6
         self.fc6 = self._get_conv_layer(512, 4096, 7)
         self.relu6 = nn.ReLU(inplace=True)
@@ -145,7 +141,11 @@ class FCN32sModel(nn.Module):
                         dtype=np.float64)
         weight[range(in_channels), range(out_channels), :, :] = filt
         return torch.from_numpy(weight).float()
-
+    
+    def reset_clf(self, out_channels):
+        device = self.last.weight.device
+        self.last = nn.ConvTranspose2d(256, out_channels, 64, stride=32, bias=False).to(device)
+    
     def forward(self, x):
         h = x
         h = self.relu1_1(self.conv1_1(h))
@@ -170,6 +170,14 @@ class FCN32sModel(nn.Module):
         h = self.relu5_2(self.conv5_2(h))
         h = self.relu5_3(self.conv5_3(h))
         h = self.pool5(h)
+        
+        if self.latent_sampling:
+            # Sampling
+            mu = self.mu(h)
+            log_var = self.var(h)
+            std = torch.exp(0.5 * log_var)
+            eps = torch.randn_like(std)
+            h =  eps * std + mu
 
         h = self.relu6(self.fc6(h))
         h = self.drop6(h)
@@ -182,8 +190,12 @@ class FCN32sModel(nn.Module):
         
         crop_start_x = h.shape[2] // 2 - x.shape[2] // 2
         crop_start_y = h.shape[3] // 2 - x.shape[3] // 2
-        h = h[:, :, crop_start_x:crop_start_x + x.shape[2], crop_start_y:crop_start_y + x.shape[3]]
-        return h
+        output = h[:, :, crop_start_x:crop_start_x + x.shape[2], crop_start_y:crop_start_y + x.shape[3]]
+        
+        if self.latent_sampling:
+            output = {'mu': mu, 'log_var': log_var, 'reconstr': output}
+        
+        return output
 
 
 

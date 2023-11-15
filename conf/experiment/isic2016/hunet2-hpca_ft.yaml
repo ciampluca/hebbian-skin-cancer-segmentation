@@ -11,7 +11,7 @@ model:
     mode: 'HebbianPCA'
     alpha: 0
   pretrained: last://last    # best://[dice, jaccard, loss]
-  reset_clf: true
+  reset_clf: 1
 
 optim:
   batch_size: 4

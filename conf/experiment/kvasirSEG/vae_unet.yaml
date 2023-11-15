@@ -1,0 +1,14 @@
+# @package _global_
+
+defaults:
+ - kvasirSEG/common
+ - /common/model: unet
+
+model:
+  out_channels: 3
+  latent_sampling: True
+
+optim:
+  loss:
+    _target_: metrics.ElboMetric
+    beta: 1

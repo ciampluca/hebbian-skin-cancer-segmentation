@@ -51,8 +51,8 @@ class HUNet(nn.Module):
     def load_state_dict(self, state_dict, strict = ...):
         self.net.load_state_dict(state_dict, strict)
     
-    def reset_clf(self):
-        self.net.reset_clf()
+    def reset_clf(self, out_channels):
+        self.net.reset_clf(out_channels)
 
 class HUNetModel(nn.Module):
     
@@ -117,9 +117,9 @@ class HUNetModel(nn.Module):
         self.last = HebbianConv2d(prev_channels, out_channels, kernel_size=1, **adjust_hebb_params(self.last_hebb_params))
         if not self.last_bias: self.last.bias.requires_grad = False
     
-    def reset_clf(self):
+    def reset_clf(self, out_channels):
         device = self.last.weight.device
-        self.last = HebbianConv2d(self.last.in_channels, self.last.out_channels, kernel_size=1, **self.last_hebb_params).to(device)
+        self.last = HebbianConv2d(self.last.in_channels, out_channels, kernel_size=1, **self.last_hebb_params).to(device)
         if not self.last_bias: self.last.bias.requires_grad = False
     
     def forward(self, x):

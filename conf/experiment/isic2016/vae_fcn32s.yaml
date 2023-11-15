@@ -1,0 +1,14 @@
+# @package _global_
+
+defaults:
+ - isic2016/common
+ - /common/model: fcn32s
+
+model:
+  out_channels: 3
+  latent_sampling: True
+
+optim:
+  loss:
+    _target_: metrics.ElboMetric
+    beta: 1

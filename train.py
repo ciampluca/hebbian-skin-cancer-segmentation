@@ -88,7 +88,7 @@ def main(cfg):
             pre_trained_model = torch.load(ckpt_path, map_location=device)
         model.load_state_dict(pre_trained_model['model'])
         if cfg.model.reset_clf and hasattr(model, 'reset_clf'):
-            model.reset_clf()
+            model.reset_clf(cfg.model.reset_clf) # Resets final classifier with number of output channels specified in cfg.model.reset_clf
         log.info(f"[PRETRAINED]: {cfg.model.pretrained}")
         
     start_epoch = 0
