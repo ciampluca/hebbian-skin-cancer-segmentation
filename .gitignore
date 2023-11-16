@@ -148,7 +148,7 @@ dmypy.json
 /data/DRIVE
 /data/DataScienceBowl2018
 /data/ISIC2016
-papers_unsupervised_segmentation.txt
+semi-supervised_papers.txt
+unsupervised_papers.txt
 domande_per_lagani.txt
-interesting_papers.txt
 /scripts/
