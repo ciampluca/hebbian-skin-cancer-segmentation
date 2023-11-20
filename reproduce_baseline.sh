@@ -32,6 +32,11 @@ EXPS=(
     #################################
     datasciencebowl2018/unet
     datasciencebowl2018/fcn32s
+    #################################
+    # GlaS Dataset
+    #################################
+    glas/unet
+    glas/fcn32s
 )
 
 # Train & Evaluate (k-cross validation)

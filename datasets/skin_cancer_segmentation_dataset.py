@@ -91,8 +91,9 @@ class SkinCancerSegmentationDataset(Dataset):
     
     def _get_mask(self, mask_path):
         mask = cv2.imread(mask_path.as_posix(), cv2.IMREAD_GRAYSCALE).astype(np.float32)
-        mask[mask != 255] = 0.
-        mask[mask == 255] = 1.
+        mask[mask > 0] = 1.
+        #mask[mask != 255] = 0.
+        #mask[mask == 255] = 1.
 
         return mask
         
@@ -140,9 +141,11 @@ def main():
     import albumentations as A
     from albumentations.pytorch import ToTensorV2
 
+    image_size = 256
+
     train_transform = A.Compose([
-        A.LongestMaxSize(512),
-        A.PadIfNeeded(min_height=512, min_width=512, border_mode=cv2.BORDER_CONSTANT),
+        A.LongestMaxSize(image_size),
+        A.PadIfNeeded(min_height=image_size, min_width=image_size, border_mode=cv2.BORDER_CONSTANT),
         A.Flip(),
         A.ShiftScaleRotate(shift_limit=0.05, scale_limit=0.05, rotate_limit=15, p=0.5),
         #A.RGBShift(r_shift_limit=15, g_shift_limit=15, b_shift_limit=15, p=0.5),
@@ -152,7 +155,7 @@ def main():
     ])
 
     train_dataset_params = {
-        'root': "data/DRIVE",
+        'root': "data/DataScienceBowl2018",
         'split': "train",
         'split_seed': 87,
         'cross_val_bucket_validation_index': 0,
