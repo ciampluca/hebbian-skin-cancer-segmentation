@@ -20,17 +20,21 @@ tqdm = partial(tqdm, dynamic_ncols=True)
 log = logging.getLogger(__name__)
 
 
-def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_map, seg_rgb=False, split="validation", outdir=None):
+def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_map, cfg, split="validation", outdir=None):
     debug_folder_name = 'train_output_debug' if split == "train" else 'val_output_debug' if split == "validation" else Path(outdir / "test_output_debug")
     debug_dir = Path(debug_folder_name)
     debug_dir.mkdir(parents=True, exist_ok=True)
+
+    seg_rgb = cfg.optim.loss.__class__.__name__ == 'ElboMetric'
+    image_mean = cfg.data.image_mean
+    image_std = cfg.data.image_std
 
     image_id = Path(image_id)
 
     def _scale_and_save(image, path, denormalize_image=False):
         if denormalize_image:
-            image = F.normalize(image, mean=[0., 0., 0.], std=[1/0.225, 1/0.225, 1/0.225])
-            image = F.normalize(image, mean=[-0.45, -0.45, -0.45], std=[1., 1., 1.])
+            image = F.normalize(image, mean=[0., 0., 0.], std=[1/image_std[0], 1/image_std[1], 1/image_std[2]])
+            image = F.normalize(image, mean=[-image_mean[0], -image_mean[1], -image_mean[2]], std=[1., 1., 1.])
 
         dim_to_move = 1 if image.ndim == 4 else 0 if image.ndim == 3 else None
         if dim_to_move is not None:
@@ -198,8 +202,7 @@ def predict(dataloader, model, device, cfg, outdir, debug=0, csv_file_name='pred
             })
 
             if outdir and debug:
-                seg_rgb = criterion.__class__.__name__ == 'ElboMetric'
-                _save_image_and_segmentation_maps(image, image_id, pred_prob, label, seg_rgb=seg_rgb, split="test", outdir=outdir)
+                _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg, split="test", outdir=outdir)
 
     metrics = pd.DataFrame(metrics).set_index('image_id')
     metrics = pd.DataFrame(metrics)

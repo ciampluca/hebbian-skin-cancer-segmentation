@@ -3,6 +3,8 @@
 data:
     drop_last_batch: True
     image_size: 512
+    image_mean: [0.45, 0.45, 0.45]
+    image_std: [0.225, 0.225, 0.225]
     
     train: &common
         _target_: datasets.SkinCancerSegmentationDataset
@@ -31,14 +33,8 @@ data:
                     rotate_limit: 15
                     p: 0.5   
                   - _target_: albumentations.Normalize
-                    mean:
-                    - 0.45
-                    - 0.45
-                    - 0.45
-                    std:
-                    - 0.225
-                    - 0.225
-                    - 0.225
+                    mean: ${data.image_mean}
+                    std: ${data.image_std}
                   - _target_: albumentations.pytorch.ToTensorV2
 
     validation:

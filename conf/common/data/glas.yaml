@@ -3,6 +3,8 @@
 data:
     drop_last_batch: True
     image_size: 512
+    image_mean: [0.787803, 0.512017, 0.784938]
+    image_std: [0.428206, 0.507778, 0.426366]
     
     train: &common
         _target_: datasets.SkinCancerSegmentationDataset
@@ -31,14 +33,8 @@ data:
                     rotate_limit: 15
                     p: 0.5   
                   - _target_: albumentations.Normalize
-                    mean:
-                    - 0.787803
-                    - 0.512017
-                    - 0.784938
-                    std:
-                    - 0.428206
-                    - 0.507778
-                    - 0.426366
+                    mean: ${data.image_mean}
+                    std: ${data.image_std}
                   - _target_: albumentations.pytorch.ToTensorV2
 
     validation:
@@ -56,12 +52,6 @@ data:
                     min_width: ${data.image_size}
                     border_mode: 0   # it corresponds to cv2.BORDER_CONSTANT
                   - _target_: albumentations.Normalize
-                    mean:
-                    - 0.787803
-                    - 0.512017
-                    - 0.784938
-                    std:
-                    - 0.428206
-                    - 0.507778
-                    - 0.426366
+                    mean: ${data.image_mean}
+                    std: ${data.image_std}
                   - _target_: albumentations.pytorch.ToTensorV2
