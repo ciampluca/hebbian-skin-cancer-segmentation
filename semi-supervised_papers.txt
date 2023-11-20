@@ -1,0 +1,264 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%           Semi-Supervised Semantic Segmentation on Medical/Biomedical Images                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+---------------------------
+MICCAI 2023
+---------------------------
+
+1. Consistency-Guided Meta-learning for Bootstrapping Semi-supervised Medical Image Segmentation
+Code: https://github.com/aijinrjinr/MLB-Seg
+Dataset: Left Atrial (LA), Prostate MR Image Segmentation challenge (PROMISE 2012)
+Metrics: Dice Coefficient, Jaccard Index, Hausdorff Distance, Average Surface Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
+
+2. Correlation-Aware Mutual Learning for Semi-supervised Medical Image Segmentation
+Code: https://github.com/Herschel555/CAML
+Dataset: Left Atrial (LA)
+Metrics: Dice Coefficient, Jaccard Index, Hausdorff Distance, Average Surface Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
+
+3. Cross-Adversarial Local Distribution Regularization for Semi-supervised Medical Image Segmentation
+Code (il repo è vuoto): https://github.com/PotatoThanh/Cross-adversarial-local-distribution-regularization
+Dataset: Left Atrial (LA), Automated Cardiac Diagnosis Challenge (ACDC)
+Metrics: Dice Coefficient, Jaccard Index, 95% Hausdorff Distance, Average Surface Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è 
+
+4. Decoupled Consistency for Semi-supervised Medical Image Segmentation
+Code: https://github.com/wxfaaaaa/DCNet
+Dataset: Automated Cardiac Diagnosis Challenge (ACDC), Prostate MR Image Segmentation challenge (PROMISE 2012)
+Metrics: Dice Coefficient, Jaccard Index, 95% Hausdorff Distance, Average Surface Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è 
+
+5. Deep Mutual Distillation for Semi-supervised Medical Image Segmentation
+Code (repo mezzo vuoto): https://github.com/SilenceMonk/Dual-Mutual-Distillation
+Dataset: Left Atrial (LA), Automated Cardiac Diagnosis Challenge (ACDC)
+Metrics: Dice Coefficient, Jaccard Index, 95% Hausdorff Distance, Average Surface Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è 
+
+6. Self-aware and Cross-Sample Prototypical Learning for Semi-supervised Medical Image Segmentation
+Code: https://github.com/Medsemiseg/SCP-Net
+Dataset: Automated Cardiac Diagnosis Challenge (ACDC), Prostate MR Image Segmentation challenge (PROMISE 2012)
+Metrics: Dice Coefficient, Average Surface Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
+
+7. Semi-supervised Domain Adaptive Medical Image Segmentation Through Consistency Regularized Disentangled Contrastive Learning
+Code: https://github.com/hritam-98/GFDA-disentangled
+Dataset: Kvasir-SEG, CVC-EndoScene Still, BraTS2018
+Metrics: Dice Coefficient, Hausdorff Distance
+Note: L'ho messo perchè c'è Kvasir-SEG fra i dataset, tuttavia, fa un task un pò diverso. In particolare, fa semi-supervised Domain
+      adaptation, che è similare a UDA; per capire meglio, gli esperimenti sono ad esempio del tipo kvasir --> CVC e CVC --> kvasir
+      prendendo pochi sample del target dataset. Eventualmente sono riportati anche altri risultati in una tabellina, forse anche
+      riguardanti UDA., Potrebbe essere un task meno competitivo e simile al nostro.
+
+8. UPCoL: Uncertainty-Informed Prototype Consistency Learning for Semi-supervised Medical Image Segmentation
+Code: https://github.com/VivienLu/UPCoL
+Dataset: Left Atrial (LA), NIH pancreas, multi-center dataset for Type B Aortic Dissection (TBAD)
+Metrics: Dice Coefficient, Jaccard Index, 95% Hausdorff Distance, Average Surface Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
+
+9. ACTION++: Improving Semi-supervised Medical Image Segmentation with Adaptive Anatomical Contrast
+Code: No Code
+Dataset: Left Atrial (LA), Automated Cardiac Diagnosis Challenge (ACDC)
+Metrics: Dice Coefficient, Average Surface Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
+
+
+---------------------------
+CVPR 2023
+---------------------------
+
+1. Pseudo-label Guided Contrastive Learning for Semi-supervised Medical Image Segmentation
+Code (404 error): https://github.com/hritam-98/PatchCL-MedSeg
+Dataset: Automated Cardiac Diagnosis Challenge (ACDC), KiTS19, Colorectal Adenocarcinoma Gland (CRAG) 
+Metrics: Dice Coefficient, 95% Hausdorff Distance, Average Surface Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
+
+2. MCF: Mutual Correction Framework for Semi-Supervised Medical Image Segmentation
+Code: https://github.com/WYC-321/MCF
+Dataset: Left Atrial (LA), NIH pancreas
+Metrics: Dice Coefficient, Jaccard Index, 95% Hausdorff Distance, Average Surface Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
+
+3. Bidirectional Copy-Paste for Semi-Supervised Medical Image Segmentation
+Code: https://github.com/DeepMed-Lab-ECNU/BCP
+Dataset: Left Atrial (LA), NIH pancreas, Automated Cardiac Diagnosis Challenge (ACDC)
+Metrics: Dice Coefficient, Jaccard Index, 95% Hausdorff Distance, Average Surface Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
+
+
+---------------------------
+ICCV 2023
+---------------------------
+
+1. CauSSL: Causality-inspired Semi-supervised Learning for Medical Image Segmentation
+Code: https://github.com/JuzhengMiao/CauSSL
+Dataset: Automated Cardiac Diagnosis Challenge (ACDC), NIH pancreas, Multimodal Brain Tumor Segmentation challenge 2019 (BraTS’19)
+Metrics: Dice Coefficient, Jaccard Index, 95% Hausdorff Distance, Average Surface Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
+
+2. XNet: Wavelet-Based Low and High Frequency Fusion Networks for Fully- and Semi-Supervised Semantic Segmentation of Biomedical Images
+Code: https://github.com/Yanfeng-Zhou/XNet
+Dataset: Left Atrial (LA), GlasS, CREMI, LiTS
+Metrics: Dice Coefficient, Jaccard Index, 95% Hausdorff Distance, Average Surface Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è;
+      ci sono anche due dataset 2D, che non sono quasi mai utilizzati però almeno si avrebbero i risultati
+
+
+---------------------------
+MICCAI 2022
+---------------------------
+
+1. Bayesian Pseudo Labels: Expectation Maximization for Robust and Efficient Semi-supervised Segmentation
+Code: https://github.com/moucheng2017/EMSSL
+Dataset: CARVE 2014, BRATS 2018
+Metrics: IoU
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
+
+2. Exploring Smoothness and Class-Separation for Semi-supervised Medical Image Segmentation
+Code: https://github.com/ycwu1997/SS-Net
+Dataset: Automated Cardiac Diagnosis Challenge (ACDC), Left Atrial (LA)
+Metrics: Dice Coefficient, Jaccard Index, 95% Hausdorff Distance, Average Surface Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
+
+3. FUSSNet: Fusing Two Sources of Uncertainty for Semi-supervised Medical Image Segmentation
+Code: https://github.com/grant-jpg/FUSSNet
+Dataset: Left Atrial (LA), NIH pancreas
+Metrics: Dice Coefficient, Jaccard Index, 95% Hausdorff Distance, Average Surface Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
+
+4. Leveraging Labeling Representations in Uncertainty-Based Semi-supervised Segmentation
+Code: https://github.com/adigasu/Labeling_Representations
+Dataset: Left Atrial (LA)
+Metrics: Dice Coefficient, 95% Hausdorff Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
+
+5. Momentum Contrastive Voxel-Wise Representation Learning for Semi-supervised Volumetric Medical Image Segmentation
+Code: No Code
+Dataset: Left Atrial (LA), NIH pancreas
+Metrics: Dice Coefficient, Jaccard Index, 95% Hausdorff Distance, Average Surface Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
+
+6. Semi-supervised Histological Image Segmentation via Hierarchical Consistency Enforcement
+Code (repo vuoto): https://github.com/qgking/HCE
+Dataset: MoNuSeg, CRAG
+Metrics: Dice Coefficient, Jaccard Index, 95% Hausdorff Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
+
+7. Semi-supervised Medical Image Segmentation Using Cross-Model Pseudo-Supervision with Shape Awareness and Local Context Constraints
+Code: https://github.com/igip-liu/SLC-Net
+Dataset: Prostate MR Image Segmentation challenge (PROMISE 2012), Automated Cardiac Diagnosis Challenge (ACDC)
+Metrics: Dice Coefficient, Average Surface Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
+
+
+---------------------------
+CVPR 2022
+---------------------------
+
+1. Cross-patch Dense Contrastive Learning for Semi-supervised Segmentation of Cellular Nuclei in Histopathologic Images
+Code: https://github.com/zzw-szu/CDCL
+Dataset: DSB Dataset, MoNuSeg Dataset
+Metrics: Dice Coefficient, Jaccard Index
+Note: DSB è DataScienceBowl che abbiamo già usato; c'è una tabellina coi risultati anche di altri metodi
+
+2. Rethinking Bayesian Deep Learning Methods for Semi-Supervised Volumetric Medical Image Segmentation
+Code: https://github.com/Jianf-Wang/GBDL
+Dataset: Left Atrial (LA), Liver Segmentation, KiTS19
+Metrics: Dice Coefficient, Jaccard Index, 95% Hausdorff Distance, Average Surface Distance
+Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
+
+
+
+
+
+
+
+%----------------------------------------------%
+%                 Datasets                     %
+%----------------------------------------------%
+
+-----------------------
+1. Left Atrial (LA)
+- Paper: A global benchmark of algorithms for segmenting the left atrium from late gadolinium-enhanced cardiac magnetic resonance imaging
+- Venue: Medical Image Analysis 2021, dataset usato nella LA Segmentation Challenge del 2018
+- Download: https://www.cardiacatlas.org/atriaseg2018-challenge/atria-seg-data/
+- Usato da: MICCAI 2023.1, MICCAI 2023.2, MICCAI 2023.3, MICCAI 2023.5, MICCAI 2023.8, MICCAI 2023.9, CVPR 2023.2, CVPR 2023.3, ICCV2023.2, 
+            MICCAI 2022.2, MICCAI 2022.3, MICCAI 2022.4, MICCAI 2022.5, CVPR 2022.2
+
+- Descrizione: Uno tra i più usati per questo task, forse il più usato in assoluto.
+               Sono 154 3D MRI, divise in un training set di 100 immagini aventi le label e un testing set di 54 immagini senza label (non usate).
+               Maggiori informazioni sul dataset all'indirizzo del Download.
+               Per il momento non lo userei perchè è usato con voxel (quasi da tutti, anche se per esempio in MICCAI 2023.1 pare di no), 
+               ci sarebbe da cambiare un bel pò di roba nella implementazione.
+
+-----------------------
+2. Automated Cardiac Diagnosis Challenge (ACDC)
+- Paper: Deep Learning Techniques for Automatic MRI Cardiac Multi-structures Segmentation and Diagnosis: Is the Problem Solved?
+- Venue: IEEE Transactions on Medical Imaging 2018, dataset usato nella Automated Cardiac Diagnosis Challenge (ACDC) del 2018
+- Download: https://www.creatis.insa-lyon.fr/Challenge/acdc/
+- Download alternativo comodo per split division: https://drive.google.com/drive/folders/1XJgSKlR58iGTrWjvlJBOZH73NaempGV5
+- Repo per split division e pre-processing: https://github.com/HiLab-git/SSL4MIS/tree/master/data/ACDC
+- Script per caricare salvare e calcolare metriche: https://www.creatis.insa-lyon.fr/Challenge/acdc/code/metrics_acdc.py (da controllare eventualemente)
+- Usato da: MICCAI 2023.3, MICCAI 2023.4, MICCAI 2023.5, MICCAI 2023.6, MICCAI 2023.9, CVPR 2023.1, CVPR 2023.3, ICCV 2023.1, MICCAI 2022.2, MICCAI 2022.7
+
+- Descrizione: Uno tra i più usati per questo task. Sono 150 RMI afferenti ad altrettanti pazienti, 100 etichettate per il training e 50 non etichettate
+               per il testing (non usate). Vengono quindi considerate solo le 100 RMI per il training. Il dataset è poi usato mediante slice 2D
+               di queste RMI, quindi può essere papabile anche per noi (probabilmente c'è da cambiare meno roba). In particolare, si considerano 2 scan
+               per ogni paziente (nell'elenco chiamati frame che è un pò confusing), per un totale di 200 MRI, suddivise in 70, 10 e 20 pazienti e 
+               conseguenti 140, 20 e 40 scan per il training set, il validation set e il testing set, rispettivamente (nota che i vari set non hanno quindi 
+               pazienti in comune). Le slice sono ridimensionate 
+               a 256x256 e normalizzate tra [0 1]. Mi pare che tanti usino degli split fissi per quanto riguarda i pazienti (definiti nel repo per slit division).
+               Non è chiarissimo se vengono riportate le performance sul validation set (come detto in MICCAI 2023.5) oppure sul testing set 
+               (come sarebbe più corretto). Le classi sono 4: background, left and right ventricle (LV, RV), and myocardium (MYO): da questo punto di vista
+               quindi ci sarebbe sicuramente da cambiare qualcosa. Da capire meglio come avviene la valutazione: in qualche modo sembra essere fatta a livello
+               volumetrico, come dice anche MICCAI 2022.7 (usare come performance evaluator la Dice Similarity Coefficient per l'accuratezza della 
+               segmentazione 3D ottenuta facendo lo stack di ogni predizione afferente a uno slice 2D): vedere meglio repo per split division e preprocessing
+               a riguardo.
+               Infine, per quanto riguarda gli esperimenti per il semi-supervised, vengono usati due setting: 5% e 10% dei dati, da capire meglio se 
+               presi in maniera random o se sono fissi. Sembra che nel repo per split division siano fissi, ma che abbiano implementato in via sperimentale
+               una 5-fold cross-validation in un altro branch.
+
+
+-----------------------
+3. Prostate MR Image Segmentation challenge (PROMISE 2012)
+- Paper: Evaluation of prostate segmentation algorithms for MRI: The PROMISE12 challenge
+- Venue: Medical Image Analysis 2014, dataset usato nella MICCAI Grand Challenge: Prostate MR Image Segmentation del 2012
+- Download: https://zenodo.org/records/8026660
+- Usato da: MICCAI 2023.1, MICCAI 2023.4, MICCAI 2023.6, MICCAI 2022.7
+
+- Descrizione: un pò meno usato, ma forse con più margine di miglioramento e un pò meno concorrenza. Sono MRI da 50 soggetti; il dataset è usato mediante
+               slice 2D di queste RMI, quindi può essere papabile anche per noi (probabilmente c'è da cambiare meno roba). In particolare, le MRI 
+               vengono convertite in 2D slice e suddivise per il training, validation e testing set, rispettivamente per 35, 5, e 10 pazienti. 
+               Le slice sono ridimensionate a 256x256 e normalizzate tra [0 1].
+               Da capire meglio come avviene la valutazione: in qualche modo sembra essere fatta a livello volumetrico, come dice anche MICCAI 2022.7 
+               (usare come performance evaluator la Dice Similarity Coefficient per l'accuratezza della segmentazione 3D ottenuta facendo lo stack di ogni 
+               predizione afferente a uno slice 2D).
+               Da capire meglio anche quante sono le classi, ma forse due, cosa che ci andrebbe benissimo.
+               Infine, per quanto riguarda gli esperimenti per il semi-supervised, vengono usati due setting: 10% e 20% dei dati, da capire meglio se 
+               presi in maniera random o se sono fissi.
+
+
+-----------------------
+4. Pancreas-CT
+- Paper: DeepOrgan: Multi-level deep convolutional networks for automated pancreas segmentation
+- Venue: MICCAI 2015
+- Download: https://wiki.cancerimagingarchive.net/display/Public/Pancreas-CT#22514040c56be89073824ef7946e58d813146283
+- Usato da: MICCAI 2023.8, CVPR 2023.2, CVPR 2023.3, ICCV 2023.1, MICCAI 2022.3, MICCAI 2022.5
+
+- Descrizione: un pò meno usato, ma forse con più margine di miglioramento e un pò meno concorrenza. Sono 82 CTA scan.
+               Per il momento non lo userei perchè è usato con voxel, ci sarebbe da cambiare un bel pò di roba nella implementazione.
+
+
+-----------------------
+4. GlaS
+- Paper: Gland segmentation in colon histology images: The glas challenge contest
+- Venue: Medical Image Analysis 2017, dataset usato nella Gland Segmentation in Colon Histology Images Challenge Contest (GlaS) di MICCAI 2015
+- Download: mi pare il sito originale non vada, l'ho trovato su Kaggle https://www.kaggle.com/datasets/sani84/glasmiccai2015-gland-segmentation
+- Usato da: ICCV 2023.2
+
+- Descrizione: sono 165 Hematoxylin and Eosin (H&E) stained immagini di tessuto maligno e benigno, di cui 85 e 80 per il training e il test, rispettivamente.
+               Usato solo da un paper qui nella lista, comunque almeno ci sarebbe una tabellina con altri metodi già fatta. Inoltre è 2D, penso con 
+               due classi, quindi sicuramente è papabile.
+               Per il setting semi-supervised dicono di usare il 20%-80% che è quello più usato
