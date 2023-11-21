@@ -57,6 +57,21 @@ EXPS=(
     datasciencebowl2018/hunet-swta_t_ft
     #datasciencebowl2018/hunet2-swta
     #datasciencebowl2018/hunet2-swta_ft
+    #################################
+    # GlaS Dataset
+    #################################
+    glas/hunet-swta
+    glas/hunet-swta_ft
+    glas/hunet-swta_t
+    glas/hunet-swta_t_ft
+    #glas/hunet2-swta
+    #glas/hunet2-swta_ft
+    glas/hfcn32s-swta
+    glas/hfcn32s-swta_ft
+    glas/hfcn32s-swta_t
+    glas/hfcn32s-swta_t_ft
+    #glas/hfcn32s-swta
+    #glas/hfcn32s-swta_ft
 )
 
 # Train & Evaluate (k-cross validation)
@@ -82,6 +97,8 @@ for K in ${K_VALUES[@]}; do
                     CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/KvasirSEG --in-memory True;;
                 datasciencebowl2018*)
                     CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/DataScienceBowl2018 --in-memory True;;
+                glas*)
+                    CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True;;
             esac
         done
     done

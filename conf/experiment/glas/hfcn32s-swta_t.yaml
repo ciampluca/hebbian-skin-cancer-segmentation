@@ -1,0 +1,23 @@
+# @package _global_
+
+defaults:
+ - glas/common
+ - /common/model: hfcn32s
+
+model:
+  hebb:
+    w_nrm: True
+    mode: 'swta_t'
+    patchwise: True
+    contrast: 1.
+    uniformity: False
+    alpha: 1
+
+optim:
+  batch_size: 4
+  batch_accumulation: 4
+
+  epochs: 400
+
+  lr_scheduler:
+      milestones: [350, 380, 400]

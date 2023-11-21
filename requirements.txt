@@ -12,5 +12,5 @@ tensorboard
 gdown
 matplotlib
 fcn
-
+medpy
 

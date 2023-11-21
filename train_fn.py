@@ -12,7 +12,7 @@ from tqdm import tqdm
 import pandas as pd
 from PIL import Image
 
-from metrics import dice_jaccard
+from metrics import dice_jaccard, hausdorff_distance, average_surface_distance
 
 tqdm = partial(tqdm, dynamic_ncols=True)
 
@@ -146,14 +146,17 @@ def validate(dataloader, model, device, epoch, cfg):
  
             # threshold-free metrics
             loss = criterion(pred, label)
-            segm_metrics = {}
+            segm_metrics_pixel, segm_metrics_distance = {}, {}
             if criterion.__class__.__name__ != 'ElboMetric':
-                segm_metrics = dice_jaccard(label.movedim(1, -1), pred_prob.movedim(1, -1))    # NCHW -> NHWC
+                segm_metrics_pixel = dice_jaccard(label.movedim(1, -1), pred_prob.movedim(1, -1))    # NCHW -> NHWC
+                segm_metrics_distance = hausdorff_distance(label.movedim(1, -1), pred_prob.movedim(1, -1))
+                segm_metrics_distance.update(average_surface_distance(label.movedim(1, -1), pred_prob.movedim(1, -1)))
 
             metrics.append({
                 'image_id': image_id,
                 'segm/loss': loss.item(),
-                **segm_metrics,
+                **segm_metrics_pixel,
+                **segm_metrics_distance,
             })
 
             if cfg.optim.debug and epoch % cfg.optim.debug_freq == 0 and cfg.optim.save_debug_val_images:

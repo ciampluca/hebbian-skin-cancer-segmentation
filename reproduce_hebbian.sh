@@ -17,6 +17,7 @@ INV_TEMP_PH2=5        # to be set accordingly, used by SWTA
 INV_TEMP_ISIC2016=2        # to be set accordingly, used by SWTA
 INV_TEMP_KvasirSEG=5        # to be set accordingly, used by SWTA
 INV_TEMP_DataScienceBowl2018=10        # to be set accordingly, used by SWTA
+INV_TEMP_GlaS=0         # to be set accordingly, used by SWTA
 
 EXPS=(
     #################################
@@ -111,6 +112,29 @@ EXPS=(
     datasciencebowl2018/hfcn32s-swta_t_ft
     #datasciencebowl2018/hunet2-swta_ft
     #datasciencebowl2018/hunet2-hpca_ft
+    #################################
+    # GlaS Dataset
+    #################################
+    glas/hunet-hpca
+    glas/hunet-hpca_ft
+    glas/hunet-hpca_t
+    glas/hunet-hpca_t_ft
+    glas/hfcn32s-hpca
+    glas/hfcn32s-hpca_ft
+    glas/hfcn32s-hpca_t
+    glas/hfcn32s-hpca_t_ft
+    #glas/hunet2-hpca_ft
+    #glas/hunet2-hpca_t_ft
+    glas/hunet-swta
+    glas/hunet-swta_ft
+    glas/hunet-swta_t
+    glas/hunet-swta_t_ft
+    glas/hfcn32s-swta
+    glas/hfcn32s-swta_ft
+    glas/hfcn32s-swta_t
+    glas/hfcn32s-swta_t_ft
+    #glas/hunet2-swta_ft
+    #glas/hunet2-hpca_ft
 )
 
 # Train & Evaluate (k-cross validation)
@@ -127,6 +151,8 @@ for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do    # Multiple repetitio
                         CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP model.hebb.k=$INV_TEMP_KvasirSEG;;
                     datasciencebowl2018*)
                         CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP model.hebb.k=$INV_TEMP_DataScienceBowl2018;;
+                    glas*)
+                        CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP model.hebb.k=$INV_TEMP_GlaS;;
                 esac;;
             *)
                 CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP;;
@@ -166,6 +192,13 @@ for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do
                         CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$INV_TEMP_DataScienceBowl2018/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/DataScienceBowl2018 --in-memory True;;
                     *)
                         CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/DataScienceBowl2018 --in-memory True;;
+                esac;;
+            glas*)
+                case $EXP in
+                    */*-swta*)
+                        CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$INV_TEMP_GlaS/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True;;
+                    *)
+                        CUDA_VISIBLE_DEVICES=$GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True;;
                 esac;;
         esac
     done
