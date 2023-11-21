@@ -67,7 +67,7 @@ def dice_jaccard(y_true, y_pred, smooth=1, thr=None, prefix=''):
     return metrics
 
 
-def hausdorff_distance(y_true, y_pred, prefix=''):
+def hausdorff_distance(y_true, y_pred, thr=None, prefix=''):
     """
     Computes Hausdorff Distance (95HD).
 
@@ -83,6 +83,8 @@ def hausdorff_distance(y_true, y_pred, prefix=''):
     y_pred = _atleast_nhwc(y_pred)
     y_true = _atleast_nhwc(y_true)
 
+    y_pred = (y_pred >= thr) if thr is not None else y_pred
+
     y_pred, y_true = y_pred.detach().cpu().numpy(), y_true.detach().cpu().numpy()
 
     hausdorff_distance = _hausdorff_distance_single_class(y_true, y_pred)
@@ -94,7 +96,7 @@ def hausdorff_distance(y_true, y_pred, prefix=''):
     return metrics
 
 
-def average_surface_distance(y_true, y_pred, prefix=''):
+def average_surface_distance(y_true, y_pred, thr=None, prefix=''):
     """
     Computes Average Surface Distace (ASD).
 
@@ -111,6 +113,8 @@ def average_surface_distance(y_true, y_pred, prefix=''):
     y_true = _atleast_nhwc(y_true)
 
     y_pred, y_true = y_pred.detach().cpu().numpy(), y_true.detach().cpu().numpy()
+
+    y_pred = (y_pred >= thr) if thr is not None else y_pred
 
     average_surface_distance = _average_surface_distance_single_class(y_true, y_pred)
 

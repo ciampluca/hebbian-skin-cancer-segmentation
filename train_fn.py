@@ -149,8 +149,8 @@ def validate(dataloader, model, device, epoch, cfg):
             segm_metrics_pixel, segm_metrics_distance = {}, {}
             if criterion.__class__.__name__ != 'ElboMetric':
                 segm_metrics_pixel = dice_jaccard(label.movedim(1, -1), pred_prob.movedim(1, -1))    # NCHW -> NHWC
-                segm_metrics_distance = hausdorff_distance(label.movedim(1, -1), pred_prob.movedim(1, -1))
-                segm_metrics_distance.update(average_surface_distance(label.movedim(1, -1), pred_prob.movedim(1, -1)))
+                segm_metrics_distance = hausdorff_distance(label.movedim(1, -1), pred_prob.movedim(1, -1), thr=0.5)
+                segm_metrics_distance.update(average_surface_distance(label.movedim(1, -1), pred_prob.movedim(1, -1), thr=0.5))
 
             metrics.append({
                 'image_id': image_id,
