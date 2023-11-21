@@ -85,12 +85,14 @@ def hausdorff_distance(y_true, y_pred, thr=None, prefix=''):
 
     y_pred = (y_pred >= thr) if thr is not None else y_pred
 
-    y_pred, y_true = y_pred.detach().cpu().numpy(), y_true.detach().cpu().numpy()
-
-    hausdorff_distance = _hausdorff_distance_single_class(y_true, y_pred)
+    if torch.any(y_pred) and torch.any(y_true):
+        y_pred, y_true = y_pred.detach().cpu().numpy(), y_true.detach().cpu().numpy()
+        hausdorff_distance = _hausdorff_distance_single_class(y_true, y_pred).item()
+    else:
+        hausdorff_distance = None
 
     metrics = {
-        f'segm/{prefix}95hd': hausdorff_distance.item(),
+        f'segm/{prefix}95hd': hausdorff_distance,
     }
     
     return metrics
@@ -112,14 +114,16 @@ def average_surface_distance(y_true, y_pred, thr=None, prefix=''):
     y_pred = _atleast_nhwc(y_pred)
     y_true = _atleast_nhwc(y_true)
 
-    y_pred, y_true = y_pred.detach().cpu().numpy(), y_true.detach().cpu().numpy()
-
     y_pred = (y_pred >= thr) if thr is not None else y_pred
 
-    average_surface_distance = _average_surface_distance_single_class(y_true, y_pred)
+    if torch.any(y_pred) and torch.any(y_true):
+        y_pred, y_true = y_pred.detach().cpu().numpy(), y_true.detach().cpu().numpy()
+        average_surface_distance = _average_surface_distance_single_class(y_true, y_pred).item()
+    else:
+        average_surface_distance = None
 
     metrics = {
-        f'segm/{prefix}asd': average_surface_distance.item(),
+        f'segm/{prefix}asd': average_surface_distance,
     }
     
     return metrics

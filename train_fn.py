@@ -166,7 +166,7 @@ def validate(dataloader, model, device, epoch, cfg):
          _save_debug_metrics(metrics, epoch)
 
     metrics = pd.DataFrame(metrics).set_index('image_id')
-    metrics = metrics.mean(axis=0).to_dict()
+    metrics = metrics.mean(axis=0, skipna=True).to_dict()
 
     return metrics
 
