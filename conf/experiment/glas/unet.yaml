@@ -3,3 +3,9 @@
 defaults:
  - glas/common
  - /common/model: unet
+
+optim:
+  epochs: 300
+
+  lr_scheduler:
+      milestones: [200, 250, 300]
