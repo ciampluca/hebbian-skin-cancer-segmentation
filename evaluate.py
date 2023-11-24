@@ -22,6 +22,7 @@ def main(args):
     cfg = OmegaConf.load(run_path / '.hydra' / 'config.yaml')
     print(OmegaConf.to_yaml(cfg))
 
+    # set device
     device = torch.device(args.device)
     
     # create test dataset and dataloader

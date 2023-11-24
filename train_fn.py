@@ -89,11 +89,15 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
         # NCHW -> NHWC
         batch_metrics = {'loss': loss.item()}
         if criterion.__class__.__name__ != 'ElboMetric':
-            coefs = dice_jaccard(labels.movedim(1, -1), preds_prob.movedim(1, -1))
+            coefs_pixel = dice_jaccard(labels.movedim(1, -1), preds_prob.movedim(1, -1))
+            coefs_hausdorff_distance = hausdorff_distance(labels.movedim(1, -1), preds_prob.movedim(1, -1), thr=0.5)
+            coefs_average_surface_distance = average_surface_distance(labels.movedim(1, -1), preds_prob.movedim(1, -1), thr=0.5)
             batch_metrics = {
                 'loss': loss.item(),
-                'dice': coefs['segm/dice'],
-                'jaccard': coefs['segm/jaccard'],
+                'dice': coefs_pixel['segm/dice'],
+                'jaccard': coefs_pixel['segm/jaccard'],
+                'hausdorff distance': coefs_hausdorff_distance['segm/95hd'],
+                'average surface distance': coefs_average_surface_distance['segm/asd'],
             }
         metrics.append(batch_metrics)
 
@@ -136,7 +140,6 @@ def validate(dataloader, model, device, epoch, cfg):
         images, labels, image_ids, _ = sample
 
         # Un-batching
-        # TODO not efficient, should be done in parallel
         for image, label, image_id in zip(images, labels, image_ids):
             image, label = torch.unsqueeze(image, dim=0).to(validation_device), label[None, None, ...].to(validation_device)
 
@@ -144,7 +147,7 @@ def validate(dataloader, model, device, epoch, cfg):
             pred = model(image)
             pred_prob = (torch.sigmoid(pred)) if criterion.__class__.__name__.endswith("WithLogitsLoss") else pred
  
-            # threshold-free metrics
+            # computing metrics
             loss = criterion(pred, label)
             segm_metrics_pixel, segm_metrics_distance = {}, {}
             if criterion.__class__.__name__ != 'ElboMetric':
@@ -186,7 +189,6 @@ def predict(dataloader, model, device, cfg, outdir, debug=0, csv_file_name='pred
         images, labels, image_ids, _ = sample
 
         # Un-batching
-        # TODO not efficient, should be done in parallel
         for image, label, image_id in zip(images, labels, image_ids):
             image, label = torch.unsqueeze(image, dim=0).to(device), label[None, None, ...].to(device)
 
@@ -194,14 +196,17 @@ def predict(dataloader, model, device, cfg, outdir, debug=0, csv_file_name='pred
             pred = model(image)
             pred_prob = (torch.sigmoid(pred)) if criterion.__class__.__name__.endswith("WithLogitsLoss") else pred
 
-            # threshold-free metrics
-            segm_metrics = {}
+            # computing metrics
+            segm_metrics_pixel, segm_metrics_distance = {}, {}
             if criterion.__class__.__name__ != 'ElboMetric':
-                segm_metrics = dice_jaccard(label.movedim(1, -1), pred_prob.movedim(1, -1))    # NCHW -> NHWC
+                segm_metrics_pixel = dice_jaccard(label.movedim(1, -1), pred_prob.movedim(1, -1))    # NCHW -> NHWC
+                segm_metrics_distance = hausdorff_distance(label.movedim(1, -1), pred_prob.movedim(1, -1), thr=0.5)
+                segm_metrics_distance.update(average_surface_distance(label.movedim(1, -1), pred_prob.movedim(1, -1), thr=0.5))
 
             metrics.append({
                 'image_id': image_id,
-                **segm_metrics,
+                **segm_metrics_pixel,
+                **segm_metrics_distance,
             })
 
             if outdir and debug:

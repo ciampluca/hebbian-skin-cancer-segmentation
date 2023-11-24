@@ -145,8 +145,8 @@ class HFCN32sModel(nn.Module):
         return torch.from_numpy(weight).float()
     
     def reset_clf(self, out_channels):
-        device = self.last.weight.device
-        self.last = nn.ConvTranspose2d(256, out_channels, 64, stride=32, bias=False).to(device)
+        device = self.upscore.weight.device
+        self.upscore = nn.ConvTranspose2d(256, out_channels, 64, stride=32, bias=False).to(device)
     
     def forward(self, x):
         h = x

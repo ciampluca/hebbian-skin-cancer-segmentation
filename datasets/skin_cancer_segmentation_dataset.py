@@ -4,6 +4,7 @@ from tqdm import tqdm
 from functools import partial
 import random
 import numpy as np
+import math
 
 import torch
 from torch.utils.data import Dataset
@@ -49,7 +50,11 @@ class SkinCancerSegmentationDataset(Dataset):
         # get list of images in the given split
         self.image_paths = self._get_images_in_split()
         if self.split == 'train':
-            num_imgs = int(self.smpleff_regime * len(self.image_paths))
+            num_imgs = math.ceil(self.smpleff_regime * len(self.image_paths))
+            self.image_paths = self.image_paths[:num_imgs]
+        if self.root.stem == 'train' and self.split == 'all':
+            num_imgs = math.ceil(self.smpleff_regime * len(self.image_paths))
+            random.Random(self.split_seed).shuffle(self.image_paths)    # reproducible shuffle
             self.image_paths = self.image_paths[:num_imgs]
         
         if in_memory:
