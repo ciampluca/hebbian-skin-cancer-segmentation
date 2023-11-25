@@ -12,7 +12,7 @@ from tqdm import tqdm
 import pandas as pd
 from PIL import Image
 
-from metrics import dice_jaccard, hausdorff_distance, average_surface_distance
+from metrics import dice_jaccard, hausdorff_distance, average_surface_distance, EntropyMetric
 
 tqdm = partial(tqdm, dynamic_ncols=True)
 
@@ -69,22 +69,27 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
     optimizer.zero_grad()
 
     criterion = hydra.utils.instantiate(cfg.optim.loss)
+    entropy_lambda = cfg.optim.entropy_lambda
+    entropy_cost = EntropyMetric() if entropy_lambda != 0 else None
 
     metrics = []
     n_batches = len(dataloader)
     progress = tqdm(dataloader, desc='TRAIN', leave=False)
     for i, sample in enumerate(progress):
         images, labels, image_ids, _ = sample
-        labels = labels.unsqueeze(dim=1)
+        if labels.ndim < 4: labels = labels.unsqueeze(dim=1) # Unsqueeze channel dimension if necessary
         images, labels = images.to(device), labels.to(device)
+        visible_labels = torch.all(labels.view(labels.shape[0], -1) != -1, dim=1)
 
         # computing outputs
         preds = model(images)
         preds_prob = (torch.sigmoid(preds)) if criterion.__class__.__name__.endswith("WithLogitsLoss") else preds
 
         # computing loss and backwarding it
-        loss = criterion(preds, labels)
-        loss.backward()
+        loss = criterion(preds[visible_labels], labels[visible_labels])
+        entropy_loss = entropy_cost(preds_prob) if entropy_cost is not None else 0
+        total_loss = loss + entropy_lambda * entropy_loss
+        total_loss.backward()
 
         # NCHW -> NHWC
         batch_metrics = {'loss': loss.item()}

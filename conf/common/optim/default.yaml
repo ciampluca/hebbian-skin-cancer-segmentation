@@ -29,3 +29,5 @@ save_debug_train_images: true
 
 loss:
     _target_: torch.nn.BCEWithLogitsLoss
+
+entropy_lambda: 0

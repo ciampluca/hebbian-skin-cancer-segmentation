@@ -10,3 +10,5 @@ model:
   reset_clf: 1
   latent_sampling: True
 
+optim:
+  entropy_lambda: 0.005

@@ -3,6 +3,3 @@
 defaults:
  - ph2/common
  - /common/model: unet
-
-optim:
-  entropy_lambda: 0.005

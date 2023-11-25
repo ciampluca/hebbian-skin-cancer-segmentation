@@ -23,3 +23,5 @@ optim:
 
   lr_scheduler:
       milestones: [350, 380, 400]
+
+  entropy_lambda: 0.005

@@ -142,3 +142,16 @@ class ElboMetric:
         kld_loss = torch.mean(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim=1), dim=0)
 
         return reconstr_loss + self.beta * kld_loss
+
+class EntropyMetric:
+
+    def __init__(self):
+        pass
+    
+    def __call__(self, outputs):
+        B, C = outputs.shape[0], outputs.shape[1]
+        if C == 1:
+            l_ent = - (1 / torch.log(2)) * (outputs * torch.log(outputs) + (1 - outputs) * torch.log(1 - outputs))
+        else:
+            l_ent = - (1 / torch.log(C)) * torch.sum(outputs * torch.log(outputs), dim=1, keepdim=True)
+        return torch.sum(l_ent) / B

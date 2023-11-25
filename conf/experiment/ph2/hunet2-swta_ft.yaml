@@ -17,3 +17,4 @@ optim:
   batch_size: 4
   batch_accumulation: 4
 
+  entropy_lambda: 0.005
