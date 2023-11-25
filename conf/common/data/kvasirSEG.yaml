@@ -7,7 +7,7 @@ data:
     image_std: [0.225, 0.225, 0.225]
     
     train: &common
-        _target_: datasets.SkinCancerSegmentationDataset
+        _target_: datasets.SegmentationDataset #datasets.SkinCancerSegmentationDataset
         root: ${hydra:runtime.cwd}/data/KvasirSEG
         split: train
         split_seed: 87
