@@ -8,6 +8,6 @@ optim:
   epochs: 300
 
   lr_scheduler:
-      milestones: [200, 250, 300]
+      milestones: [250, 280, 300]
 
   entropy_lambda: 0.005

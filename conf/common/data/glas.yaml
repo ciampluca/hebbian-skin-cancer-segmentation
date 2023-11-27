@@ -35,7 +35,14 @@ data:
                     shift_limit: 0.05
                     scale_limit: 0.05
                     rotate_limit: 15
-                    p: 0.5   
+                    p: 0.5
+                  - _target_: albumentations.RGBShift
+                    r_shift_limit: 15
+                    g_shift_limit: 15
+                    b_shift_limit: 15
+                    p: 0.5
+                  - _target_: albumentations.RandomBrightnessContrast
+                    p: 0.5
                   - _target_: albumentations.Normalize
                     mean: ${data.image_mean}
                     std: ${data.image_std}
