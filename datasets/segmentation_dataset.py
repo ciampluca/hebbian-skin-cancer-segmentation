@@ -26,6 +26,7 @@ class SegmentationDataset(Dataset):
         target=None,
         transforms=None,
         smpleff_regime=1.,
+        use_pseudolabel=False,
     ):
         """ Dataset constructor.
         Args:
@@ -43,6 +44,7 @@ class SegmentationDataset(Dataset):
         self.target = target
         self.transforms = transforms
         self.smpleff_regime = smpleff_regime
+        self.use_pseudolabel = use_pseudolabel
 
         self.in_memory = in_memory
 
@@ -51,10 +53,14 @@ class SegmentationDataset(Dataset):
         self.visible_labels = torch.ones(len(self.image_paths)).bool()
         if self.split == 'train':
             num_imgs = math.ceil(self.smpleff_regime * len(self.image_paths))
+            if not self.use_pseudolabel:
+                self.image_paths = self.image_paths[:num_imgs]
             self.visible_labels[num_imgs:] = False
         if self.root.stem == 'train' and self.split == 'all':
             num_imgs = math.ceil(self.smpleff_regime * len(self.image_paths))
             random.Random(self.split_seed).shuffle(self.image_paths)    # reproducible shuffle
+            if not self.use_pseudolabel:
+                self.image_paths = self.image_paths[:num_imgs]
             self.visible_labels[num_imgs:] = False
         
         if in_memory:

@@ -16,6 +16,7 @@ data:
         in_memory: false
         target: true
         smpleff_regime: 1.
+        use_pseudolabel: false
         transforms:
             _target_: albumentations.Compose
             _args_:

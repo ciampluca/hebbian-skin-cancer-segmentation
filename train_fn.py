@@ -80,13 +80,14 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
         if labels.ndim < 4: labels = labels.unsqueeze(dim=1) # Unsqueeze channel dimension if necessary
         images, labels = images.to(device), labels.to(device)
         visible_labels = torch.all(labels.view(labels.shape[0], -1) != -1, dim=1)
+        any_visible_label = torch.any(visible_labels)
 
         # computing outputs
         preds = model(images)
         preds_prob = (torch.sigmoid(preds)) if criterion.__class__.__name__.endswith("WithLogitsLoss") else preds
 
         # computing loss and backwarding it
-        loss = criterion(preds[visible_labels], labels[visible_labels])
+        loss = criterion(preds[visible_labels], labels[visible_labels]) if any_visible_label else torch.zeros(1, dtype=preds.dtype, device=device)
         entropy_loss = entropy_cost(preds_prob) if entropy_cost is not None else 0
         total_loss = loss + entropy_lambda * entropy_loss
         total_loss.backward()
@@ -99,6 +100,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
             coefs_average_surface_distance = average_surface_distance(labels.movedim(1, -1), preds_prob.movedim(1, -1), thr=0.5)
             batch_metrics = {
                 'loss': loss.item(),
+                'entropy_loss': entropy_loss.item(),
                 'dice': coefs_pixel['segm/dice'],
                 'jaccard': coefs_pixel['segm/jaccard'],
                 'hausdorff distance': coefs_hausdorff_distance['segm/95hd'],
