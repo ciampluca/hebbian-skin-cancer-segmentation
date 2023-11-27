@@ -3,6 +3,7 @@ from pathlib import Path
 from tqdm import tqdm
 from functools import partial
 import random
+import math
 import numpy as np
 
 import torch
@@ -49,8 +50,12 @@ class SegmentationDataset(Dataset):
         self.image_paths = self._get_images_in_split()
         self.visible_labels = torch.ones(len(self.image_paths)).bool()
         if self.split == 'train':
-            if self.smpleff_regime < 1:
-                self.visible_labels = torch.rand(len(self.image_paths)) < self.smpleff_regime
+            num_imgs = math.ceil(self.smpleff_regime * len(self.image_paths))
+            self.visible_labels[num_imgs:] = False
+        if self.root.stem == 'train' and self.split == 'all':
+            num_imgs = math.ceil(self.smpleff_regime * len(self.image_paths))
+            random.Random(self.split_seed).shuffle(self.image_paths)    # reproducible shuffle
+            self.visible_labels[num_imgs:] = False
         
         if in_memory:
             self.data = {}
