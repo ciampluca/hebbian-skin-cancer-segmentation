@@ -87,8 +87,8 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
         preds_prob = (torch.sigmoid(preds)) if criterion.__class__.__name__.endswith("WithLogitsLoss") else preds
 
         # computing loss and backwarding it
-        loss = criterion(preds[visible_labels], labels[visible_labels]) if any_visible_label else torch.zeros(1, dtype=preds.dtype, device=device)
-        entropy_loss = entropy_cost(preds_prob) if entropy_cost is not None else 0
+        loss = criterion(preds[visible_labels], labels[visible_labels]) if any_visible_label else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+        entropy_loss = entropy_cost(preds_prob) if entropy_cost is not None else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
         total_loss = loss + entropy_lambda * entropy_loss
         total_loss.backward()
 

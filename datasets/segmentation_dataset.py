@@ -131,7 +131,7 @@ class SegmentationDataset(Dataset):
 
         if self.target:
             datum = (image,
-                     mask if self.visible_labels[index] else mask.fill(-1) # Hide label information in semi-supervised training
+                     mask if self.visible_labels[index] else mask.fill_(-1) # Hide label information in semi-supervised training
                      )
         else:
             datum = (image,)

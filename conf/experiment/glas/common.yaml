@@ -14,8 +14,9 @@ optim:
 
 data:
     image_size: 480
+
     train: &common
         in_memory: true
+        use_pseudolabel: true
     validation:
         <<: *common   # reinsert 'train' block content
-    use_pseudolabel: false

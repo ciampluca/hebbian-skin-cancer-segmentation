@@ -151,7 +151,8 @@ class EntropyMetric:
     def __call__(self, outputs):
         B, C = outputs.shape[0], outputs.shape[1]
         if C == 1:
-            l_ent = - (1 / torch.log(2)) * (outputs * torch.log(outputs) + (1 - outputs) * torch.log(1 - outputs))
+            l_ent = - (1 / torch.log(torch.tensor([2], device=outputs.device, dtype=outputs.dtype))) * (outputs * torch.log(outputs) + (1 - outputs) * torch.log(1 - outputs))
         else:
-            l_ent = - (1 / torch.log(C)) * torch.sum(outputs * torch.log(outputs), dim=1, keepdim=True)
+            l_ent = - (1 / torch.log(torch.tensor([C], device=outputs.device, dtype=outputs.dtype))) * torch.sum(outputs * torch.log(outputs), dim=1, keepdim=True)
+        
         return torch.sum(l_ent) / B
