@@ -12,7 +12,7 @@ from tqdm import tqdm
 import pandas as pd
 from PIL import Image
 
-from metrics import dice_jaccard, hausdorff_distance, average_surface_distance, EntropyMetric
+from metrics import dice_jaccard, hausdorff_distance, average_surface_distance, EntropyMetricWithLogitLoss
 
 tqdm = partial(tqdm, dynamic_ncols=True)
 
@@ -70,7 +70,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
 
     criterion = hydra.utils.instantiate(cfg.optim.loss)
     entropy_lambda = cfg.optim.entropy_lambda
-    entropy_cost = EntropyMetric() if entropy_lambda != 0 else None
+    entropy_cost = EntropyMetricWithLogitLoss() if entropy_lambda != 0 else None
 
     metrics = []
     n_batches = len(dataloader)
@@ -88,7 +88,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
 
         # computing loss and backwarding it
         loss = criterion(preds[visible_labels], labels[visible_labels]) if any_visible_label else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-        entropy_loss = entropy_cost(preds_prob) if entropy_cost is not None else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+        entropy_loss = entropy_cost(preds) if entropy_cost is not None else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
         total_loss = loss + entropy_lambda * entropy_loss
         total_loss.backward()
 

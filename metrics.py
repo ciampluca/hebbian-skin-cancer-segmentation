@@ -156,3 +156,17 @@ class EntropyMetric:
             l_ent = - (1 / torch.log(torch.tensor([C], device=outputs.device, dtype=outputs.dtype))) * torch.sum(outputs * torch.log(outputs), dim=1, keepdim=True)
         
         return torch.sum(l_ent) / B
+
+class EntropyMetricWithLogitLoss:
+
+    def __init__(self):
+        pass
+    
+    def __call__(self, outputs):
+        B, C = outputs.shape[0], outputs.shape[1]
+        if C == 1:
+            t = torch.exp(-outputs)
+            l_ent = - (1 / torch.log(torch.tensor([2], device=outputs.device, dtype=outputs.dtype))) * (- torch.log(1 + t) - t * outputs / (1 + t))
+        else:
+            l_ent = - (1 / torch.log(torch.tensor([C], device=outputs.device, dtype=outputs.dtype))) * torch.sum(outputs * torch.log(outputs), dim=1, keepdim=True)
+        return torch.sum(l_ent) / B
