@@ -2,7 +2,7 @@
 
 defaults:
  - glas/common
- - /common/model: hunet
+ - /common/model: fcn32s
 
 model:
   hebb:
@@ -19,10 +19,15 @@ optim:
   batch_size: 4
   batch_accumulation: 4
 
-  epochs: 300
+  optimizer:
+    lr: 0.001
+
+  epochs: 400
 
   lr_scheduler:
-       milestones: [250, 280, 300]
+      milestones: [350, 380, 400]
 
-  entropy_lambda: 0.005
+data:
+  train:
+    use_pseudolabel: false
 

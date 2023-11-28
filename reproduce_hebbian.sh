@@ -125,16 +125,14 @@ EXPS=(
     #glas/hfcn32s-hpca_t_ft
     #glas/hunet2-hpca_ft
     #glas/hunet2-hpca_t_ft
-    glas/hunet-swta
-    #glas/hunet-swta_ft
-    glas/hunet-swta_t
-    #glas/hunet-swta_t_ft
-    #glas/hfcn32s-swta
-    #glas/hfcn32s-swta_ft
-    #glas/hfcn32s-swta_t
-    #glas/hfcn32s-swta_t_ft
-    #glas/hunet2-swta_ft
-    #glas/hunet2-hpca_ft
+    glas/hunet_base-swta
+    glas/hunet_base-swta_ft
+    glas/hunet_base-swta_t
+    glas/hunet_base-swta_t_ft
+    glas/hfcn32s_base-swta
+    glas/hfcn32s_base-swta_ft
+    glas/hfcn32s_base-swta_t
+    glas/hfcn32s_base-swta_t_ft
 )
 
 # Train & Evaluate (k-cross validation)
@@ -152,10 +150,18 @@ for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do    # Multiple repetitio
                     datasciencebowl2018*)
                         HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP model.hebb.k=$INV_TEMP_DataScienceBowl2018;;
                     glas*)
-                        HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP model.hebb.k=$INV_TEMP_GlaS;;
+                        if [ $REP -lt 1 ]; then        # this dataset has a fixed test split
+                            HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 model.hebb.k=$INV_TEMP_GlaS
+                        fi;;
                 esac;;
             *)
-                HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP;;
+                if [[ $EXP == glas* ]]; then
+                    if [ $REP -lt 1 ]; then        # this dataset has a fixed test split
+                        HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0
+                    fi
+                else
+                    HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP
+                fi;;
         esac
     done
 done
@@ -194,12 +200,14 @@ for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do
                         CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/DataScienceBowl2018 --in-memory True;;
                 esac;;
             glas*)
-                case $EXP in
-                    */*-swta*)
-                        CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$INV_TEMP_GlaS/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all;;
-                    *)
-                        CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all;;
-                esac;;
+                if [ $REP -lt 1 ]; then        # this dataset has a fixed test split
+                    case $EXP in
+                        */*-swta*)
+                            CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$INV_TEMP_GlaS/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True  --test-split all;;
+                        *)
+                            CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all;;
+                    esac
+                fi;;
         esac
     done
 done

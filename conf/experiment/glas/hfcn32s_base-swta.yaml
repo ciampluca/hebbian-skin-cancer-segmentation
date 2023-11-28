@@ -2,12 +2,12 @@
 
 defaults:
  - glas/common
- - /common/model: hunet
+ - /common/model: fcn32s
 
 model:
   hebb:
     w_nrm: True
-    mode: 'swta_t'
+    mode: 'swta'
     patchwise: True
     contrast: 1.
     uniformity: False
@@ -17,7 +17,14 @@ optim:
   batch_size: 4
   batch_accumulation: 4
 
-  epochs: 300
+  optimizer:
+    lr: 0.001
+
+  epochs: 400
 
   lr_scheduler:
-      milestones: [200, 250, 300]
+      milestones: [350, 380, 400]
+
+data:
+  train:
+    use_pseudolabel: false

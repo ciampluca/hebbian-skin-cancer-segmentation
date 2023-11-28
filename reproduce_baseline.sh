@@ -4,7 +4,7 @@
 
 set -e
 
-REPS=3
+REPS=1
 START_REP=0
 EVAL_GPU=0
 
@@ -12,26 +12,26 @@ EVAL_EXP_ROOT="./runs"
 EVAL_DATA_ROOT="./data"
 
 EXPS=(
-    #################################
-    # PH2 Dataset
-    #################################
-    ph2/unet
-    ph2/fcn32s
-    #################################
-    # ISIC2016 Dataset
-    #################################
-    isic2016/unet
-    isic2016/fcn32s
-    #################################
-    # KvasirSEG Dataset
-    #################################
-    kvasirSEG/unet
-    kvasirSEG/fcn32s
-    #################################
-    # DataScienceBowl2018 Dataset
-    #################################
-    datasciencebowl2018/unet
-    datasciencebowl2018/fcn32s
+    # #################################
+    # # PH2 Dataset
+    # #################################
+    # ph2/unet
+    # ph2/fcn32s
+    # #################################
+    # # ISIC2016 Dataset
+    # #################################
+    # isic2016/unet
+    # isic2016/fcn32s
+    # #################################
+    # # KvasirSEG Dataset
+    # #################################
+    # kvasirSEG/unet
+    # kvasirSEG/fcn32s
+    # #################################
+    # # DataScienceBowl2018 Dataset
+    # #################################
+    # datasciencebowl2018/unet
+    # datasciencebowl2018/fcn32s
     #################################
     # GlaS Dataset
     #################################
