@@ -7,7 +7,7 @@ data:
     image_std: [0.428206, 0.507778, 0.426366]
     
     train: &common
-        _target_: datasets.SegmentationDataset #datasets.SkinCancerSegmentationDataset
+        _target_: datasets.SegmentationDataset
         root: ${hydra:runtime.cwd}/data/GlaS/train
         split: all
         split_seed: 87  # not used since split is all

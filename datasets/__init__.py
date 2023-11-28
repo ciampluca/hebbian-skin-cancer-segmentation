@@ -1,2 +1,1 @@
-from .skin_cancer_segmentation_dataset import SkinCancerSegmentationDataset
 from .segmentation_dataset import SegmentationDataset

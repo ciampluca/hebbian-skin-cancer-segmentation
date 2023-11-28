@@ -12,3 +12,7 @@ optim:
 
   lr_scheduler:
       milestones: [350, 380, 400]
+
+data:
+  train:
+    use_pseudolabel: false
