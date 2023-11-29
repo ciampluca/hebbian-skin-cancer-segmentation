@@ -20,3 +20,4 @@ data:
         use_pseudolabel: true
     validation:
         <<: *common   # reinsert 'train' block content
+        use_pseudolabel: false

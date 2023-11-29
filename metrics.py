@@ -145,28 +145,14 @@ class ElboMetric:
 
 class EntropyMetric:
 
-    def __init__(self):
-        pass
+    def __init__(self, epsilon=1e-10):
+        self.epsilon = epsilon
     
     def __call__(self, outputs):
-        B, C = outputs.shape[0], outputs.shape[1]
-        if C == 1:
-            l_ent = - (1 / torch.log(torch.tensor([2], device=outputs.device, dtype=outputs.dtype))) * (outputs * torch.log(outputs) + (1 - outputs) * torch.log(1 - outputs))
-        else:
-            l_ent = - (1 / torch.log(torch.tensor([C], device=outputs.device, dtype=outputs.dtype))) * torch.sum(outputs * torch.log(outputs), dim=1, keepdim=True)
+        n, c, h, w = outputs.size()
         
-        return torch.sum(l_ent) / B
-
-class EntropyMetricWithLogitLoss:
-
-    def __init__(self):
-        pass
-    
-    def __call__(self, outputs):
-        B, C = outputs.shape[0], outputs.shape[1]
-        if C == 1:
-            t = torch.exp(-outputs)
-            l_ent = - (1 / torch.log(torch.tensor([2], device=outputs.device, dtype=outputs.dtype))) * (- torch.log(1 + t) - t * outputs / (1 + t))
+        if c == 1:
+            return -torch.sum(torch.mul(outputs, torch.log2(outputs + self.epsilon))) / (n * h * w * np.log2(2))
         else:
-            l_ent = - (1 / torch.log(torch.tensor([C], device=outputs.device, dtype=outputs.dtype))) * torch.sum(outputs * torch.log(outputs), dim=1, keepdim=True)
-        return torch.sum(l_ent) / B
+            return -torch.sum(torch.mul(outputs, torch.log2(outputs + self.epsilon))) / (n * h * w * np.log2(c))
+

@@ -12,7 +12,7 @@ from tqdm import tqdm
 import pandas as pd
 from PIL import Image
 
-from metrics import dice_jaccard, hausdorff_distance, average_surface_distance, EntropyMetricWithLogitLoss
+from metrics import dice_jaccard, hausdorff_distance, average_surface_distance, EntropyMetric
 
 tqdm = partial(tqdm, dynamic_ncols=True)
 
@@ -70,7 +70,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
 
     criterion = hydra.utils.instantiate(cfg.optim.loss)
     entropy_lambda = cfg.optim.entropy_lambda
-    entropy_cost = EntropyMetricWithLogitLoss() if entropy_lambda != 0 else None
+    entropy_cost = EntropyMetric() if entropy_lambda != 0 else None
 
     metrics = []
     n_batches = len(dataloader)
@@ -95,9 +95,9 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
         # NCHW -> NHWC
         batch_metrics = {'loss': loss.item()}
         if criterion.__class__.__name__ != 'ElboMetric':
-            coefs_pixel = dice_jaccard(labels.movedim(1, -1), preds_prob.movedim(1, -1))
-            coefs_hausdorff_distance = hausdorff_distance(labels.movedim(1, -1), preds_prob.movedim(1, -1), thr=0.5)
-            coefs_average_surface_distance = average_surface_distance(labels.movedim(1, -1), preds_prob.movedim(1, -1), thr=0.5)
+            coefs_pixel = dice_jaccard(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1)) if any_visible_label else None
+            coefs_hausdorff_distance = hausdorff_distance(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1), thr=0.5) if any_visible_label else None
+            coefs_average_surface_distance = average_surface_distance(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1), thr=0.5) if any_visible_label else None
             batch_metrics = {
                 'loss': loss.item(),
                 'entropy_loss': entropy_loss.item(),
@@ -108,7 +108,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
             }
         metrics.append(batch_metrics)
 
-        postfix = {metric: f'{value:.3f}' for metric, value in batch_metrics.items()}
+        postfix = {metric: f'{value:.3f}' if value is not None else None for metric, value in batch_metrics.items()}
         progress.set_postfix(postfix)
 
         if (i + 1) % cfg.optim.batch_accumulation == 0 or (i + 1) == n_batches:
@@ -120,7 +120,8 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
             batch_metrics.update({'lr': optimizer.param_groups[0]['lr']})
             n_iter = epoch * n_batches + i
             for metric, value in batch_metrics.items():
-                writer.add_scalar(f'train/{metric}', value, n_iter)
+                if value is not None:
+                    writer.add_scalar(f'train/{metric}', value, n_iter)
 
         if cfg.optim.debug and epoch % cfg.optim.debug_freq == 0 and cfg.optim.save_debug_train_images:
             for image, label, image_id, pred_seg_map in zip(images, labels, image_ids, preds_prob):

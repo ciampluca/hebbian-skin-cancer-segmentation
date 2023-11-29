@@ -6,8 +6,8 @@ defaults:
 
 model:
   hebb:
-    w_nrm: True
-    mode: 'swta_t'
+    w_nrm: False
+    mode: 'hpca_t'
     patchwise: True
     contrast: 1.
     uniformity: False
@@ -19,9 +19,6 @@ optim:
   batch_size: 4
   batch_accumulation: 4
 
-  optimizer:
-    lr: 0.001
-
   epochs: 400
 
   lr_scheduler:
@@ -30,4 +27,3 @@ optim:
 data:
   train:
     use_pseudolabel: false
-

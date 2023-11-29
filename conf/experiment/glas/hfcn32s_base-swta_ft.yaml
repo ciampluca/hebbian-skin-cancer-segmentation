@@ -2,7 +2,7 @@
 
 defaults:
  - glas/common
- - /common/model: fcn32s
+ - /common/model: hfcn32s
 
 model:
   hebb:
