@@ -4,7 +4,7 @@
 
 set -e
 
-REPS=1
+REPS=3
 START_REP=0
 EVAL_GPU=0
 
@@ -39,6 +39,8 @@ EXPS=(
     glas/fcn32s_base
     glas/unet
     glas/fcn32s
+    #glas/unet_base-256
+    #glas/fcn32s_base-256
 )
 
 # Train & Evaluate (k-cross validation)

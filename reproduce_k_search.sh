@@ -12,17 +12,12 @@ EVAL_EXP_ROOT="./runs"
 EVAL_DATA_ROOT="./data"
 
 K_VALUES=(
-    #0.001
-    #0.002
-    #0.005
-    #2
-    #5
-    6
-    #10
-    #12
-    #15
-    #18
-    #20
+    1
+    5
+    10
+    20
+    50
+    100
 )
 
 EXPS=(
@@ -67,11 +62,15 @@ EXPS=(
     #################################
     glas/hunet_base-swta
     glas/hunet_base-swta_ft
+    #glas/hunet-swta_ft
     glas/hunet_base-swta_t
+    #glas/hunet-swta_t_ft
     glas/hunet_base-swta_t_ft
     glas/hfcn32s_base-swta
     glas/hfcn32s_base-swta_ft
+    #glas/hfcn32s-swta_ft
     glas/hfcn32s_base-swta_t
+    #glas/hfcn32s-swta_t_ft
     glas/hfcn32s_base-swta_t_ft
 )
 
