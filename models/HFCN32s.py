@@ -9,8 +9,10 @@ default_hebb_params = dict(w_nrm=True, mode='swta', k=0.02, patchwise=True, cont
 
 
 class HFCN32s(nn.Module):
+
     def __init__(self, cfg, **kwargs):
         super(HFCN32s, self).__init__()
+
         hebb_params = default_hebb_params
         if hasattr(cfg.model, 'hebb'):
             hebb_params = dict(
@@ -32,6 +34,10 @@ class HFCN32s(nn.Module):
     def forward(self, x):
         return self.net(x)
     
+    def local_update(self):
+        for m in self.net.modules():
+            if hasattr(m, 'local_update'): m.local_update()
+    
     def state_dict(self):
         return self.net.state_dict()
     
@@ -47,11 +53,11 @@ class HFCN32sModel(nn.Module):
             self,
             in_channels=3, 
             out_channels=1,
-            hebb_params=default_hebb_params
+            hebb_params=None
     ):
         super(HFCN32sModel, self).__init__()
         
-        self.hebb_params = hebb_params
+        self.hebb_params = hebb_params if hebb_params is not None else default_hebb_params
         
         # conv1
         self.conv1_1 = self._get_conv_layer(in_channels, 64, 3, padding=100)
@@ -149,6 +155,8 @@ class HFCN32sModel(nn.Module):
         self.upscore = nn.ConvTranspose2d(256, out_channels, 64, stride=32, bias=False).to(device)
     
     def forward(self, x):
+        torch.set_grad_enabled(self.hebb_params['alpha'] == 1) 
+        
         h = x
         h = self.relu1_1(self.conv1_1(h))
         h = self.relu1_2(self.conv1_2(h))
@@ -180,11 +188,14 @@ class HFCN32sModel(nn.Module):
         h = self.drop7(h)
 
         h = self.score_fr(h)
+
+        torch.set_grad_enabled(True)
         h = self.upscore(h)
         
         crop_start_x = h.shape[2] // 2 - x.shape[2] // 2
         crop_start_y = h.shape[3] // 2 - x.shape[3] // 2
         h = h[:, :, crop_start_x:crop_start_x + x.shape[2], crop_start_y:crop_start_y + x.shape[3]]
+        
         return h
 
 

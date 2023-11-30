@@ -6,8 +6,8 @@ defaults:
 
 model:
   hebb:
-    w_nrm: False
-    mode: 'hpca_t'
+    w_nrm: True
+    mode: 'swta'
     patchwise: True
     contrast: 1.
     uniformity: False
@@ -22,6 +22,7 @@ optim:
   epochs: 300
 
   lr_scheduler:
-      milestones: [200, 250, 300]
+      milestones: [250, 280, 300]
 
   entropy_lambda: 0.005
+

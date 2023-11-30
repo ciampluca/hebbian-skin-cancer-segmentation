@@ -12,8 +12,10 @@ from utils import get_init_param_by_name
 default_hebb_params = dict(w_nrm=True, mode='swta', k=0.02, patchwise=True, contrast=1., uniformity=False, alpha=0)
 
 class HUNet(nn.Module):
+
     def __init__(self, cfg, **kwargs):
         super(HUNet, self).__init__()
+        
         hebb_params = default_hebb_params
         if hasattr(cfg.model, 'hebb'):
             hebb_params = dict(
@@ -123,6 +125,8 @@ class HUNetModel(nn.Module):
         if not self.last_bias: self.last.bias.requires_grad = False
     
     def forward(self, x):
+        torch.set_grad_enabled(self.hebb_params['alpha'] == 1) 
+
         h, w = x.shape[-2:]
         need_resize = (h % 32) or (w % 32)
 
@@ -141,6 +145,7 @@ class HUNetModel(nn.Module):
         for i, up in enumerate(self.up_path):
             x = up(x, blocks[-i - 1])
 
+        torch.set_grad_enabled(True)
         output = self.last(x)
 
         if need_resize:

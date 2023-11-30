@@ -149,6 +149,7 @@ class EntropyMetric:
         self.epsilon = epsilon
     
     def __call__(self, outputs):
+        outputs = torch.sigmoid(outputs)
         n, c, h, w = outputs.size()
         
         if c == 1:
