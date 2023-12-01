@@ -16,9 +16,6 @@ model:
   reset_clf: 1
 
 optim:
-  batch_size: 4
-  batch_accumulation: 4
-
   optimizer:
     lr: 0.001
 
