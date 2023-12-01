@@ -123,7 +123,7 @@ class HUNetModel(nn.Module):
         if not self.last_bias: self.last.bias.requires_grad = False
     
     def forward(self, x):
-        torch.set_grad_enabled(self.hebb_params['alpha'] == 1) 
+        torch.set_grad_enabled(not self.hebb_params['alpha'] == 1) 
 
         h, w = x.shape[-2:]
         need_resize = (h % 32) or (w % 32)
