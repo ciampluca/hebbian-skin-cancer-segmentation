@@ -114,14 +114,12 @@ class HUNetModel(nn.Module):
             prev_channels = 2 ** (wf + i)
 
         self.last_bias = last_bias
-        repl_params = {'alpha': 0}
-        self.last_hebb_params = {k: v if k not in repl_params else repl_params[k] for k, v in self.hebb_params.items()}
-        self.last = HebbianConv2d(prev_channels, out_channels, kernel_size=1, **adjust_hebb_params(self.last_hebb_params))
+        self.last = nn.Conv2d(prev_channels, out_channels, kernel_size=1, bias=self.last_bias)
         if not self.last_bias: self.last.bias.requires_grad = False
     
     def reset_clf(self, out_channels):
         device = self.last.weight.device
-        self.last = HebbianConv2d(self.last.in_channels, out_channels, kernel_size=1, **self.last_hebb_params).to(device)
+        self.last = nn.Conv2d(self.last.in_channels, out_channels, kernel_size=1, bias=self.last_bias).to(device)
         if not self.last_bias: self.last.bias.requires_grad = False
     
     def forward(self, x):
