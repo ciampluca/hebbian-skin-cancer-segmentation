@@ -11,7 +11,7 @@ from train_fn import predict
 
 
 log = logging.getLogger(__name__)
-
+log.setLevel(logging.INFO)
 
 
 def main(args):
@@ -42,7 +42,7 @@ def main(args):
     model.to(device)
     
     # resume from a saved checkpoint
-    if metric_name == 'last':
+    if args.best_on_metric == 'last':
         ckpt_path = run_path / 'last.pth'
     else:
         best_models_folder = run_path / 'best_models'

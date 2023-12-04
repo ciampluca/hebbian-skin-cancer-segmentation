@@ -209,21 +209,16 @@ for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do
                 if [ $REP -lt 1 ]; then        # this dataset has a fixed test split
                     case $EXP in
                         */*-swta*)
-                            case $EXP in
-                                */*_ft)
-                                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$INV_TEMP_GlaS/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True  --test-split all;;
-                                *)
-                                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$INV_TEMP_GlaS/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True  --test-split all --best-on-metric last;;
-                            esac;;
+                            CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$INV_TEMP_GlaS/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True  --test-split all;;
                         *)
                             case $EXP in
                                 */*_ft)
                                     CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all;;
                                 *)
                                     CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all --best-on-metric last;;
-                            esac;;
-                    esac;;
+                            esac
+                    esac
                 fi;;
-        esac;;
+        esac
     done
 done

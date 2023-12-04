@@ -18,6 +18,7 @@ tqdm = partial(tqdm, dynamic_ncols=True)
 
 # creating logger
 log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 
 def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_map, cfg, split="validation", outdir=None):
