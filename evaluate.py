@@ -42,9 +42,12 @@ def main(args):
     model.to(device)
     
     # resume from a saved checkpoint
-    best_models_folder = run_path / 'best_models'
-    metric_name = args.best_on_metric.replace('/', '-')
-    ckpt_path = best_models_folder / f'best_model_metric_segm-{metric_name}.pth'
+    if metric_name == 'last':
+        ckpt_path = run_path / 'last.pth'
+    else:
+        best_models_folder = run_path / 'best_models'
+        metric_name = args.best_on_metric.replace('/', '-')
+        ckpt_path = best_models_folder / f'best_model_metric_segm-{metric_name}.pth'
     log.info(f"[CKPT]: Loading {ckpt_path}")
     checkpoint = torch.load(ckpt_path, map_location=device)
     model.load_state_dict(checkpoint['model'])
@@ -62,7 +65,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Perform evaluation on test set')
     parser.add_argument('run', help='Path to run dir')
     parser.add_argument('-d', '--device', default='cuda', help='device to use for prediction')
-    parser.add_argument('--best-on-metric', default='dice', help='select snapshot that optimizes this metric [dice, jaccard, loss]')
+    parser.add_argument('--best-on-metric', default='dice', 
+                        help='select snapshot that optimizes this metric [dice, jaccard, 95hd, asd]; if last is specified, last snapshot saved is considered')
     parser.add_argument('--debug', type=int, default=1, help='draw images for debugging')
     parser.add_argument('--data-root', default=None, help='root of the images')
     parser.add_argument('--test-split', default='validation', help='split to be used for evaluation')
