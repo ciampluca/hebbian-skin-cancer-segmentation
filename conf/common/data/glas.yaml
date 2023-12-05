@@ -10,7 +10,7 @@ data:
         _target_: datasets.SegmentationDataset
         root: ${hydra:runtime.cwd}/data/GlaS/train
         split: all
-        split_seed: 87  # not used since split is all
+        split_seed: 87  # not used since split is all and regime=1, but useful when regime less than 1
         cross_val_num_buckets: 5  # not used since split is all
         cross_val_bucket_validation_index: 0  # not used since split is all
         in_memory: false

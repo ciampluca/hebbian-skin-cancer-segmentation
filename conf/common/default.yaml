@@ -19,3 +19,4 @@ hydra:
           - data.validation.cross_val_bucket_validation_index
           - data.train.smpleff_regime
           - model.hebb.k
+          - data.train.split_seed
