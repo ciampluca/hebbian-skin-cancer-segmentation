@@ -6,7 +6,7 @@
 
 set -e
 
-REPS=3
+REPS=1
 START_REP=0
 EVAL_GPU=0
 
@@ -115,30 +115,24 @@ EXPS=(
     #################################
     # GlaS Dataset
     #################################
-    glas/hunet_base-swta
-    glas/hunet_base-swta_ft
-    glas/hunet_base-swta_t
-    glas/hunet_base-swta_t_ft
-    glas/hunet-swta_ft
-    glas/hunet-swta_t_ft
-    glas/hfcn32s_base-swta
-    glas/hfcn32s_base-swta_ft
-    glas/hfcn32s_base-swta_t
-    glas/hfcn32s_base-swta_t_ft
-    glas/hfcn32s-swta_ft
-    glas/hfcn32s-swta_t_ft
+    #glas/hunet_base-swta
+    #glas/hunet_base-swta_ft
+    #glas/hunet_base-swta_t
+    #glas/hunet_base-swta_t_ft
+    #glas/hunet-swta_ft
+    #glas/hunet-swta_t_ft
+    #glas/hfcn32s_base-swta
+    #glas/hfcn32s_base-swta_ft
+    #glas/hfcn32s-swta_ft
     glas/hunet_base-hpca
-    glas/hunet_base-hpca_ft
+    #glas/hunet_base-hpca_ft
     glas/hunet_base-hpca_t
-    glas/hunet_base-hpca_t_ft
-    glas/hunet-hpca_ft
-    glas/hunet-hpca_t_ft
-    glas/hfcn32s_base-hpca
-    glas/hfcn32s_base-hpca_ft
-    glas/hfcn32s_base-hpca_t
-    glas/hfcn32s_base-hpca_t_ft
-    glas/hfcn32s-hpca_ft
-    glas/hfcn32s-hpca_t_ft
+    #glas/hunet_base-hpca_t_ft
+    #glas/hunet-hpca_ft
+    #glas/hunet-hpca_t_ft
+    #glas/hfcn32s_base-hpca
+    #glas/hfcn32s_base-hpca_ft
+    #glas/hfcn32s-hpca_ft
 )
 
 # Train & Evaluate (k-cross validation)
@@ -209,7 +203,12 @@ for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do
                 if [ $REP -lt 1 ]; then        # this dataset has a fixed test split
                     case $EXP in
                         */*-swta*)
-                            CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$INV_TEMP_GlaS/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True  --test-split all;;
+                            case $EXP in
+                                */*_ft)
+                                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$INV_TEMP_GlaS/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True  --test-split all;;
+                                *)
+                                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$INV_TEMP_GlaS/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True  --test-split all --best-on-metric last;;
+                            esac;;
                         *)
                             case $EXP in
                                 */*_ft)

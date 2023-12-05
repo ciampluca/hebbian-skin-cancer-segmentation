@@ -106,7 +106,7 @@ EXPS=(
     #################################
     glas/unet_base
     #glas/fcn32s_base
-    glas/unet
+    #glas/unet
     #glas/fcn32s
     #glas/hunet_base-swta_ft
     #glas/hunet_base-swta_t_ft
@@ -118,8 +118,8 @@ EXPS=(
     #glas/hfcn32s-swta_t_ft
     glas/hunet_base-hpca_ft
     glas/hunet_base-hpca_t_ft
-    glas/hunet-hpca_ft
-    glas/hunet-hpca_t_ft
+    #glas/hunet-hpca_ft
+    #glas/hunet-hpca_t_ft
     #glas/hfcn32s_base-hpca_ft
     #glas/hfcn32s_base-hpca_t_ft
     #glas/hfcn32s-hpca_ft
@@ -142,12 +142,12 @@ for R in ${REGIMES[@]}; do
                         datasciencebowl2018*)
                             HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R model.hebb.k=$INV_TEMP_DataScienceBowl2018;;
                         glas*)
-                            HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R data.train_split_seed=$R model.hebb.k=$INV_TEMP_GlaS;;                    
+                            HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R data.train.split_seed=$REP model.hebb.k=$INV_TEMP_GlaS;;                    
                     esac;;
                 *)
                     case $EXP in
                         glas*)
-                            HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R data.train_split_seed=$R;;
+                            HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R data.train.split_seed=$REP;;
                         *)
                             HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R;;
                     esac;;

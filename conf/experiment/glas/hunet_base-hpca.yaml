@@ -14,16 +14,13 @@ model:
     alpha: 1
 
 optim:
-  optimizer:
-    lr: 0.001
-    
   batch_size: 4
   batch_accumulation: 4
 
   epochs: 300
 
   lr_scheduler:
-      milestones: [200, 250, 300]
+      milestones: [100, 150, 200]
 
 data:
   train:
