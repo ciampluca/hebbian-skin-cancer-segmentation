@@ -96,9 +96,9 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
         # NCHW -> NHWC
         batch_metrics = {'loss': loss.item()}
         if criterion.__class__.__name__ != 'ElboMetric':
-            coefs_pixel = dice_jaccard(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1)) if any_visible_label else None
-            coefs_hausdorff_distance = hausdorff_distance(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1), thr=0.5) if any_visible_label else None
-            coefs_average_surface_distance = average_surface_distance(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1), thr=0.5) if any_visible_label else None
+            coefs_pixel = dice_jaccard(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1)) if any_visible_label else {'segm/dice': None, 'segm/jaccard': None}
+            coefs_hausdorff_distance = hausdorff_distance(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1), thr=0.5) if any_visible_label else {'segm/95hd': None}
+            coefs_average_surface_distance = average_surface_distance(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1), thr=0.5) if any_visible_label else {'segm/asd': None}
             batch_metrics = {
                 'loss': loss.item(),
                 'entropy_loss': entropy_loss.item(),
