@@ -81,7 +81,12 @@ for K in ${K_VALUES[@]}; do
             case $EXP in
                 glas*)
                     if [[ $REP -lt 1 ]]; then    # this dataset has a fixed test split
-                        HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 model.hebb.k=$K data.train.smpleff_regime=0.2 data.train.split_seed=$REP
+                        case $EXP in
+                            */*_ft)
+                                HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 model.hebb.k=$K data.train.smpleff_regime=0.2 data.train.split_seed=$REP;;
+                            *)
+                                HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 model.hebb.k=$K;;
+                        esac
                     fi;;
                 *)
                     HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP model.hebb.k=$K data.train.smpleff_regime=0.2;;
