@@ -10,4 +10,4 @@ optim:
   lr_scheduler:
       milestones: [250, 280, 300]
 
-  entropy_lambda: 0.005
+  entropy_lambda: adaptive

@@ -70,7 +70,10 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
     optimizer.zero_grad()
 
     criterion = hydra.utils.instantiate(cfg.optim.loss)
-    entropy_lambda = cfg.optim.entropy_lambda
+    if cfg.optim.entropy_lambda == 'adaptive':
+        entropy_lambda = 5 * ((epoch+1) / cfg.optim.epochs)
+    else:
+        entropy_lambda = cfg.optim.entropy_lambda
     entropy_cost = EntropyMetric() if entropy_lambda != 0 else None
 
     metrics = []
