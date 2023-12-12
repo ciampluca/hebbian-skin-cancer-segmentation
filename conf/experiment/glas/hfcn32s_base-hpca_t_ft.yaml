@@ -12,7 +12,7 @@ model:
     contrast: 1.
     uniformity: False
     alpha: 0
-  pretrained: last://last    # best://[dice, jaccard]
+  pretrained: best://dice  #last://last    # best://[dice, jaccard]
   reset_clf: 1
 
 optim:
