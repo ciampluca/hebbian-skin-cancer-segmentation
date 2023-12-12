@@ -20,4 +20,4 @@ optim:
   epochs: 300
 
   lr_scheduler:
-      milestones: [200, 250, 300]
+      milestones: [100, 150, 200]

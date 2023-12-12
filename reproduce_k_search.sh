@@ -60,18 +60,18 @@ EXPS=(
     #################################
     # GlaS Dataset
     #################################
-    glas/hunet_base-swta
+    glas/hunet-swta
+    glas/hunet-swta_ft
     glas/hunet_base-swta_ft
-    #glas/hunet-swta_ft
-    glas/hunet_base-swta_t
-    #glas/hunet-swta_t_ft
+    glas/hunet-swta_t
+    glas/hunet-swta_t_ft
     glas/hunet_base-swta_t_ft
-    glas/hfcn32s_base-swta
-    glas/hfcn32s_base-swta_ft
+    #glas/hfcn32s-swta
     #glas/hfcn32s-swta_ft
-    glas/hfcn32s_base-swta_t
+    #glas/hfcn32s_base-swta_ft
+    #glas/hfcn32s-swta_t
     #glas/hfcn32s-swta_t_ft
-    glas/hfcn32s_base-swta_t_ft
+    #glas/hfcn32s_base-swta_t_ft
 )
 
 # Train & Evaluate (k-cross validation)

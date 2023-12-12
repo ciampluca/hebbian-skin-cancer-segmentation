@@ -155,7 +155,7 @@ class HFCN32sModel(nn.Module):
         self.upscore = nn.ConvTranspose2d(256, out_channels, 64, stride=32, bias=False).to(device)
     
     def forward(self, x):
-        torch.set_grad_enabled(not self.hebb_params['alpha'] == 1) 
+        #torch.set_grad_enabled(not self.hebb_params['alpha'] == 1)
         
         h = x
         h = self.relu1_1(self.conv1_1(h))

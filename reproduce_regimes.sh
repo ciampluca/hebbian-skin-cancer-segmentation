@@ -104,27 +104,34 @@ EXPS=(
     #################################
     # GlaS Dataset
     #################################
-    #glas/unet_base
-    glas/unet_base-random-crop
-    #glas/fcn32s_base
     #glas/unet
+    glas/unet_base
     #glas/fcn32s
-    #glas/hunet_base-swta_ft
-    #glas/hunet_base-swta_t_ft
-    #glas/hunet-swta_ft
-    #glas/hunet-swta_t_ft
-    #glas/hfcn32s_base-swta_ft
-    #glas/hfcn32s_base-swta_t_ft
+    #glas/fcn32s_base
+    glas/hunet-swta
+    glas/hunet-swta_ft
+    glas/hunet_base-swta_ft
+    glas/hunet-swta_t
+    glas/hunet-swta_t_ft
+    glas/hunet_base-swta_t_ft
+    glas/hunet-hpca
+    glas/hunet-hpca_ft
+    glas/hunet_base-hpca_ft
+    glas/hunet-hpca_t
+    glas/hunet-hpca_t_ft
+    glas/hunet_base-hpca_t_ft
+    #glas/hfcn32s-swta
     #glas/hfcn32s-swta_ft
+    #glas/hfcn32s_base-swta_ft
+    #glas/hfcn32s-swta_t
     #glas/hfcn32s-swta_t_ft
-    #glas/hunet_base-hpca_ft
-    #glas/hunet_base-hpca_t_ft
-    #glas/hunet-hpca_ft
-    #glas/hunet-hpca_t_ft
-    #glas/hfcn32s_base-hpca_ft
-    #glas/hfcn32s_base-hpca_t_ft
+    #glas/hfcn32s_base-swta_t_ft
+    #glas/hfcn32s-hpca
     #glas/hfcn32s-hpca_ft
+    #glas/hfcn32s_base-hpca_ft
+    #glas/hfcn32s-hpca_t
     #glas/hfcn32s-hpca_t_ft
+    #glas/hfcn32s_base-hpca_t_ft
 )
 
 # Train & Evaluate (k-cross validation)
