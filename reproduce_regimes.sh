@@ -7,7 +7,7 @@
 
 set -e
 
-REPS=1
+REPS=10
 START_REP=0
 EVAL_GPU=0
 
@@ -104,7 +104,8 @@ EXPS=(
     #################################
     # GlaS Dataset
     #################################
-    glas/unet_base
+    #glas/unet_base
+    glas/unet_base-random-crop
     #glas/fcn32s_base
     #glas/unet
     #glas/fcn32s
@@ -116,8 +117,8 @@ EXPS=(
     #glas/hfcn32s_base-swta_t_ft
     #glas/hfcn32s-swta_ft
     #glas/hfcn32s-swta_t_ft
-    glas/hunet_base-hpca_ft
-    glas/hunet_base-hpca_t_ft
+    #glas/hunet_base-hpca_ft
+    #glas/hunet_base-hpca_t_ft
     #glas/hunet-hpca_ft
     #glas/hunet-hpca_t_ft
     #glas/hfcn32s_base-hpca_ft

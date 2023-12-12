@@ -6,6 +6,7 @@ defaults:
 
 optim:
   epochs: 300
+  val_batch_size: 1
 
   lr_scheduler:
       milestones: [250, 280, 300]
@@ -23,6 +24,10 @@ data:
                 - - _target_: albumentations.RandomCrop
                     height: ${data.image_size}
                     width: ${data.image_size}
+                  - _target_: albumentations.PadIfNeeded
+                    min_height: ${data.image_size}
+                    min_width: ${data.image_size}
+                    border_mode: 0   # it corresponds to cv2.BORDER_CONSTANT
                   - _target_: albumentations.VerticalFlip
                     p: 0.5
                   - _target_: albumentations.HorizontalFlip
@@ -48,7 +53,11 @@ data:
         transforms:
             _target_: albumentations.Compose
             _args_:
-                - - _target_: albumentations.Normalize
+                - - _target_: albumentations.PadIfNeeded
+                    min_height: ${data.image_size}
+                    min_width: ${data.image_size}
+                    border_mode: 0   # it corresponds to cv2.BORDER_CONSTANT
+                  - _target_: albumentations.Normalize
                     mean: ${data.image_mean}
                     std: ${data.image_std}
                   - _target_: albumentations.pytorch.ToTensorV2
