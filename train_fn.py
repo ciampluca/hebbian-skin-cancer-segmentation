@@ -71,7 +71,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
 
     criterion = hydra.utils.instantiate(cfg.optim.loss)
     if cfg.optim.entropy_lambda == 'adaptive':
-        entropy_lambda = 5 * ((epoch+1) / cfg.optim.epochs)
+        entropy_lambda = cfg.optim.starting_entropy_lambda * ((epoch+1) / cfg.optim.epochs)
     else:
         entropy_lambda = cfg.optim.entropy_lambda
     entropy_cost = EntropyMetric() if entropy_lambda != 0 else None
@@ -126,6 +126,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
             for metric, value in batch_metrics.items():
                 if value is not None:
                     writer.add_scalar(f'train/{metric}', value, n_iter)
+            writer.add_scalar('train/entropy_lambda', entropy_lambda, n_iter)
 
         if cfg.optim.debug and epoch % cfg.optim.debug_freq == 0 and cfg.optim.save_debug_train_images:
             for image, label, image_id, pred_seg_map in zip(images, labels, image_ids, preds_prob):

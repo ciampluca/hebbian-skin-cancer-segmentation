@@ -30,4 +30,5 @@ save_debug_train_images: true
 loss:
     _target_: torch.nn.BCEWithLogitsLoss
 
-entropy_lambda: 0
+entropy_lambda: 0   # used by EM; can be a fixed value or 'adaptive'
+starting_entropy_lambda: 5      # used only with 'adaptive' EM
