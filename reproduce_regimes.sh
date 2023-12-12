@@ -105,11 +105,11 @@ EXPS=(
     # GlaS Dataset
     #################################
     #glas/unet
-    glas/unet_base
+    #glas/unet_base
     #glas/fcn32s
     #glas/fcn32s_base
-    glas/hunet-swta
-    glas/hunet-swta_ft
+    #glas/hunet-swta
+    #glas/hunet-swta_ft
     glas/hunet_base-swta_ft
     glas/hunet-swta_t
     glas/hunet-swta_t_ft

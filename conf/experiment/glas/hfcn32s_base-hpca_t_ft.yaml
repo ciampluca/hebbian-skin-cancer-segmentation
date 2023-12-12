@@ -1,0 +1,29 @@
+# @package _global_
+
+defaults:
+ - glas/common
+ - /common/model: hfcn32s
+
+model:
+  hebb:
+    w_nrm: False
+    mode: 'hpca_t'
+    patchwise: True
+    contrast: 1.
+    uniformity: False
+    alpha: 0
+  pretrained: last://last    # best://[dice, jaccard]
+  reset_clf: 1
+
+optim:
+  optimizer:
+    lr: 0.001
+
+  epochs: 400
+
+  lr_scheduler:
+      milestones: [350, 380, 400]
+
+data:
+  train:
+    use_pseudolabel: false

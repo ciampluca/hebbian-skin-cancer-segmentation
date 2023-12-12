@@ -1,0 +1,30 @@
+# @package _global_
+
+defaults:
+ - glas/common
+ - /common/model: hunet
+
+model:
+  hebb:
+    w_nrm: False
+    mode: 'hpca'
+    patchwise: True
+    contrast: 1.
+    uniformity: False
+    alpha: 0
+  pretrained: last://last    # best://[dice, jaccard, loss]
+  reset_clf: 1
+
+optim:
+  batch_size: 4
+  batch_accumulation: 4
+
+  epochs: 300
+
+  lr_scheduler:
+      milestones: [200, 250, 300]
+
+data:
+  train:
+    use_pseudolabel: false
+
