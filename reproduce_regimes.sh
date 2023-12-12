@@ -7,7 +7,7 @@
 
 set -e
 
-REPS=1
+REPS=10
 START_REP=0
 EVAL_GPU=0
 
