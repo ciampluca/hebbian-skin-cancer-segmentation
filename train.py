@@ -72,24 +72,26 @@ def main(cfg):
                 cfg.model.pretrained, map_location=device, model_dir=cfg.model.cache_folder)
         elif cfg.model.pretrained.startswith('best://'):
             checkpoint_config_path = str(run_path).replace('_ft', "")
-            checkpoint_config_path = re.sub("regime-\d+\.\d+", "regime-1.0", checkpoint_config_path)
+            checkpoint_config_path = checkpoint_config_path.replace('_base', "")
+            #checkpoint_config_path = re.sub("regime-\d+\.\d+", "regime-1.0", checkpoint_config_path)
             checkpoint_config_path = Path(re.sub("run-\d+", "run-0", checkpoint_config_path))
-            exp_name = checkpoint_config_path.parts[-4]
-            if "base" not in exp_name:
-                new_exp_name = exp_name.split("-", 1)[0] + '_base-' + exp_name.split("-", 1)[1]
-                checkpoint_config_path = Path(str(checkpoint_config_path).replace(exp_name, new_exp_name))
+            #exp_name = checkpoint_config_path.parts[-4]
+            #if "base" not in exp_name:
+            #    new_exp_name = exp_name.split("-", 1)[0] + '_base-' + exp_name.split("-", 1)[1]
+            #    checkpoint_config_path = Path(str(checkpoint_config_path).replace(exp_name, new_exp_name))
             best_models_folder = checkpoint_config_path / 'best_models'
             metric_name = cfg.model.pretrained.split('best://', 1)[1]
             ckpt_path = best_models_folder / f'best_model_metric_segm-{metric_name}.pth'
             pre_trained_model = torch.load(ckpt_path, map_location=device)
         elif cfg.model.pretrained.startswith('last://'):
             checkpoint_config_path = str(run_path).replace('_ft', "")
-            checkpoint_config_path = re.sub("regime-\d+\.\d+", "regime-1.0", checkpoint_config_path)
+            #checkpoint_config_path = re.sub("regime-\d+\.\d+", "regime-1.0", checkpoint_config_path)
+            checkpoint_config_path = checkpoint_config_path.replace('_base', "")
             checkpoint_config_path = Path(re.sub("run-\d+", "run-0", checkpoint_config_path))
-            exp_name = checkpoint_config_path.parts[-4]
-            if "base" not in exp_name:
-                new_exp_name = exp_name.split("-", 1)[0] + '_base-' + exp_name.split("-", 1)[1]
-                checkpoint_config_path = Path(str(checkpoint_config_path).replace(exp_name, new_exp_name))
+            #exp_name = checkpoint_config_path.parts[-4]
+            #if "base" not in exp_name:
+            #    new_exp_name = exp_name.split("-", 1)[0] + '_base-' + exp_name.split("-", 1)[1]
+            #    checkpoint_config_path = Path(str(checkpoint_config_path).replace(exp_name, new_exp_name))
             ckpt_file_name = cfg.model.pretrained.split('last://', 1)[1]
             ckpt_path = checkpoint_config_path / f'{ckpt_file_name}.pth'
             pre_trained_model = torch.load(ckpt_path, map_location=device)

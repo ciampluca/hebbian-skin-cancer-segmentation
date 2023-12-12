@@ -20,6 +20,8 @@ K_VALUES=(
     100
 )
 
+REGIME=0.2
+
 EXPS=(
     # #################################
     # # PH2 Dataset
@@ -60,16 +62,16 @@ EXPS=(
     #################################
     # GlaS Dataset
     #################################
-    glas/hunet_base-swta
+    glas/hunet-swta
+    glas/hunet-swta_ft
     glas/hunet_base-swta_ft
-    #glas/hunet-swta_ft
-    glas/hunet_base-swta_t
+    glas/hunet-swta_t
+    glas/hunet-swta_t_ft
     glas/hunet_base-swta_t_ft
-    #glas/hunet-swta_t_ft
-    #glas/hfcn32s_base-swta
-    #glas/hfcn32s_base-swta_ft
+    #glas/hfcn32s-swta
     #glas/hfcn32s-swta_ft
-    #glas/hfcn32s_base-swta_t
+    #glas/hfcn32s_base-swta_ft
+    #glas/hfcn32s-swta_t
     #glas/hfcn32s-swta_t_ft
     #glas/hfcn32s_base-swta_t_ft
 )
@@ -81,15 +83,10 @@ for K in ${K_VALUES[@]}; do
             case $EXP in
                 glas*)
                     if [[ $REP -lt 1 ]]; then    # this dataset has a fixed test split
-                        case $EXP in
-                            */*_ft)
-                                HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 model.hebb.k=$K data.train.smpleff_regime=0.2 data.train.split_seed=$REP;;
-                            *)
-                                HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 model.hebb.k=$K;;
-                        esac
+                        HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 model.hebb.k=$K data.train.smpleff_regime=$REGIME data.train.split_seed=$REP;;
                     fi;;
                 *)
-                    HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP model.hebb.k=$K data.train.smpleff_regime=0.2;;
+                    HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP model.hebb.k=$K data.train.smpleff_regime=$REGIME;;
             esac
         done
     done
@@ -102,21 +99,16 @@ for K in ${K_VALUES[@]}; do
         for EXP in ${EXPS[@]}; do
             case $EXP in 
                 ph2*)
-                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/PH2 --in-memory True;;
+                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$REGIME/run-$REP --data-root $EVAL_DATA_ROOT/PH2 --in-memory True;;
                 isic2016*)
-                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/ISIC2016 --in-memory True;;
+                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$REGIME/run-$REP --data-root $EVAL_DATA_ROOT/ISIC2016 --in-memory True;;
                 kvasirSEG*)
-                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/KvasirSEG --in-memory True;;
+                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$REGIME/run-$REP --data-root $EVAL_DATA_ROOT/KvasirSEG --in-memory True;;
                 datasciencebowl2018*)
-                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/DataScienceBowl2018 --in-memory True;;
+                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$REGIME/run-$REP --data-root $EVAL_DATA_ROOT/DataScienceBowl2018 --in-memory True;;
                 glas*)
                     if [ $REP -lt 1 ]; then        # this dataset has a fixed test split
-                        case $EXP in
-                            */*_ft)
-                                CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-0.2/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all;;
-                            *)
-                                CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all --best-on-metric last;;
-                        esac
+                        CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$REGIME/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all;;
                     fi;;
             esac
         done
