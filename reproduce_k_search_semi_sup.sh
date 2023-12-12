@@ -83,7 +83,7 @@ for K in ${K_VALUES[@]}; do
             case $EXP in
                 glas*)
                     if [[ $REP -lt 1 ]]; then    # this dataset has a fixed test split
-                        HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 model.hebb.k=$K data.train.smpleff_regime=$REGIME data.train.split_seed=$REP;;
+                        HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 model.hebb.k=$K data.train.smpleff_regime=$REGIME data.train.split_seed=$REP
                     fi;;
                 *)
                     HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP model.hebb.k=$K data.train.smpleff_regime=$REGIME;;
@@ -108,7 +108,7 @@ for K in ${K_VALUES[@]}; do
                     CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$REGIME/run-$REP --data-root $EVAL_DATA_ROOT/DataScienceBowl2018 --in-memory True;;
                 glas*)
                     if [ $REP -lt 1 ]; then        # this dataset has a fixed test split
-                        CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$REGIME/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all;;
+                        CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$REGIME/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all
                     fi;;
             esac
         done
