@@ -56,7 +56,7 @@ def main(cfg):
     
     zca = None
     if 'swta' in cfg.model.hebb.mode:
-        zca = load_zca(cfg.data.zca_path)
+        zca = load_zca(cfg.data.zca_path).to(device)
     
     # create model
     torch.hub.set_dir(cfg.model.cache_folder)
