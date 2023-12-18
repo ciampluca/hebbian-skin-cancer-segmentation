@@ -26,6 +26,9 @@ def whiten(x, zca):
 	return torch.conv2d(x, zca, padding=((zca.shape[-2]-1)//2, (zca.shape[-1]-1)//2))
 
 def compute_zca(dataset, device='cpu', smoothing=1e-3, batch=4, filtershape=(3, 32, 32), imagesize=112):
+	if filtershape[1]%2 == 0 or filtershape[2]%2 == 0:
+		raise ValueError("ZCA filter height and width should be odd integers, but found {}".format(filtershape))
+	
 	dataroot = os.path.join(DATAROOT, dataset) # Path to the dataset folder
 	outpath = os.path.join(OUTDIR, dataset + '.pth') # Path to the outputfile where the ZCA matrix will be stored
 	
@@ -83,8 +86,9 @@ if __name__ == '__main__':
 	parser.add_argument('--device', default='cpu', choices=AVAILABLE_DEVICES, help="The device you want to use for the computation.")
 	parser.add_argument('--smoothing', type=float, default=1e-3, help="A number specifying the intensity of smoothing.")
 	parser.add_argument('--batch', type=int, default=4, help="A number specifying the intensity of smoothing.")
-	parser.add_argument('--filtershape', nargs=3, type=int, default=[3, 32, 32], help="A number specifying the intensity of smoothing.")
+	parser.add_argument('--filtershape', nargs=3, type=int, default=[3, 35, 35], help="A number specifying the intensity of smoothing.")
 	parser.add_argument('--imagesize', type=int, default=112, help="The desired size to reshape inputs.")
 	args = parser.parse_args()
+	
 	
 	compute_zca(args.dataset, args.device, args.smoothing, args.batch, args.filtershape, args.imagesize)
