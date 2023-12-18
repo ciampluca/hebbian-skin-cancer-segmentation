@@ -5,6 +5,7 @@ from tqdm import tqdm
 import torch
 from torch.utils.data import DataLoader
 import albumentations
+import albumentations.pytorch
 
 from datasets import SegmentationDataset
 
@@ -86,4 +87,4 @@ if __name__ == '__main__':
 	parser.add_argument('--imagesize', type=int, default=112, help="The desired size to reshape inputs.")
 	args = parser.parse_args()
 	
-	compute_zca(args.dataroot, args.device, args.smoothing, args.batch, args.filtershape, args.imagesize)
+	compute_zca(args.dataset, args.device, args.smoothing, args.batch, args.filtershape, args.imagesize)

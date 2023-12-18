@@ -5,7 +5,7 @@ data:
     image_size: 512
     image_mean: [0.787803, 0.512017, 0.784938]
     image_std: [0.428206, 0.507778, 0.426366]
-    zca_path: ${hydra:runtime.cwd}/zca/GlaS.pth
+    zca_path: ${hydra:runtime.cwd}/data/zca/GlaS.pth
     
     train: &common
         _target_: datasets.SegmentationDataset
