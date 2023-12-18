@@ -147,6 +147,7 @@ def validate(dataloader, model, device, epoch, zca, cfg):
     model.eval()
     validation_device = cfg.optim.val_device
     criterion = hydra.utils.instantiate(cfg.optim.loss)
+    zca = zca.to(validation_device)
 
     metrics = []
 
@@ -155,12 +156,13 @@ def validate(dataloader, model, device, epoch, zca, cfg):
 
     for i, sample in enumerate(progress):
         images, labels, image_ids, _ = sample
+        images, labels = images.to(validation_device), labels.to(validation_device)
         
         if zca is not None: images = whiten(images, zca)
 
         # Un-batching
         for image, label, image_id in zip(images, labels, image_ids):
-            image, label = torch.unsqueeze(image, dim=0).to(validation_device), label[None, None, ...].to(validation_device)
+            image, label = torch.unsqueeze(image, dim=0), label[None, None, ...]
 
             # computing outputs
             pred = model(image)
