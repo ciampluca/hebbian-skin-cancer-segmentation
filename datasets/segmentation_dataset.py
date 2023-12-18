@@ -33,7 +33,7 @@ class SegmentationDataset(Dataset):
         """
         assert split in ('all', 'train', 'validation'), "Split must be one of ('train', 'validation', 'all')"
         assert split == 'all' or split_seed is not None, "You must supply split_seed when split != 'all'"
-        assert cross_val_num_buckets > cross_val_bucket_validation_index, "Cross Validation bucket index must be lower than total number of buckets"
+        assert split == 'all' or cross_val_num_buckets > cross_val_bucket_validation_index, "Cross Validation bucket index must be lower than total number of buckets"
 
         self.root = Path(root)
         

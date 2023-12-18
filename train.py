@@ -14,6 +14,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from train_fn import train_one_epoch, validate
 from utils import seed_everything, seed_worker, CheckpointManager
+from data.compute_zca import load_zca
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -52,7 +53,11 @@ def main(cfg):
     valid_dataset = hydra.utils.instantiate(cfg.data.validation)
     valid_loader = DataLoader(valid_dataset, batch_size=cfg.optim.val_batch_size, num_workers=cfg.optim.num_workers, worker_init_fn=seed_worker, generator=g)
     log.info(f'[VALID] {valid_dataset}')
-
+    
+    zca = None
+    if 'swta' in cfg.model.hebb.mode:
+        zca = load_zca(cfg.data.zca_path)
+    
     # create model
     torch.hub.set_dir(cfg.model.cache_folder)
     model = hydra.utils.instantiate(cfg.model.module, cfg)
@@ -74,7 +79,7 @@ def main(cfg):
             checkpoint_config_path = str(run_path).replace('_ft', "")
             checkpoint_config_path = checkpoint_config_path.replace('_base', "")
             #checkpoint_config_path = re.sub("regime-\d+\.\d+", "regime-1.0", checkpoint_config_path)
-            checkpoint_config_path = Path(re.sub("run-\d+", "run-0", checkpoint_config_path))
+            checkpoint_config_path = Path(checkpoint_config_path)
             #exp_name = checkpoint_config_path.parts[-4]
             #if "base" not in exp_name:
             #    new_exp_name = exp_name.split("-", 1)[0] + '_base-' + exp_name.split("-", 1)[1]
@@ -87,7 +92,7 @@ def main(cfg):
             checkpoint_config_path = str(run_path).replace('_ft', "")
             #checkpoint_config_path = re.sub("regime-\d+\.\d+", "regime-1.0", checkpoint_config_path)
             checkpoint_config_path = checkpoint_config_path.replace('_base', "")
-            checkpoint_config_path = Path(re.sub("run-\d+", "run-0", checkpoint_config_path))
+            checkpoint_config_path = Path(checkpoint_config_path)
             #exp_name = checkpoint_config_path.parts[-4]
             #if "base" not in exp_name:
             #    new_exp_name = exp_name.split("-", 1)[0] + '_base-' + exp_name.split("-", 1)[1]
@@ -139,7 +144,7 @@ def main(cfg):
     progress = trange(start_epoch, cfg.optim.epochs, initial=start_epoch)
     for epoch in progress:
         # train
-        train_metrics = train_one_epoch(train_loader, model, optimizer, device, writer, epoch, cfg)
+        train_metrics = train_one_epoch(train_loader, model, optimizer, device, writer, epoch, zca, cfg)
         scheduler.step()  # update lr scheduler
 
         # convert for pandas
@@ -150,7 +155,7 @@ def main(cfg):
 
         # evaluation
         if (epoch + 1) % cfg.optim.val_freq == 0:
-            valid_metrics = validate(valid_loader, model, device, epoch, cfg)
+            valid_metrics = validate(valid_loader, model, device, epoch, zca, cfg)
 
             for metric, value in valid_metrics.items():  # log to tensorboard
                 writer.add_scalar(f'valid/{metric}', value, epoch)

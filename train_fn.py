@@ -13,6 +13,7 @@ import pandas as pd
 from PIL import Image
 
 from metrics import dice_jaccard, hausdorff_distance, average_surface_distance, EntropyMetric
+from data.compute_zca import whiten
 
 tqdm = partial(tqdm, dynamic_ncols=True)
 
@@ -64,7 +65,7 @@ def _save_debug_metrics(metrics, epoch):
     metrics.to_csv(debug_dir / Path(csv_file_path), index=False)
 
 
-def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
+def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, zca, cfg):
     """ Trains the model for one epoch. """
     model.train()
     optimizer.zero_grad()
@@ -85,6 +86,9 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
         images, labels = images.to(device), labels.to(device)
         visible_labels = torch.all(labels.view(labels.shape[0], -1) != -1, dim=1)
         any_visible_label = torch.any(visible_labels)
+        
+        # preprocess inputs
+        if zca is not None: images = whiten(images, zca)
 
         # computing outputs
         preds = model(images)
@@ -138,7 +142,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
 
 
 @torch.no_grad()
-def validate(dataloader, model, device, epoch, cfg):
+def validate(dataloader, model, device, epoch, zca, cfg):
     """ Evaluate model on validation data. """
     model.eval()
     validation_device = cfg.optim.val_device
@@ -151,6 +155,8 @@ def validate(dataloader, model, device, epoch, cfg):
 
     for i, sample in enumerate(progress):
         images, labels, image_ids, _ = sample
+        
+        if zca is not None: images = whiten(images, zca)
 
         # Un-batching
         for image, label, image_id in zip(images, labels, image_ids):
