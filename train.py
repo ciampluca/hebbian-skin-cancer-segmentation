@@ -79,6 +79,7 @@ def main(cfg):
             checkpoint_config_path = str(run_path).replace('_ft', "")
             checkpoint_config_path = checkpoint_config_path.replace('_base', "")
             #checkpoint_config_path = re.sub("regime-\d+\.\d+", "regime-1.0", checkpoint_config_path)
+            #checkpoint_config_path = Path(re.sub("run-\d+", "run-0", checkpoint_config_path))
             checkpoint_config_path = Path(checkpoint_config_path)
             #exp_name = checkpoint_config_path.parts[-4]
             #if "base" not in exp_name:
@@ -90,8 +91,9 @@ def main(cfg):
             pre_trained_model = torch.load(ckpt_path, map_location=device)
         elif cfg.model.pretrained.startswith('last://'):
             checkpoint_config_path = str(run_path).replace('_ft', "")
-            #checkpoint_config_path = re.sub("regime-\d+\.\d+", "regime-1.0", checkpoint_config_path)
             checkpoint_config_path = checkpoint_config_path.replace('_base', "")
+            #checkpoint_config_path = re.sub("regime-\d+\.\d+", "regime-1.0", checkpoint_config_path)
+            #checkpoint_config_path = Path(re.sub("run-\d+", "run-0", checkpoint_config_path))
             checkpoint_config_path = Path(checkpoint_config_path)
             #exp_name = checkpoint_config_path.parts[-4]
             #if "base" not in exp_name:

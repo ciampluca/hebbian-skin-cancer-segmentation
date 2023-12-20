@@ -69,9 +69,6 @@ EXPS=(
     #glas/hfcn32s-swta
     #glas/hfcn32s-swta_ft
     #glas/hfcn32s_base-swta_ft
-    #glas/hfcn32s-swta_t
-    #glas/hfcn32s-swta_t_ft
-    #glas/hfcn32s_base-swta_t_ft
 )
 
 # Train & Evaluate (k-cross validation)

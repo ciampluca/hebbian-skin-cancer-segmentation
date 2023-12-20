@@ -4,7 +4,7 @@
 
 set -e
 
-REPS=1
+REPS=10
 START_REP=0
 EVAL_GPU=0
 
@@ -71,9 +71,6 @@ EXPS=(
     #glas/hfcn32s-swta
     #glas/hfcn32s-swta_ft
     #glas/hfcn32s_base-swta_ft
-    #glas/hfcn32s-swta_t
-    #glas/hfcn32s-swta_t_ft
-    #glas/hfcn32s_base-swta_t_ft
 )
 
 # Train & Evaluate (k-cross validation)
@@ -107,9 +104,7 @@ for K in ${K_VALUES[@]}; do
                 datasciencebowl2018*)
                     CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$REGIME/run-$REP --data-root $EVAL_DATA_ROOT/DataScienceBowl2018 --in-memory True;;
                 glas*)
-                    if [ $REP -lt 1 ]; then        # this dataset has a fixed test split
-                        CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$REGIME/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all
-                    fi;;
+                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$REGIME/run-$REP --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all;;
             esac
         done
     done

@@ -5,9 +5,9 @@ defaults:
  - /common/model: unet
 
 optim:
-  epochs: 300
+  epochs: 350
 
   lr_scheduler:
-      milestones: [250, 280, 300]
+      milestones: [300, 330, 350]
 
   entropy_lambda: adaptive
