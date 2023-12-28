@@ -1,23 +1,15 @@
 #!/bin/bash
 
-# This script trains and evaluates Hebbian semantic segmentation models
-
-# Concerning Hebbian models belonging to the SWTA paradigm, it is needed to set the best temperature value found in the reproduce_k_search script
+# This script trains and evaluates Hebbian semantic segmentation models based on unsupervised HPCA
 
 set -e
 
-REPS=1
+REPS=1      # 1 because only pretraining
 START_REP=0
 EVAL_GPU=0
 
 EVAL_EXP_ROOT="./runs"
 EVAL_DATA_ROOT="./data"
-
-INV_TEMP_PH2=5        # to be set accordingly, used by SWTA
-INV_TEMP_ISIC2016=2        # to be set accordingly, used by SWTA
-INV_TEMP_KvasirSEG=5        # to be set accordingly, used by SWTA
-INV_TEMP_DataScienceBowl2018=10        # to be set accordingly, used by SWTA
-INV_TEMP_GlaS=15         # to be set accordingly, used by SWTA
 
 EXPS=(
     #################################
@@ -115,24 +107,9 @@ EXPS=(
     #################################
     # GlaS Dataset
     #################################
-    #glas/hunet_base-swta
-    #glas/hunet_base-swta_ft
-    #glas/hunet_base-swta_t
-    #glas/hunet_base-swta_t_ft
-    #glas/hunet-swta_ft
-    #glas/hunet-swta_t_ft
-    #glas/hfcn32s_base-swta
-    #glas/hfcn32s_base-swta_ft
-    #glas/hfcn32s-swta_ft
-    glas/hunet_base-hpca
-    #glas/hunet_base-hpca_ft
-    glas/hunet_base-hpca_t
-    #glas/hunet_base-hpca_t_ft
-    #glas/hunet-hpca_ft
-    #glas/hunet-hpca_t_ft
+    #glas/hunet_base-hpca
+    #glas/hunet_base-hpca_t
     #glas/hfcn32s_base-hpca
-    #glas/hfcn32s_base-hpca_ft
-    #glas/hfcn32s-hpca_ft
 )
 
 # Train & Evaluate (k-cross validation)
@@ -151,7 +128,7 @@ for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do    # Multiple repetitio
                         HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP model.hebb.k=$INV_TEMP_DataScienceBowl2018;;
                     glas*)
                         if [ $REP -lt 1 ]; then        # this dataset has a fixed test split
-                            HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 model.hebb.k=$INV_TEMP_GlaS
+                            HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0
                         fi;;
                 esac;;
             *)
@@ -201,22 +178,7 @@ for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do
                 esac;;
             glas*)
                 if [ $REP -lt 1 ]; then        # this dataset has a fixed test split
-                    case $EXP in
-                        */*-swta*)
-                            case $EXP in
-                                */*_ft)
-                                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$INV_TEMP_GlaS/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True  --test-split all;;
-                                *)
-                                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$INV_TEMP_GlaS/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True  --test-split all --best-on-metric last;;
-                            esac;;
-                        *)
-                            case $EXP in
-                                */*_ft)
-                                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all;;
-                                *)
-                                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all --best-on-metric last;;
-                            esac
-                    esac
+                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all --best-on-metric last --output-file-name preds_from_last.csv;;
                 fi;;
         esac
     done

@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# This script aims to search the best inv-temp hyperparameter concerning the Hebbian models belonging to the SWTA paradigm
+# This script aims to search the best inv-temp hyperparameter concerning the Hebbian models 
+# belonging to the SWTA paradigm (both unsupervised and semi-supervised) varying the regimes
 
 set -e
 
@@ -98,7 +99,7 @@ for R in ${REGIMES[@]}; do
                                 if [[ $REP -lt 1 ]]; then    # this dataset has a fixed test split
                                     HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 model.hebb.k=$K
                                 fi;;
-                        esac
+                        esac;;
                     *)
                         HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP model.hebb.k=$K data.train.smpleff_regime=$R;;
                 esac
@@ -125,7 +126,7 @@ for R in ${REGIMES[@]}; do
                     glas*)
                         case $EXP in
                             */*_ft)
-                                CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$R/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all --best-on-metric dice;;
+                                CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all --best-on-metric dice;;
                             *)
                                 if [[ $REP -lt 1 ]]; then    # this dataset has a fixed test split
                                     CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all --best-on-metric last --output-file-name preds_from_last.csv

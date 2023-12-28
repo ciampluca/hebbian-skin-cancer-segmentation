@@ -1,9 +1,7 @@
 #!/bin/bash
 
-# This script train and evaluate Hebbian models with different regimes, i.e, considering increasing portions of labeled data,
-# starting from the models pre-trained in an unsupervised way.
-
-# Concerning Hebbian models belonging to the SWTA paradigm, it is needed to set the best temperature value found in the reproduce_k_search script
+# This script trains and evaluates Hebbian semantic segmentation models based on semi-supervised HPCA varying the regime 
+# and supervised-only concerning the baselines
 
 set -e
 
