@@ -11,7 +11,7 @@ model:
     patchwise: True
     contrast: 1.
     uniformity: False
-    alpha: 0
+    alpha: 0.
   pretrained: last://last    # best://[dice, jaccard]
   reset_clf: 1
 
