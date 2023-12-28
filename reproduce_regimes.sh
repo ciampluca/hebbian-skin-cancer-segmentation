@@ -105,22 +105,14 @@ EXPS=(
     # GlaS Dataset
     #################################
     #glas/unet_base
-    glas/unet_base-random-crop
+    #glas/unet_base-random-crop
     #glas/fcn32s_base
     #glas/unet
     #glas/fcn32s
-    #glas/hunet_base-swta_ft
-    #glas/hunet_base-swta_t_ft
-    #glas/hunet-swta_ft
-    #glas/hunet-swta_t_ft
-    #glas/hfcn32s_base-swta_ft
-    #glas/hfcn32s_base-swta_t_ft
-    #glas/hfcn32s-swta_ft
-    #glas/hfcn32s-swta_t_ft
     #glas/hunet_base-hpca_ft
     #glas/hunet_base-hpca_t_ft
-    #glas/hunet-hpca_ft
-    #glas/hunet-hpca_t_ft
+    glas/hunet-hpca_ft
+    glas/hunet-hpca_t_ft
     #glas/hfcn32s_base-hpca_ft
     #glas/hfcn32s_base-hpca_t_ft
     #glas/hfcn32s-hpca_ft
@@ -132,27 +124,11 @@ for R in ${REGIMES[@]}; do
     for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do    # Multiple repetitions of the same experiment, varying the validation bucket
         for EXP in ${EXPS[@]}; do
             case $EXP in
-                */*-swta*)
-                    case $EXP in
-                        ph2*)
-                            HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R model.hebb.k=$INV_TEMP_PH2;;
-                        isic2016*)
-                            HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R model.hebb.k=$INV_TEMP_ISIC2016;;
-                        kvasirSEG*)
-                            HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R model.hebb.k=$INV_TEMP_KvasirSEG;;
-                        datasciencebowl2018*)
-                            HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R model.hebb.k=$INV_TEMP_DataScienceBowl2018;;
-                        glas*)
-                            HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R data.train.split_seed=$REP model.hebb.k=$INV_TEMP_GlaS;;                    
-                    esac;;
+                glas*)
+                    HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R data.train.split_seed=$REP;;
                 *)
-                    case $EXP in
-                        glas*)
-                            HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R data.train.split_seed=$REP;;
-                        *)
-                            HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R;;
-                    esac;;
-            esac
+                    HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R;;
+            esac;;
         done
     done
 done
@@ -192,12 +168,7 @@ for R in ${REGIMES[@]}; do
                             CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/DataScienceBowl2018 --in-memory True;;
                     esac;;
                 glas*)
-                    case $EXP in
-                        */*-swta*)
-                            CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$INV_TEMP_GlaS/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all;;
-                        *)
-                            CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all;;
-                    esac;;
+                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all --best-on-metric dice;;
             esac
         done
     done

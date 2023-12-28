@@ -4,7 +4,7 @@
 
 set -e
 
-REPS=1
+REPS=10
 START_REP=0
 EVAL_GPU=0
 
@@ -18,6 +18,16 @@ K_VALUES=(
     20
     50
     100
+)
+
+REGIMES=(
+    #0.05
+    #0.1
+    0.2
+    #0.25
+    #0.5
+    #0.75
+    #1.0     # it should be the same of the one in reproduce_hebbian script
 )
 
 EXPS=(
@@ -75,50 +85,54 @@ EXPS=(
 )
 
 # Train & Evaluate (k-cross validation)
-for K in ${K_VALUES[@]}; do
-    for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do    # Multiple repetitions of the same experiment, varying the validation bucket
-        for EXP in ${EXPS[@]}; do
-            case $EXP in
-                glas*)
-                    if [[ $REP -lt 1 ]]; then    # this dataset has a fixed test split
+for R in ${REGIMES[@]}; do
+    for K in ${K_VALUES[@]}; do
+        for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do    # Multiple repetitions of the same experiment, varying the validation bucket
+            for EXP in ${EXPS[@]}; do
+                case $EXP in
+                    glas*)
                         case $EXP in
                             */*_ft)
-                                HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 model.hebb.k=$K data.train.smpleff_regime=0.2 data.train.split_seed=$REP;;
+                                HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 model.hebb.k=$K data.train.smpleff_regime=$R data.train.split_seed=$REP;;
                             *)
-                                HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 model.hebb.k=$K;;
+                                if [[ $REP -lt 1 ]]; then    # this dataset has a fixed test split
+                                    HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 model.hebb.k=$K
+                                fi;;
                         esac
-                    fi;;
-                *)
-                    HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP model.hebb.k=$K data.train.smpleff_regime=0.2;;
-            esac
+                    *)
+                        HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP model.hebb.k=$K data.train.smpleff_regime=$R;;
+                esac
+            done
         done
     done
 done
 
 
-# Test 
-for K in ${K_VALUES[@]}; do
-    for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do
-        for EXP in ${EXPS[@]}; do
-            case $EXP in 
-                ph2*)
-                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/PH2 --in-memory True;;
-                isic2016*)
-                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/ISIC2016 --in-memory True;;
-                kvasirSEG*)
-                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/KvasirSEG --in-memory True;;
-                datasciencebowl2018*)
-                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/DataScienceBowl2018 --in-memory True;;
-                glas*)
-                    if [ $REP -lt 1 ]; then        # this dataset has a fixed test split
+# Test
+for R in ${REGIMES[@]}; do
+    for K in ${K_VALUES[@]}; do
+        for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do
+            for EXP in ${EXPS[@]}; do
+                case $EXP in
+                    ph2*)
+                        CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/PH2 --in-memory True;;
+                    isic2016*)
+                        CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/ISIC2016 --in-memory True;;
+                    kvasirSEG*)
+                        CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/KvasirSEG --in-memory True;;
+                    datasciencebowl2018*)
+                        CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/DataScienceBowl2018 --in-memory True;;
+                    glas*)
                         case $EXP in
                             */*_ft)
-                                CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-0.2/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all;;
+                                CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$R/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all --best-on-metric dice;;
                             *)
-                                CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all --best-on-metric last;;
+                                if [[ $REP -lt 1 ]]; then    # this dataset has a fixed test split
+                                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all --best-on-metric last --output-file-name preds_from_last.csv
+                                fi;;
                         esac
-                    fi;;
-            esac
+                esac
+            done
         done
     done
 done
