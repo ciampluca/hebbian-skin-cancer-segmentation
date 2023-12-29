@@ -2,7 +2,7 @@
 
 data:
     drop_last_batch: True
-    image_size: 512
+    image_size: 480
     image_mean: [0.787803, 0.512017, 0.784938]
     image_std: [0.428206, 0.507778, 0.426366]
     
@@ -10,8 +10,8 @@ data:
         _target_: datasets.SegmentationDataset
         root: ${hydra:runtime.cwd}/data/GlaS/train
         split: all
-        split_seed: 87  # not used since split is all and regime=1, but useful when regime less than 1
-        cross_val_num_buckets: 5  # not used since split is all
+        split_seed: 87 
+        cross_val_num_buckets: 5  # not used since split is all (the dataset has a fixed test set)
         cross_val_bucket_validation_index: 0  # not used since split is all
         in_memory: false
         target: true
