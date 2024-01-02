@@ -1,7 +1,7 @@
 # @package _global_
 
 data:
-    drop_last_batch: True
+    drop_last_batch: False
     image_size: 480
     image_mean: [0.787803, 0.512017, 0.784938]
     image_std: [0.428206, 0.507778, 0.426366]

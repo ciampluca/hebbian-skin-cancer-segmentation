@@ -1,3 +1,4 @@
+import numpy as np
 from pathlib import Path
 import cv2
 import albumentations as A
@@ -14,7 +15,6 @@ class MyDataset(Dataset):
     def __init__(
         self,
         root='data/PH2',
-        image_size=480,
     ):
         
         self.root = Path(root)
@@ -22,7 +22,6 @@ class MyDataset(Dataset):
         self.data = [self._get_image(image_path) for image_path in image_paths]
 
         self.transforms = A.Compose([
-            A.Resize(image_size, image_size),
             A.Normalize(0, 1),
             ToTensorV2(),
         ])
@@ -52,36 +51,36 @@ class MyDataset(Dataset):
 
 
 def main():
-    data_root = '/data/KvasirSEG'
-    image_size = 480
-    batch_size = 4
+    data_root = '/mnt/Workspace/hebbian-skin-cancer-segmentation/data/PH2'
 
     dataset = MyDataset(
         root=data_root,
-        image_size=image_size,
     )
 
     loader = DataLoader(
         dataset,
-        batch_size=batch_size,
+        batch_size=1,
         num_workers=1,
         shuffle=False,
         #drop_last=True,
     )
 
 
-    mean = 0.
-    std = 0.
+    mean_r, mean_g, mean_b = 0., 0., 0.
+    std_r, std_g, std_b = 0., 0., 0.
     nb_samples = 0.
     for data in loader:
-        batch_samples = data.size(0)
-        data = data.view(batch_samples, data.size(1), -1)
-        mean += data.mean(2).sum(0)
-        std += data.std(2).sum(0)
+        batch_samples = data.shape[0]
+        mean_r +=  torch.mean(data[0, 0])
+        mean_g +=  torch.mean(data[0, 1])
+        mean_b +=  torch.mean(data[0, 2])
+        std_r +=  torch.std(data[0, 0])
+        std_g +=  torch.std(data[0, 1])
+        std_b +=  torch.std(data[0, 2])
         nb_samples += batch_samples
 
-    mean /= nb_samples
-    std /= nb_samples
+    mean = [mean_r / nb_samples, mean_g / nb_samples, mean_b / nb_samples]
+    std = [std_r / nb_samples, std_g / nb_samples, std_b / nb_samples]
 
     print("Mean: {}, Std: {}".format(mean, std))
 

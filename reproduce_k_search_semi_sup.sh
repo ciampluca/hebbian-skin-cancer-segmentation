@@ -85,10 +85,10 @@ EXPS=(
     #glas/hfcn32s_base-swta_t_ft
 )
 
-# Train & Evaluate (k-cross validation)
+# Train & Evaluate 
 for R in ${REGIMES[@]}; do
     for K in ${K_VALUES[@]}; do
-        for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do    # Multiple repetitions of the same experiment, varying the validation bucket
+        for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do    
             for EXP in ${EXPS[@]}; do
                 case $EXP in
                     glas*)

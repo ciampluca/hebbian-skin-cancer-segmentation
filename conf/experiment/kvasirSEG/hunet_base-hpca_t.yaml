@@ -1,19 +1,17 @@
 # @package _global_
 
 defaults:
- - ph2/common
+ - kvasirSEG/common
  - /common/model: hunet
 
 model:
   hebb:
     w_nrm: False
-    mode: 'hpca'
+    mode: 'hpca_t'
     patchwise: True
     contrast: 1.
     uniformity: False
-    alpha: 0
-  pretrained: last://last    # best://[dice, jaccard, loss]
-  reset_clf: 1
+    alpha: 1
 
 optim:
   batch_size: 4
@@ -22,8 +20,8 @@ optim:
   epochs: 300
 
   lr_scheduler:
-      milestones: [200, 250, 300]
+      milestones: [100, 150, 200]
 
-  entropy_lambda: adaptive
-  starting_entropy_lambda: 5
-
+data:
+  train:
+    use_pseudolabel: false

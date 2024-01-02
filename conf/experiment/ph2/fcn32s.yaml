@@ -1,8 +1,0 @@
-# @package _global_
-
-defaults:
- - ph2/common
- - /common/model: fcn32s
-
-optim:
-  entropy_lambda: 0.005

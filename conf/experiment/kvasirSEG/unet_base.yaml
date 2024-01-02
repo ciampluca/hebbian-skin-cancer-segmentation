@@ -10,5 +10,6 @@ optim:
   lr_scheduler:
       milestones: [250, 280, 300]
 
-  entropy_lambda: adaptive
-  starting_entropy_lambda: 5
+data:
+  train:
+    use_pseudolabel: false
