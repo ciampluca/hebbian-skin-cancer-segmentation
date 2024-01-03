@@ -17,18 +17,18 @@ INV_TEMP_KvasirSEG=5        # to be set accordingly, used by SWTA
 INV_TEMP_GlaS=15         # to be set accordingly, used by SWTA
 
 REGIMES=(
-    #0.05
-    #0.1
+    0.05
+    0.1
     0.2
-    #0.25
+    0.25
     #0.5
     #0.75
     #1.0     
 
 EXPS=(
-    # #################################
-    # # PH2 Dataset
-    # #################################
+    #################################
+    # PH2 Dataset
+    #################################
     ph2/unet_base
     #ph2/fcn32s_base
     ph2/unet
@@ -41,9 +41,9 @@ EXPS=(
     #ph2/hfcn32s_base-hpca_t_ft
     #ph2/hfcn32s-hpca_ft
     #ph2/hfcn32s-hpca_t_ft
-    # #################################
-    # # KvasirSEG Dataset
-    # #################################
+    #################################
+    # KvasirSEG Dataset
+    #################################
     kvasirSEG/unet_base
     #kvasirSEG/fcn32s_base
     kvasirSEG/unet
@@ -79,7 +79,7 @@ for R in ${REGIMES[@]}; do
     for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do
         for EXP in ${EXPS[@]}; do
             case $EXP in
-                glas*)
+                glas*)  # this dataset has a fixed test split
                     HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R data.train.split_seed=$REP;;
                 *)
                     HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R;;

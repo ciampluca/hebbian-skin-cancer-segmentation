@@ -17,9 +17,9 @@ EXPS=(
     ph2/hunet_base-hpca
     ph2/hunet_base-hpca_t
     #ph2/hfcn32s_base-hpca
-    # #################################
-    # # KvasirSEG Dataset
-    # #################################
+    #################################
+    # KvasirSEG Dataset
+    #################################
     kvasirSEG/hunet_base-hpca
     kvasirSEG/hunet_base-hpca_t
     #kvasirSEG/hfcn32s_base-hpca

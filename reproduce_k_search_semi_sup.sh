@@ -22,61 +22,55 @@ K_VALUES=(
 )
 
 REGIMES=(
-    #0.05
-    #0.1
+    0.05
+    0.1
     0.2
-    #0.25
+    0.25
     #0.5
     #0.75
-    #1.0     # it should be the same of the one in reproduce_hebbian script
+    #1.0
 )
 
 EXPS=(
-    # #################################
-    # # PH2 Dataset
-    # #################################
-    # ph2/hunet-swta
-    # ph2/hunet-swta_ft
-    # ph2/hunet-swta_t
-    # ph2/hunet-swta_t_ft
-    # #ph2/hunet2-swta
-    # #ph2/hunet2-swta_ft
-    # #################################
-    # # ISIC2016 Dataset
-    # #################################
-    # isic2016/hunet-swta
-    # isic2016/hunet-swta_ft
-    # isic2016/hunet-swta_t
-    # isic2016/hunet-swta_t_ft
-    # #isic2016/hunet2-swta
-    # #isic2016/hunet2-swta_ft
-    # #################################
-    # # KvasirSEG Dataset
-    # #################################
-    # kvasirSEG/hunet-swta
-    # kvasirSEG/hunet-swta_ft
-    # kvasirSEG/hunet-swta_t
-    # kvasirSEG/hunet-swta_t_ft
-    # #kvasirSEG/hunet2-swta
-    # #kvasirSEG/hunet2-swta_ft
-    # #################################
-    # # DataScienceBowl2018 Dataset
-    # #################################
-    # datasciencebowl2018/hunet-swta
-    # datasciencebowl2018/hunet-swta_ft
-    # datasciencebowl2018/hunet-swta_t
-    # datasciencebowl2018/hunet-swta_t_ft
-    # #datasciencebowl2018/hunet2-swta
-    # #datasciencebowl2018/hunet2-swta_ft
+    #################################
+    # PH2 Dataset
+    #################################
+    ph2/hunet_base-swta
+    ph2/hunet_base-swta_ft
+    ph2/hunet-swta_ft
+    ph2/hunet_base-swta_t
+    ph2/hunet_base-swta_t_ft
+    ph2/hunet-swta_t_ft
+    #ph2/hfcn32s_base-swta
+    #ph2/hfcn32s_base-swta_ft
+    #ph2/hfcn32s-swta_ft
+    #ph2/hfcn32s_base-swta_t
+    #ph2/hfcn32s-swta_t_ft
+    #ph2/hfcn32s_base-swta_t_ft
+    #################################
+    # KvasirSEG Dataset
+    #################################
+    kvasirSEG/hunet_base-swta
+    kvasirSEG/hunet_base-swta_ft
+    kvasirSEG/hunet-swta_ft
+    kvasirSEG/hunet_base-swta_t
+    kvasirSEG/hunet_base-swta_t_ft
+    kvasirSEG/hunet-swta_t_ft
+    #kvasirSEG/hfcn32s_base-swta
+    #kvasirSEG/hfcn32s_base-swta_ft
+    #kvasirSEG/hfcn32s-swta_ft
+    #kvasirSEG/hfcn32s_base-swta_t
+    #kvasirSEG/hfcn32s-swta_t_ft
+    #kvasirSEG/hfcn32s_base-swta_t_ft
     #################################
     # GlaS Dataset
     #################################
     glas/hunet_base-swta
     glas/hunet_base-swta_ft
-    #glas/hunet-swta_ft
+    glas/hunet-swta_ft
     glas/hunet_base-swta_t
     glas/hunet_base-swta_t_ft
-    #glas/hunet-swta_t_ft
+    glas/hunet-swta_t_ft
     #glas/hfcn32s_base-swta
     #glas/hfcn32s_base-swta_ft
     #glas/hfcn32s-swta_ft
@@ -91,17 +85,24 @@ for R in ${REGIMES[@]}; do
         for REP in $(seq $(( $START_REP )) $(( $REPS - 1 ))); do    
             for EXP in ${EXPS[@]}; do
                 case $EXP in
-                    glas*)
+                    glas*)   # this dataset has a fixed test split
                         case $EXP in
                             */*_ft)
                                 HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP model.hebb.k=$K data.train.smpleff_regime=$R data.train.split_seed=$REP;;
                             *)
-                                if [[ $REP -lt 1 ]]; then    # this dataset has a fixed test split
+                                if [[ $REP -lt 1 ]]; then   
                                     HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 model.hebb.k=$K
                                 fi;;
                         esac;;
                     *)
-                        HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP model.hebb.k=$K data.train.smpleff_regime=$R;;
+                        case $EXP in
+                            */*_ft)
+                                 HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP model.hebb.k=$K data.train.smpleff_regime=$R;;
+                            *)
+                                if [[ $REP -lt 1 ]]; then    
+                                    HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 model.hebb.k=$K
+                                fi;;
+                        esac;;                
                 esac
             done
         done
@@ -116,19 +117,29 @@ for R in ${REGIMES[@]}; do
             for EXP in ${EXPS[@]}; do
                 case $EXP in
                     ph2*)
-                        CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/PH2 --in-memory True;;
-                    isic2016*)
-                        CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/ISIC2016 --in-memory True;;
+                        case $EXP in
+                            */*_ft)
+                                CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/PH2 --in-memory True --best-on-metric dice;;
+                            *)
+                                if [[ $REP -lt 1 ]]; then
+                                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/PH2 --in-memory True --best-on-metric last --output-file-name preds_from_last.csv;;
+                                fi;;
+                        esac;;
                     kvasirSEG*)
-                        CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/KvasirSEG --in-memory True;;
-                    datasciencebowl2018*)
-                        CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-$REP --data-root $EVAL_DATA_ROOT/DataScienceBowl2018 --in-memory True;;
-                    glas*)
+                        case $EXP in
+                            */*_ft)
+                                CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/KvasirSEG --in-memory True --best-on-metric dice;;
+                            *)
+                                if [[ $REP -lt 1 ]]; then
+                                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/KvasirSEG --in-memory True --best-on-metric last --output-file-name preds_from_last.csv;;
+                                fi;;
+                        esac;;                    
+                    glas*)  # this dataset has a fixed test split
                         case $EXP in
                             */*_ft)
                                 CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all --best-on-metric dice;;
                             *)
-                                if [[ $REP -lt 1 ]]; then    # this dataset has a fixed test split
+                                if [[ $REP -lt 1 ]]; then
                                     CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all --best-on-metric last --output-file-name preds_from_last.csv
                                 fi;;
                         esac
