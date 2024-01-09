@@ -99,10 +99,10 @@ for R in ${REGIMES[@]}; do
                     *)
                         case $EXP in
                             */*_ft)
-                                 HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP model.hebb.k=$K data.train.smpleff_regime=$R;;
+                                 HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.validation.cross_val_bucket_validation_index=$REP model.hebb.k=$K data.train.smpleff_regime=$R;;
                             *)
                                 if [[ $REP -lt 1 ]]; then    
-                                    HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 model.hebb.k=$K
+                                    HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 data.validation.cross_val_bucket_validation_index=0 model.hebb.k=$K
                                 fi;;
                         esac;;                
                 esac

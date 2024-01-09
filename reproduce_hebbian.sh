@@ -33,7 +33,7 @@ EXPS=(
 
 # Train & Evaluate 
 for EXP in ${EXPS[@]}; do
-    HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0
+    HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=0 data.validation.cross_val_bucket_validation_index=0
 done
 
 
