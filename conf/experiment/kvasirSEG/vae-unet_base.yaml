@@ -1,0 +1,23 @@
+# @package _global_
+
+defaults:
+ - glas/common
+ - /common/model: unet
+
+model:
+  out_channels: 3
+  latent_sampling: True
+
+optim:
+  epochs: 300
+
+  lr_scheduler:
+      milestones: [250, 280, 300]
+
+  loss:
+    _target_: metrics.ElboMetric
+     beta: 1
+
+data:
+  train:
+    use_pseudolabel: false

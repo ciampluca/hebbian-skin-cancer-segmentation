@@ -1,0 +1,24 @@
+# @package _global_
+
+defaults:
+ - ph2/common
+ - /common/model: unet
+
+model:
+  out_channels: 3
+  pretrained: last://last    # best://[dice, jaccard, loss]
+  reset_clf: 1
+  latent_sampling: True
+
+optim:
+  batch_size: 4
+  batch_accumulation: 1
+
+  epochs: 300
+
+  lr_scheduler:
+       milestones: [250, 280, 300]
+
+data:
+  train:
+    use_pseudolabel: false
