@@ -17,13 +17,16 @@ INV_TEMP_KvasirSEG=5        # to be set accordingly, used by SWTA
 INV_TEMP_GlaS=15         # to be set accordingly, used by SWTA
 
 REGIMES=(
+    0.01
+    0.02
     0.05
     0.1
     0.2
-    0.25
+    #0.25
     #0.5
     #0.75
-    #1.0     
+    #1.0
+)
 
 EXPS=(
     #################################

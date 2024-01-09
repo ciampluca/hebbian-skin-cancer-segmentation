@@ -22,10 +22,12 @@ K_VALUES=(
 )
 
 REGIMES=(
+    0.01
+    0.02
     0.05
     0.1
     0.2
-    0.25
+    #0.25
     #0.5
     #0.75
     #1.0
@@ -122,7 +124,7 @@ for R in ${REGIMES[@]}; do
                                 CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/PH2 --in-memory True --best-on-metric dice;;
                             *)
                                 if [[ $REP -lt 1 ]]; then
-                                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/PH2 --in-memory True --best-on-metric last --output-file-name preds_from_last.csv;;
+                                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/PH2 --in-memory True --best-on-metric last --output-file-name preds_from_last.csv
                                 fi;;
                         esac;;
                     kvasirSEG*)
@@ -131,7 +133,7 @@ for R in ${REGIMES[@]}; do
                                 CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/KvasirSEG --in-memory True --best-on-metric dice;;
                             *)
                                 if [[ $REP -lt 1 ]]; then
-                                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/KvasirSEG --in-memory True --best-on-metric last --output-file-name preds_from_last.csv;;
+                                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/KvasirSEG --in-memory True --best-on-metric last --output-file-name preds_from_last.csv
                                 fi;;
                         esac;;                    
                     glas*)  # this dataset has a fixed test split
