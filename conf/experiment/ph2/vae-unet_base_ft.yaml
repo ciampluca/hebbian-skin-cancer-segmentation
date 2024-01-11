@@ -5,7 +5,6 @@ defaults:
  - /common/model: unet
 
 model:
-  out_channels: 3
   pretrained: last://last    # best://[dice, jaccard, loss]
   reset_clf: 1
   latent_sampling: True

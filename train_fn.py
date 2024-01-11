@@ -87,29 +87,33 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
         any_visible_label = torch.any(visible_labels)
 
         # computing outputs
-        preds = model(images)
+        output = model(images)
+        preds = output['output'] if isinstance(output, dict) else output
         preds_prob = (torch.sigmoid(preds)) if criterion.__class__.__name__.endswith("WithLogitsLoss") else preds
 
         # computing loss and backwarding it
-        loss = criterion(preds[visible_labels], labels[visible_labels]) if any_visible_label else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-        entropy_loss = entropy_cost(preds) if entropy_cost is not None else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+        if criterion.__class__.__name__ != 'ElboMetric':
+            loss = criterion(preds[visible_labels], labels[visible_labels]) if any_visible_label else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+            entropy_loss = entropy_cost(preds) if entropy_cost is not None else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+            
+        else:
+            loss = criterion(output, images)
+            entropy_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
         total_loss = loss + entropy_lambda * entropy_loss
         total_loss.backward()
-
+        
         # NCHW -> NHWC
-        batch_metrics = {'loss': loss.item()}
-        if criterion.__class__.__name__ != 'ElboMetric':
-            coefs_pixel = dice_jaccard(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1)) if any_visible_label else {'segm/dice': None, 'segm/jaccard': None}
-            coefs_hausdorff_distance = hausdorff_distance(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1), thr=0.5) if any_visible_label else {'segm/95hd': None}
-            coefs_average_surface_distance = average_surface_distance(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1), thr=0.5) if any_visible_label else {'segm/asd': None}
-            batch_metrics = {
-                'loss': loss.item(),
-                'entropy_loss': entropy_loss.item(),
-                'dice': coefs_pixel['segm/dice'],
-                'jaccard': coefs_pixel['segm/jaccard'],
-                'hausdorff distance': coefs_hausdorff_distance['segm/95hd'],
-                'average surface distance': coefs_average_surface_distance['segm/asd'],
-            }
+        coefs_pixel = dice_jaccard(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1)) if any_visible_label else {'segm/dice': None, 'segm/jaccard': None}
+        coefs_hausdorff_distance = hausdorff_distance(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1), thr=0.5) if any_visible_label else {'segm/95hd': None}
+        coefs_average_surface_distance = average_surface_distance(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1), thr=0.5) if any_visible_label else {'segm/asd': None}
+        batch_metrics = {
+            'loss': loss.item(),
+            'entropy_loss': entropy_loss.item(),
+            'dice': coefs_pixel['segm/dice'],
+            'jaccard': coefs_pixel['segm/jaccard'],
+            'hausdorff distance': coefs_hausdorff_distance['segm/95hd'],
+            'average surface distance': coefs_average_surface_distance['segm/asd'],
+        }
         metrics.append(batch_metrics)
 
         postfix = {metric: f'{value:.3f}' if value is not None else None for metric, value in batch_metrics.items()}
@@ -157,16 +161,19 @@ def validate(dataloader, model, device, epoch, cfg):
             image, label = torch.unsqueeze(image, dim=0).to(validation_device), label[None, None, ...].to(validation_device)
 
             # computing outputs
-            pred = model(image)
+            output = model(image)
+            pred = output['output'] if isinstance(output, dict) else output
             pred_prob = (torch.sigmoid(pred)) if criterion.__class__.__name__.endswith("WithLogitsLoss") else pred
  
             # computing metrics
-            loss = criterion(pred, label)
-            segm_metrics_pixel, segm_metrics_distance = {}, {}
             if criterion.__class__.__name__ != 'ElboMetric':
-                segm_metrics_pixel = dice_jaccard(label.movedim(1, -1), pred_prob.movedim(1, -1))    # NCHW -> NHWC
-                segm_metrics_distance = hausdorff_distance(label.movedim(1, -1), pred_prob.movedim(1, -1), thr=0.5)
-                segm_metrics_distance.update(average_surface_distance(label.movedim(1, -1), pred_prob.movedim(1, -1), thr=0.5))
+                loss = criterion(pred, label)
+            else:
+                loss = criterion(output, image)
+            segm_metrics_pixel, segm_metrics_distance = {}, {}
+            segm_metrics_pixel = dice_jaccard(label.movedim(1, -1), pred_prob.movedim(1, -1))    # NCHW -> NHWC
+            segm_metrics_distance = hausdorff_distance(label.movedim(1, -1), pred_prob.movedim(1, -1), thr=0.5)
+            segm_metrics_distance.update(average_surface_distance(label.movedim(1, -1), pred_prob.movedim(1, -1), thr=0.5))
 
             metrics.append({
                 'image_id': image_id,
@@ -206,15 +213,15 @@ def predict(dataloader, model, device, cfg, outdir, debug=0, csv_file_name='pred
             image, label = torch.unsqueeze(image, dim=0).to(device), label[None, None, ...].to(device)
 
             # computing outputs
-            pred = model(image)
+            output = model(image)
+            pred = output['output'] if isinstance(output, dict) else output
             pred_prob = (torch.sigmoid(pred)) if criterion.__class__.__name__.endswith("WithLogitsLoss") else pred
 
             # computing metrics
             segm_metrics_pixel, segm_metrics_distance = {}, {}
-            if criterion.__class__.__name__ != 'ElboMetric':
-                segm_metrics_pixel = dice_jaccard(label.movedim(1, -1), pred_prob.movedim(1, -1))    # NCHW -> NHWC
-                segm_metrics_distance = hausdorff_distance(label.movedim(1, -1), pred_prob.movedim(1, -1), thr=0.5)
-                segm_metrics_distance.update(average_surface_distance(label.movedim(1, -1), pred_prob.movedim(1, -1), thr=0.5))
+            segm_metrics_pixel = dice_jaccard(label.movedim(1, -1), pred_prob.movedim(1, -1))    # NCHW -> NHWC
+            segm_metrics_distance = hausdorff_distance(label.movedim(1, -1), pred_prob.movedim(1, -1), thr=0.5)
+            segm_metrics_distance.update(average_surface_distance(label.movedim(1, -1), pred_prob.movedim(1, -1), thr=0.5))
 
             metrics.append({
                 'image_id': image_id,

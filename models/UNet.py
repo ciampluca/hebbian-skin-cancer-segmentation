@@ -98,6 +98,8 @@ class UNetModel(nn.Module):
         
         self.last_bias = last_bias
         self.last = nn.Conv2d(prev_channels, out_channels, kernel_size=1, bias=self.last_bias)
+        self.reconstr = None
+        if self.latent_sampling: self.reconstr = nn.Conv2d(prev_channels, in_channels, kernel_size=1, bias=self.last_bias)
     
     def reset_clf(self, out_channels):
         device = self.last.weight.device
@@ -131,12 +133,15 @@ class UNetModel(nn.Module):
             x = up(x, blocks[-i - 1])
 
         output = self.last(x)
+        reconstr = None
+        if self.reconstr is not None: reconstr = self.reconstr(x)
 
         if need_resize:
             output = resize(output, (h, w))
+            if reconstr is not None: reconstr = resize(reconstr, (h, w))
         
         if self.latent_sampling:
-            output = {'mu': mu, 'log_var': log_var, 'reconstr': output}
+            output = {'output': output, 'mu': mu, 'log_var': log_var, 'reconstr': reconstr}
         
         return output
 

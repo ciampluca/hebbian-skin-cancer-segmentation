@@ -105,6 +105,9 @@ class FCN32sModel(nn.Module):
         self.score_fr = self._get_conv_layer(4096, 256, 1)
         self.upscore = nn.ConvTranspose2d(256, out_channels, 64, stride=32,
                                           bias=False)
+        self.reconstr = None
+        if self.latent_sampling: self.reconstr = nn.ConvTranspose2d(256, in_channels, 64, stride=32,
+                                          bias=False)
 
         #self._initialize_weights()
     
@@ -186,14 +189,18 @@ class FCN32sModel(nn.Module):
         h = self.drop7(h)
 
         h = self.score_fr(h)
+        reconstr = None
+        if self.reconstr is not None: reconstr = self.reconstr(h)
         h = self.upscore(h)
+        
         
         crop_start_x = h.shape[2] // 2 - x.shape[2] // 2
         crop_start_y = h.shape[3] // 2 - x.shape[3] // 2
         output = h[:, :, crop_start_x:crop_start_x + x.shape[2], crop_start_y:crop_start_y + x.shape[3]]
+        if reconstr is not None: reconstr = reconstr[:, :, crop_start_x:crop_start_x + x.shape[2], crop_start_y:crop_start_y + x.shape[3]]
         
         if self.latent_sampling:
-            output = {'mu': mu, 'log_var': log_var, 'reconstr': output}
+            output = {'output': output, 'mu': mu, 'log_var': log_var, 'reconstr': reconstr}
         
         return output
 
