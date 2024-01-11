@@ -43,12 +43,6 @@ EXPS=(
     ph2/hunet_base-swta_t
     ph2/hunet_base-swta_t_ft
     ph2/hunet-swta_t_ft
-    #ph2/hfcn32s_base-swta
-    #ph2/hfcn32s_base-swta_ft
-    #ph2/hfcn32s-swta_ft
-    #ph2/hfcn32s_base-swta_t
-    #ph2/hfcn32s-swta_t_ft
-    #ph2/hfcn32s_base-swta_t_ft
     #################################
     # KvasirSEG Dataset
     #################################
@@ -58,12 +52,6 @@ EXPS=(
     kvasirSEG/hunet_base-swta_t
     kvasirSEG/hunet_base-swta_t_ft
     kvasirSEG/hunet-swta_t_ft
-    #kvasirSEG/hfcn32s_base-swta
-    #kvasirSEG/hfcn32s_base-swta_ft
-    #kvasirSEG/hfcn32s-swta_ft
-    #kvasirSEG/hfcn32s_base-swta_t
-    #kvasirSEG/hfcn32s-swta_t_ft
-    #kvasirSEG/hfcn32s_base-swta_t_ft
     #################################
     # GlaS Dataset
     #################################
@@ -73,12 +61,6 @@ EXPS=(
     glas/hunet_base-swta_t
     glas/hunet_base-swta_t_ft
     glas/hunet-swta_t_ft
-    #glas/hfcn32s_base-swta
-    #glas/hfcn32s_base-swta_ft
-    #glas/hfcn32s-swta_ft
-    #glas/hfcn32s_base-swta_t
-    #glas/hfcn32s-swta_t_ft
-    #glas/hfcn32s_base-swta_t_ft
 )
 
 # Train & Evaluate (pretraining)

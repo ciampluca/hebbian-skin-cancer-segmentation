@@ -16,19 +16,19 @@ EXPS=(
     #################################
     ph2/hunet_base-hpca
     ph2/hunet_base-hpca_t
-    #ph2/hfcn32s_base-hpca
+    ph2/vae-unet_base
     #################################
     # KvasirSEG Dataset
     #################################
     kvasirSEG/hunet_base-hpca
     kvasirSEG/hunet_base-hpca_t
-    #kvasirSEG/hfcn32s_base-hpca
+    kvasirSEG/vae-unet_base
     #################################
     # GlaS Dataset
     #################################
     glas/hunet_base-hpca
     glas/hunet_base-hpca_t
-    #glas/hfcn32s_base-hpca
+    glas/vae-unet_base
 )
 
 # Train & Evaluate 

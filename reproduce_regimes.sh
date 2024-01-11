@@ -33,48 +33,35 @@ EXPS=(
     # PH2 Dataset
     #################################
     ph2/unet_base
-    #ph2/fcn32s_base
     ph2/unet
-    #ph2/fcn32s
     ph2/hunet_base-hpca_ft
     ph2/hunet_base-hpca_t_ft
     ph2/hunet-hpca_ft
     ph2/hunet-hpca_t_ft
-    #ph2/hfcn32s_base-hpca_ft
-    #ph2/hfcn32s_base-hpca_t_ft
-    #ph2/hfcn32s-hpca_ft
-    #ph2/hfcn32s-hpca_t_ft
+    ph2/vae-unet_base_ft
+    ph2/vae-unet_ft
     #################################
     # KvasirSEG Dataset
     #################################
     kvasirSEG/unet_base
-    #kvasirSEG/fcn32s_base
     kvasirSEG/unet
-    #kvasirSEG/fcn32s
     kvasirSEG/hunet_base-hpca_ft
     kvasirSEG/hunet_base-hpca_t_ft
     kvasirSEG/hunet-hpca_ft
     kvasirSEG/hunet-hpca_t_ft
-    #kvasirSEG/hfcn32s_base-hpca_ft
-    #kvasirSEG/hfcn32s_base-hpca_t_ft
-    #kvasirSEG/hfcn32s-hpca_ft
-    #kvasirSEG/hfcn32s-hpca_t_ft
+    kvasirSEG/vae-unet_base_ft
+    kvasirSEG/vae-unet_ft
     #################################
     # GlaS Dataset
     #################################
     glas/unet_base
-    #glas/unet_base-random-crop
-    #glas/fcn32s_base
     glas/unet
-    #glas/fcn32s
     glas/hunet_base-hpca_ft
     glas/hunet_base-hpca_t_ft
     glas/hunet-hpca_ft
     glas/hunet-hpca_t_ft
-    #glas/hfcn32s_base-hpca_ft
-    #glas/hfcn32s_base-hpca_t_ft
-    #glas/hfcn32s-hpca_ft
-    #glas/hfcn32s-hpca_t_ft
+    glas/vae-unet_base_ft
+    glas/vae-unet_ft
 )
 
 # Train & Evaluate
