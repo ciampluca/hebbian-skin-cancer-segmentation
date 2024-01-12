@@ -95,7 +95,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
         # computing loss and backwarding it
         if aux_criterion is not None:
             aux_loss = aux_criterion(preds[visible_labels], labels[visible_labels]) if any_visible_label else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-            aux_loss.backward()
+            aux_loss.backward(retain_graph=True)
             if hasattr(model, 'reset_internal_grads'): model.reset_internal_grads()
         else:
             aux_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
