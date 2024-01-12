@@ -139,7 +139,7 @@ class ElboMetric:
         mu = outputs['mu']
         log_var = outputs['log_var']
         reconstr_loss = F.mse_loss(reconstr, targets)
-        kld_loss = torch.mean(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim=1), dim=0)
+        kld_loss = torch.mean(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim=1))
 
         return reconstr_loss + self.beta * kld_loss
 

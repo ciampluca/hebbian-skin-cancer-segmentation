@@ -1,7 +1,7 @@
 # @package _global_
 
 defaults:
- - glas/common
+ - kvasirSEG/common
  - /common/model: unet
 
 model:
@@ -15,7 +15,7 @@ optim:
 
   loss:
     _target_: metrics.ElboMetric
-     beta: 1
+    beta: 1
 
 data:
   train:

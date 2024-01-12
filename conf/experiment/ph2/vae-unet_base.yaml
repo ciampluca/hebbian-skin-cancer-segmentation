@@ -15,7 +15,7 @@ optim:
 
   loss:
     _target_: metrics.ElboMetric
-     beta: 1
+    beta: 1
 
 data:
   train:
