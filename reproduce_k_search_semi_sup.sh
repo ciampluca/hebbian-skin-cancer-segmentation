@@ -44,15 +44,6 @@ EXPS=(
     ph2/hunet_base-swta_t_ft
     ph2/hunet-swta_t_ft
     #################################
-    # KvasirSEG Dataset
-    #################################
-    kvasirSEG/hunet_base-swta
-    kvasirSEG/hunet_base-swta_ft
-    kvasirSEG/hunet-swta_ft
-    kvasirSEG/hunet_base-swta_t
-    kvasirSEG/hunet_base-swta_t_ft
-    kvasirSEG/hunet-swta_t_ft
-    #################################
     # GlaS Dataset
     #################################
     glas/hunet_base-swta
@@ -123,14 +114,7 @@ for K in ${K_VALUES[@]}; do
                         ;;
                     *)
                         CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/PH2 --in-memory True --best-on-metric last --output-file-name preds_from_last.csv;;
-                esac;;
-            kvasirSEG*)
-                case $EXP in
-                    */*_ft)
-                        ;;
-                    *)
-                        CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/KvasirSEG --in-memory True --best-on-metric last --output-file-name preds_from_last.csv;;
-                esac;;                    
+                esac;;                   
             glas*)  # this dataset has a fixed test split
                 case $EXP in
                     */*_ft)
@@ -155,14 +139,7 @@ for R in ${REGIMES[@]}; do
                                 CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/PH2 --in-memory True --best-on-metric dice;;
                             *)
                                 ;;
-                        esac;;
-                    kvasirSEG*)
-                        case $EXP in
-                            */*_ft)
-                                CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/KvasirSEG --in-memory True --best-on-metric dice;;
-                            *)
-                                ;;
-                        esac;;                    
+                        esac;;              
                     glas*)  # this dataset has a fixed test split
                         case $EXP in
                             */*_ft)

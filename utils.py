@@ -72,10 +72,10 @@ class CheckpointManager:
             return 'max'
         
         if '95hd' in metric_name:
-            return 'min'
+            return 'ignore'
         
         if 'asd' in metric_name:
-            return 'min'
+            return 'ignore'
         
         return 'ignore'
 

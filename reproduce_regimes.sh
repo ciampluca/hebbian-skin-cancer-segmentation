@@ -13,7 +13,6 @@ EVAL_EXP_ROOT="./runs"
 EVAL_DATA_ROOT="./data"
 
 INV_TEMP_PH2=5        # to be set accordingly, used by SWTA
-INV_TEMP_KvasirSEG=5        # to be set accordingly, used by SWTA
 INV_TEMP_GlaS=15         # to be set accordingly, used by SWTA
 
 REGIMES=(
@@ -40,17 +39,6 @@ EXPS=(
     ph2/hunet-hpca_t_ft
     ph2/vae-unet_base_ft
     ph2/vae-unet_ft
-    #################################
-    # KvasirSEG Dataset
-    #################################
-    kvasirSEG/unet_base
-    kvasirSEG/unet
-    kvasirSEG/hunet_base-hpca_ft
-    kvasirSEG/hunet_base-hpca_t_ft
-    kvasirSEG/hunet-hpca_ft
-    kvasirSEG/hunet-hpca_t_ft
-    kvasirSEG/vae-unet_base_ft
-    kvasirSEG/vae-unet_ft
     #################################
     # GlaS Dataset
     #################################
@@ -86,8 +74,6 @@ for R in ${REGIMES[@]}; do
             case $EXP in 
                 ph2*)
                     CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/PH2 --in-memory True --best-on-metric dice;;
-                kvasirSEG*)
-                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/KvasirSEG --in-memory True --best-on-metric dice;;
                 glas*)
                     CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all --best-on-metric dice;;
             esac
