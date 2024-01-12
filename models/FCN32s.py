@@ -26,7 +26,9 @@ class FCN32s(nn.Module):
     
     def reset_clf(self, out_channels):
         self.net.reset_clf(out_channels)
-
+        
+    def reset_internal_grads(self):
+        self.net.reset_internal_grads()
 
 class FCN32sModel(nn.Module):
     def __init__(
@@ -148,6 +150,10 @@ class FCN32sModel(nn.Module):
     def reset_clf(self, out_channels):
         device = self.upscore.weight.device
         self.upscore = nn.ConvTranspose2d(256, out_channels, 64, stride=32, bias=False).to(device)
+    
+    def reset_internal_grads(self):
+        for m in self.modules():
+            if m != self.upscore: m.zero_grad()
     
     def forward(self, x):
         h = x

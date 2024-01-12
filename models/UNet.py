@@ -34,6 +34,9 @@ class UNet(nn.Module):
     
     def reset_clf(self, out_channels):
         self.net.reset_clf(out_channels)
+        
+    def reset_internal_grads(self):
+        self.net.reset_internal_grads()
     
 class UNetModel(nn.Module):
 
@@ -104,6 +107,10 @@ class UNetModel(nn.Module):
     def reset_clf(self, out_channels):
         device = self.last.weight.device
         self.last = nn.Conv2d(self.last.in_channels, out_channels, kernel_size=1, bias=self.last_bias).to(device)
+    
+    def reset_internal_grads(self):
+        for m in self.modules():
+            if m != self.last: m.zero_grad()
     
     def forward(self, x):
         h, w = x.shape[-2:]

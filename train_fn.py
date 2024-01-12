@@ -75,6 +75,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
     else:
         entropy_lambda = cfg.optim.entropy_lambda
     entropy_cost = EntropyMetric() if entropy_lambda != 0 else None
+    aux_criterion = torch.nn.BCEWithLogitsLoss() if criterion.__class__.__name__ == 'ElboMetric' else None
 
     metrics = []
     n_batches = len(dataloader)
@@ -92,10 +93,15 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
         preds_prob = (torch.sigmoid(preds)) if criterion.__class__.__name__.endswith("WithLogitsLoss") else preds
 
         # computing loss and backwarding it
+        if aux_criterion is not None:
+            aux_loss = aux_criterion(preds[visible_labels], labels[visible_labels]) if any_visible_label else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+            aux_loss.backward()
+            if hasattr(model, 'reset_internal_grads'): model.reset_internal_grads()
+        else:
+            aux_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
         if criterion.__class__.__name__ != 'ElboMetric':
             loss = criterion(preds[visible_labels], labels[visible_labels]) if any_visible_label else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
             entropy_loss = entropy_cost(preds) if entropy_cost is not None else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-            
         else:
             loss = criterion(output, images)
             entropy_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
@@ -107,7 +113,8 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
         coefs_hausdorff_distance = hausdorff_distance(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1), thr=0.5) if any_visible_label else {'segm/95hd': None}
         coefs_average_surface_distance = average_surface_distance(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1), thr=0.5) if any_visible_label else {'segm/asd': None}
         batch_metrics = {
-            'loss': loss.item(),
+            'loss ' + '(BCE)' if criterion.__class__.__name__ != 'ElboMetric' else '(ELBO)': loss.item(),
+            'aux_loss (BCE)': aux_loss.item(),
             'entropy_loss': entropy_loss.item(),
             'dice': coefs_pixel['segm/dice'],
             'jaccard': coefs_pixel['segm/jaccard'],
@@ -147,6 +154,7 @@ def validate(dataloader, model, device, epoch, cfg):
     model.eval()
     validation_device = cfg.optim.val_device
     criterion = hydra.utils.instantiate(cfg.optim.loss)
+    aux_criterion = torch.nn.BCEWithLogitsLoss() if criterion.__class__.__name__ == 'ElboMetric' else None
 
     metrics = []
 
@@ -166,6 +174,10 @@ def validate(dataloader, model, device, epoch, cfg):
             pred_prob = (torch.sigmoid(pred)) if criterion.__class__.__name__.endswith("WithLogitsLoss") else pred
  
             # computing metrics
+            if aux_criterion is not None:
+                aux_loss = aux_criterion(pred, label)
+            else:
+                aux_loss = torch.zeros(1, dtype=pred.dtype, device=device, requires_grad=True)
             if criterion.__class__.__name__ != 'ElboMetric':
                 loss = criterion(pred, label)
             else:
@@ -177,7 +189,8 @@ def validate(dataloader, model, device, epoch, cfg):
 
             metrics.append({
                 'image_id': image_id,
-                'segm/loss': loss.item(),
+                'segm/loss (BCE)' if criterion.__class__.__name__ != 'ElboMetric' else 'reconstr/loss (ELBO)': loss.item(),
+                'segm/aux_loss (BCE)': aux_loss.item(),
                 **segm_metrics_pixel,
                 **segm_metrics_distance,
             })
