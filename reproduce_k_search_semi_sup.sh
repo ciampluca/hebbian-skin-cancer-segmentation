@@ -52,6 +52,15 @@ EXPS=(
     glas/hunet_base-swta_t
     glas/hunet_base-swta_t_ft
     glas/hunet-swta_t_ft
+    #################################
+    # TREND Dataset
+    #################################
+    trend/hunet_base-swta
+    trend/hunet_base-swta_ft
+    trend/hunet-swta_ft
+    trend/hunet_base-swta_t
+    trend/hunet_base-swta_t_ft
+    trend/hunet-swta_t_ft
 )
 
 # Train & Evaluate (pretraining)
@@ -90,6 +99,15 @@ for R in ${REGIMES[@]}; do
                             *)
                                 ;;
                         esac;;
+                    trend*)   # regime 0.01 is skipped for this dataset since it is too small
+                        case $EXP in
+                            */*_ft)
+                                if [ "$(echo "$R > 0.01" | bc)" = 1 ]; then
+                                    HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.validation.cross_val_bucket_validation_index=$REP model.hebb.k=$K data.train.smpleff_regime=$R
+                                fi;;
+                            *)
+                                ;;
+                        esac;;
                     *)
                         case $EXP in
                             */*_ft)
@@ -114,7 +132,14 @@ for K in ${K_VALUES[@]}; do
                         ;;
                     *)
                         CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/PH2 --in-memory True --best-on-metric last --output-file-name preds_from_last.csv;;
-                esac;;                   
+                esac;;
+            trend*)
+                case $EXP in
+                    */*_ft)
+                        ;;
+                    *)
+                        CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/TREND --in-memory True --best-on-metric last --output-file-name preds_from_last.csv;;
+                esac;;            
             glas*)  # this dataset has a fixed test split
                 case $EXP in
                     */*_ft)
@@ -139,7 +164,16 @@ for R in ${REGIMES[@]}; do
                                 CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/PH2 --in-memory True --best-on-metric dice;;
                             *)
                                 ;;
-                        esac;;              
+                        esac;;
+                    trend*)      # regime 0.01 is skipped for this dataset since it is too small
+                        case $EXP in
+                            */*_ft)
+                                if [ "$(echo "$R > 0.01" | bc)" = 1 ]; then
+                                    CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-$K/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/TREND --in-memory True --best-on-metric dice
+                                fi;;
+                            *)
+                                ;;
+                        esac;;        
                     glas*)  # this dataset has a fixed test split
                         case $EXP in
                             */*_ft)

@@ -3,12 +3,12 @@
 data:
     drop_last_batch: False
     image_size: 480
-    image_mean: [0.7534, 0.5765, 0.4885]
-    image_std: [0.1647, 0.1598, 0.1588]
+    image_mean: [0.4255, 0.2263, 0.2141]
+    image_std: [0.2697, 0.1505, 0.1345]
     
     train: &common
         _target_: datasets.SegmentationDataset
-        root: ${hydra:runtime.cwd}/data/PH2
+        root: ${hydra:runtime.cwd}/data/TREND
         split: train
         split_seed: 87
         cross_val_num_buckets: 10

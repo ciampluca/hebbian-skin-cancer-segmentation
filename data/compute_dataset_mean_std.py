@@ -51,7 +51,7 @@ class MyDataset(Dataset):
 
 
 def main():
-    data_root = '/mnt/Workspace/hebbian-skin-cancer-segmentation/data/GlaS'
+    data_root = '/mnt/Workspace/hebbian-skin-cancer-segmentation/data/TREND'
 
     dataset = MyDataset(
         root=data_root,

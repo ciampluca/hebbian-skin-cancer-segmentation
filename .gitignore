@@ -149,6 +149,7 @@ dmypy.json
 /data/DataScienceBowl2018
 /data/ISIC2016
 /data/GlaS
+/data/TREND
 #semi-supervised_papers.txt
 unsupervised_papers.txt
 domande_per_lagani.txt

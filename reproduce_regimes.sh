@@ -50,6 +50,17 @@ EXPS=(
     glas/hunet-hpca_t_ft
     glas/vae-unet_base_ft
     glas/vae-unet_ft
+    #################################
+    # TREND Dataset
+    #################################
+    trend/unet_base
+    trend/unet
+    trend/hunet_base-hpca_ft
+    trend/hunet_base-hpca_t_ft
+    trend/hunet-hpca_ft
+    trend/hunet-hpca_t_ft
+    trend/vae-unet_base_ft
+    trend/vae-unet_ft
 )
 
 # Train & Evaluate
@@ -59,6 +70,10 @@ for R in ${REGIMES[@]}; do
             case $EXP in
                 glas*)  # this dataset has a fixed test split
                     HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R data.train.split_seed=$REP;;
+                trend*)     # regime 0.01 is skipped for this dataset since it is too small
+                    if [ "$(echo "$R > 0.01" | bc)" = 1 ]; then
+                        HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.validation.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R
+                    fi;;
                 *)
                     HYDRA_FULL_ERROR=1 python train.py experiment=$EXP data.train.cross_val_bucket_validation_index=$REP data.validation.cross_val_bucket_validation_index=$REP data.train.smpleff_regime=$R;;
             esac
@@ -76,6 +91,10 @@ for R in ${REGIMES[@]}; do
                     CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/PH2 --in-memory True --best-on-metric dice;;
                 glas*)
                     CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all --best-on-metric dice;;
+                trend*)
+                    if [ "$(echo "$R > 0.01" | bc)" = 1 ]; then     # regime 0.01 is skipped for this dataset since it is too small
+                        CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-$R/run-$REP --data-root $EVAL_DATA_ROOT/TREND --in-memory True --best-on-metric dice
+                    fi;;
             esac
         done
     done
