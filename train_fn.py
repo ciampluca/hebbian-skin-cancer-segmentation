@@ -12,6 +12,7 @@ from tqdm import tqdm
 import pandas as pd
 from PIL import Image
 
+from utils import wavelet_filtering
 from metrics import dice_jaccard, hausdorff_distance, average_surface_distance, EntropyMetric
 
 tqdm = partial(tqdm, dynamic_ncols=True)
@@ -70,10 +71,17 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
     optimizer.zero_grad()
 
     criterion = hydra.utils.instantiate(cfg.optim.loss)
+
     if cfg.optim.entropy_lambda == 'adaptive':
         entropy_lambda = cfg.optim.starting_entropy_lambda * ((epoch+1) / cfg.optim.epochs)
     else:
         entropy_lambda = cfg.optim.entropy_lambda
+
+    if cfg.optim.wavelet_lambda == 'adaptive':
+        wavelet_lambda = cfg.optim.starting_wavelet_lambda * ((epoch+1) / cfg.optim.epochs)
+    else:
+        wavelet_lambda = cfg.optim.wavelet_lambda
+
     entropy_cost = EntropyMetric() if entropy_lambda != 0 else None
     aux_criterion = torch.nn.BCEWithLogitsLoss() if criterion.__class__.__name__ == 'ElboMetric' else None
 
@@ -82,7 +90,12 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
     progress = tqdm(dataloader, desc='TRAIN', leave=False)
     for i, sample in enumerate(progress):
         images, labels, image_ids, _ = sample
-        if labels.ndim < 4: labels = labels.unsqueeze(dim=1) # Unsqueeze channel dimension if necessary
+        if labels.ndim < 4: labels = labels.unsqueeze(dim=1)    # Unsqueeze channel dimension if necessary
+
+        if wavelet_lambda != 0:
+            h_images, l_images = wavelet_filtering(images)
+            images = torch.cat([h_images, l_images], dim=0)
+
         images, labels = images.to(device), labels.to(device)
         visible_labels = torch.all(labels.view(labels.shape[0], -1) != -1, dim=1)
         any_visible_label = torch.any(visible_labels)
@@ -90,7 +103,16 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
         # computing outputs
         output = model(images)
         preds = output['output'] if isinstance(output, dict) else output
-        preds_prob = (torch.sigmoid(preds)) if criterion.__class__.__name__.endswith("WithLogitsLoss") else preds
+
+        preds_prob = (torch.sigmoid(preds)) if criterion.__class__.__name__.endswith("WithLogitsLoss") or criterion.__class__.__name__ == "ElboMetric" else preds
+
+        if wavelet_lambda != 0:
+            h_preds, l_preds = preds[:preds.shape[0]//2], preds[preds.shape[0]//2:]
+            h_preds_prob, l_preds_prob = preds_prob[:preds_prob.shape[0]//2], preds_prob[preds_prob.shape[0]//2:]
+            preds_prob = h_preds_prob
+            preds = h_preds
+            max_l_preds_prob = (l_preds_prob > 0.5).float()
+            max_h_preds_prob = (h_preds_prob > 0.5).float()
 
         # computing loss and backwarding it
         if aux_criterion is not None:
@@ -101,11 +123,13 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
             aux_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
         if criterion.__class__.__name__ != 'ElboMetric':
             loss = criterion(preds[visible_labels], labels[visible_labels]) if any_visible_label else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-            entropy_loss = entropy_cost(preds) if entropy_cost is not None else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+            entropy_loss = entropy_cost(preds) if entropy_lambda != 0 else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+            wavelet_loss = criterion(h_preds, max_l_preds_prob) + criterion(l_preds, max_h_preds_prob) if wavelet_lambda != 0 else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
         else:
             loss = criterion(output, images)
             entropy_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-        total_loss = loss + entropy_lambda * entropy_loss
+            wavelet_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+        total_loss = loss + entropy_lambda * entropy_loss + wavelet_lambda * wavelet_loss
         total_loss.backward()
         
         # NCHW -> NHWC
@@ -116,6 +140,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
             'loss ' + '(BCE)' if criterion.__class__.__name__ != 'ElboMetric' else '(ELBO)': loss.item(),
             'aux_loss (BCE)': aux_loss.item(),
             'entropy_loss': entropy_loss.item(),
+            'wavelet_loss': wavelet_loss.item(),
             'dice': coefs_pixel['segm/dice'],
             'jaccard': coefs_pixel['segm/jaccard'],
             'hausdorff distance': coefs_hausdorff_distance['segm/95hd'],
@@ -138,6 +163,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
                 if value is not None:
                     writer.add_scalar(f'train/{metric}', value, n_iter)
             writer.add_scalar('train/entropy_lambda', entropy_lambda, n_iter)
+            writer.add_scalar('train/wavelet_lambda', entropy_lambda, n_iter)
 
         if cfg.optim.debug and epoch % cfg.optim.debug_freq == 0 and cfg.optim.save_debug_train_images:
             for image, label, image_id, pred_seg_map in zip(images, labels, image_ids, preds_prob):
@@ -156,6 +182,8 @@ def validate(dataloader, model, device, epoch, cfg):
     criterion = hydra.utils.instantiate(cfg.optim.loss)
     aux_criterion = torch.nn.BCEWithLogitsLoss() if criterion.__class__.__name__ == 'ElboMetric' else None
 
+    use_waivelet_filtering = cfg.optim.wavelet_lambda != 0
+
     metrics = []
 
     n_images = len(dataloader)
@@ -163,6 +191,10 @@ def validate(dataloader, model, device, epoch, cfg):
 
     for i, sample in enumerate(progress):
         images, labels, image_ids, _ = sample
+
+        if use_waivelet_filtering:
+            h_images, _ = wavelet_filtering(images)
+            images = h_images
 
         # Un-batching
         for image, label, image_id in zip(images, labels, image_ids):
@@ -213,6 +245,8 @@ def predict(dataloader, model, device, cfg, outdir, debug=0, csv_file_name='pred
     model.eval()
     criterion = hydra.utils.instantiate(cfg.optim.loss)
 
+    use_waivelet_filtering = cfg.optim.wavelet_lambda != 0
+
     metrics = []
 
     n_images = len(dataloader)
@@ -220,6 +254,10 @@ def predict(dataloader, model, device, cfg, outdir, debug=0, csv_file_name='pred
 
     for i, sample in enumerate(progress):
         images, labels, image_ids, _ = sample
+
+        if use_waivelet_filtering:
+            h_images, _ = wavelet_filtering(images)
+            images = h_images
 
         # Un-batching
         for image, label, image_id in zip(images, labels, image_ids):

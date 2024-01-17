@@ -3,9 +3,12 @@ import os
 from pathlib import Path
 import re
 import random
-
 import numpy as np
+
 import torch
+import torchvision.transforms.functional as tf
+
+import pywt
 
 
 def seed_everything(seed):
@@ -82,3 +85,28 @@ class CheckpointManager:
 
 def get_init_param_by_name(param_name, param_dict, cfg, default):
     return param_dict.get(param_name, getattr(cfg, param_name, default))
+
+
+def wavelet_filtering(images):
+    images = tf.rgb_to_grayscale(images)
+    images = images.squeeze(dim=1)
+    np_images = images.cpu().detach().numpy()
+    
+    h_images, l_images = [], []
+    for image in np_images:
+        LL, (LH, HL, HH) = pywt.dwt2(image, "db2")
+        h_images.append(HH + HL + LH)
+        l_images.append(LL)
+
+    h_images = np.stack(h_images, axis=0)
+    l_images = np.stack(l_images, axis=0)
+
+    h_images = torch.from_numpy(h_images).to(images.device).unsqueeze(dim=1).repeat(1, 3, 1, 1)
+    l_images = torch.from_numpy(l_images).to(images.device).unsqueeze(dim=1).repeat(1, 3, 1, 1)
+
+    h_images = tf.resize(h_images, [images.shape[1], images.shape[2]], antialias=True)
+    l_images = tf.resize(l_images, [images.shape[1], images.shape[2]], antialias=True)
+
+    return h_images, l_images
+
+    

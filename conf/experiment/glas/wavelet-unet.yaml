@@ -1,0 +1,14 @@
+# @package _global_
+
+defaults:
+ - glas/common
+ - /common/model: unet
+
+optim:
+  epochs: 300
+
+  lr_scheduler:
+      milestones: [250, 280, 300]
+
+  wavelet_lambda: adaptive
+  starting_wavelet_lambda: 5

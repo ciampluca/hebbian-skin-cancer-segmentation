@@ -109,9 +109,10 @@ class UNetModel(nn.Module):
         self.last = nn.Conv2d(self.last.in_channels, out_channels, kernel_size=1, bias=self.last_bias).to(device)
     
     def reset_internal_grads(self):
-        for m in self.modules():
-            if m != self.last: m.zero_grad()
-    
+        grad = self.last.weight.grad.clone().detach()
+        self.zero_grad()
+        self.last.weight.grad = grad
+        
     def forward(self, x):
         h, w = x.shape[-2:]
         need_resize = (h % 32) or (w % 32)

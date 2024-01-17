@@ -13,4 +13,5 @@ gdown
 matplotlib
 fcn
 medpy
+PyWavelets
 
