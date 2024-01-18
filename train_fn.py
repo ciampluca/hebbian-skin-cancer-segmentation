@@ -219,7 +219,7 @@ def validate(dataloader, model, device, epoch, cfg):
             # computing outputs
             output = model(image)
             pred = output['output'] if isinstance(output, dict) else output
-            pred_prob = (torch.sigmoid(pred)) if criterion.__class__.__name__.endswith("WithLogitsLoss") else pred
+            pred_prob = (torch.sigmoid(pred)) if criterion.__class__.__name__.endswith("WithLogitsLoss") or criterion.__class__.__name__ == "ElboMetric" else pred
  
             # computing metrics
             if aux_criterion is not None:
@@ -288,7 +288,7 @@ def predict(dataloader, model, device, cfg, outdir, debug=0, csv_file_name='pred
             # computing outputs
             output = model(image)
             pred = output['output'] if isinstance(output, dict) else output
-            pred_prob = (torch.sigmoid(pred)) if criterion.__class__.__name__.endswith("WithLogitsLoss") else pred
+            pred_prob = (torch.sigmoid(pred)) if criterion.__class__.__name__.endswith("WithLogitsLoss") or criterion.__class__.__name__ == "ElboMetric" else pred
 
             # computing metrics
             segm_metrics_pixel, segm_metrics_distance = {}, {}
