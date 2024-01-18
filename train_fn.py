@@ -22,12 +22,11 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 
-def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_map, cfg, split="validation", outdir=None):
+def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_map, cfg, split="validation", outdir=None, h_image=None, l_image=None, reconstructed_image=None):
     debug_folder_name = 'train_output_debug' if split == "train" else 'val_output_debug' if split == "validation" else Path(outdir / "test_output_debug")
     debug_dir = Path(debug_folder_name)
     debug_dir.mkdir(parents=True, exist_ok=True)
 
-    seg_rgb = cfg.optim.loss.__class__.__name__ == 'ElboMetric'
     image_mean = cfg.data.image_mean
     image_std = cfg.data.image_std
 
@@ -46,14 +45,22 @@ def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_
         pil_image.save(path)
         
     _scale_and_save(image, debug_dir / image_id, denormalize_image=True)
+
+    if h_image is not None and l_image is not None:
+        image_name, image_ext = image_id.as_posix().rsplit(".", 1)
+        h_image_name, l_image_name = Path("{}_h.{}".format(image_name, image_ext)), Path("{}_l.{}".format(image_name, image_ext))
+        _scale_and_save(h_image, debug_dir / h_image_name, denormalize_image=True)
+        _scale_and_save(l_image, debug_dir / l_image_name, denormalize_image=True)
     
-    if seg_rgb:
-         _scale_and_save(segmentation_map.movedim(1, -1), debug_dir / f'{image_id.stem}_reconstr.png', denormalize_image=True)
-    else:
-        n_classes = segmentation_map.shape[0]
-        for i in range(n_classes):
-            _scale_and_save(segmentation_map[i, :, :], debug_dir / f'{image_id.stem}_segm_cls{i}.png')
-            _scale_and_save(target_map[i, :, :], debug_dir / f'{image_id.stem}_target_cls{i}.png')
+    if reconstructed_image is not None:
+        image_name, image_ext = image_id.as_posix().rsplit(".", 1)
+        r_image_name = Path("{}_reconstructr.{}".format(image_name, image_ext))
+        _scale_and_save(reconstructed_image, debug_dir / r_image_name, denormalize_image=True)
+    
+    n_classes = segmentation_map.shape[0]
+    for i in range(n_classes):
+        _scale_and_save(segmentation_map[i, :, :], debug_dir / f'{image_id.stem}_segm_cls{i}.png')
+        _scale_and_save(target_map[i, :, :], debug_dir / f'{image_id.stem}_target_cls{i}.png')
 
 
 def _save_debug_metrics(metrics, epoch):
@@ -94,6 +101,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
 
         if wavelet_lambda != 0:
             h_images, l_images = wavelet_filtering(images)
+            unfiltered_images = images
             images = torch.cat([h_images, l_images], dim=0)
 
         images, labels = images.to(device), labels.to(device)
@@ -109,8 +117,8 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
         if wavelet_lambda != 0:
             h_preds, l_preds = preds[:preds.shape[0]//2], preds[preds.shape[0]//2:]
             h_preds_prob, l_preds_prob = preds_prob[:preds_prob.shape[0]//2], preds_prob[preds_prob.shape[0]//2:]
-            preds_prob = h_preds_prob
-            preds = h_preds
+            preds_prob = h_preds_prob  if cfg.optim.use_h_wavelet else l_preds_prob
+            preds = h_preds if cfg.optim.use_h_wavelet else l_preds
             max_l_preds_prob = (l_preds_prob > 0.5).float()
             max_h_preds_prob = (h_preds_prob > 0.5).float()
 
@@ -163,11 +171,18 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
                 if value is not None:
                     writer.add_scalar(f'train/{metric}', value, n_iter)
             writer.add_scalar('train/entropy_lambda', entropy_lambda, n_iter)
-            writer.add_scalar('train/wavelet_lambda', entropy_lambda, n_iter)
+            writer.add_scalar('train/wavelet_lambda', wavelet_lambda, n_iter)
 
         if cfg.optim.debug and epoch % cfg.optim.debug_freq == 0 and cfg.optim.save_debug_train_images:
-            for image, label, image_id, pred_seg_map in zip(images, labels, image_ids, preds_prob):
-                _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train")
+            if wavelet_lambda != 0:
+                for unfiltered_image, h_image, l_image, label, image_id, pred_seg_map in zip(unfiltered_images, h_images, l_images, labels, image_ids, preds_prob):
+                    _save_image_and_segmentation_maps(unfiltered_image, image_id, pred_seg_map, label, cfg, split="train", h_image=h_image, l_image=l_image)
+            elif criterion.__class__.__name__ == 'ElboMetric':
+                 for image, reconstr_image, label, image_id, pred_seg_map in zip(images, output['reconstr'], labels, image_ids, preds_prob):
+                    _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train", reconstructed_image=reconstr_image)               
+            else:
+                for image, label, image_id, pred_seg_map in zip(images, labels, image_ids, preds_prob):
+                    _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train")
 
     metrics = pd.DataFrame(metrics).mean(axis=0).to_dict()
 
@@ -193,11 +208,12 @@ def validate(dataloader, model, device, epoch, cfg):
         images, labels, image_ids, _ = sample
 
         if use_waivelet_filtering:
-            h_images, _ = wavelet_filtering(images)
-            images = h_images
+            h_images, l_images = wavelet_filtering(images)
+            unfiltered_images = images
+            images = h_images if cfg.optim.use_h_wavelet else l_images
 
         # Un-batching
-        for image, label, image_id in zip(images, labels, image_ids):
+        for i, (image, label, image_id) in enumerate(zip(images, labels, image_ids)):
             image, label = torch.unsqueeze(image, dim=0).to(validation_device), label[None, None, ...].to(validation_device)
 
             # computing outputs
@@ -228,7 +244,12 @@ def validate(dataloader, model, device, epoch, cfg):
             })
 
             if cfg.optim.debug and epoch % cfg.optim.debug_freq == 0 and cfg.optim.save_debug_val_images:
-                _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg, split="validation")
+                if use_waivelet_filtering:
+                    _save_image_and_segmentation_maps(unfiltered_images[i], image_id, pred_prob, label, cfg, split="validation", h_image=h_images[i], l_image=l_images[i])
+                elif criterion.__class__.__name__ == 'ElboMetric':
+                    _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg, split="validation", reconstructed_image=output['reconstr'][0])
+                else:
+                    _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg, split="validation")  
 
     if cfg.optim.debug:
          _save_debug_metrics(metrics, epoch)
@@ -256,11 +277,12 @@ def predict(dataloader, model, device, cfg, outdir, debug=0, csv_file_name='pred
         images, labels, image_ids, _ = sample
 
         if use_waivelet_filtering:
-            h_images, _ = wavelet_filtering(images)
-            images = h_images
+            h_images, l_images = wavelet_filtering(images)
+            unfiltered_images = images
+            images = h_images if cfg.optim.use_h_wavelet else l_images
 
         # Un-batching
-        for image, label, image_id in zip(images, labels, image_ids):
+        for i, (image, label, image_id) in enumerate(zip(images, labels, image_ids)):
             image, label = torch.unsqueeze(image, dim=0).to(device), label[None, None, ...].to(device)
 
             # computing outputs
@@ -281,7 +303,12 @@ def predict(dataloader, model, device, cfg, outdir, debug=0, csv_file_name='pred
             })
 
             if outdir and debug:
-                _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg, split="test", outdir=outdir)
+                if use_waivelet_filtering:
+                    _save_image_and_segmentation_maps(unfiltered_images[i], image_id, pred_prob, label, cfg, split="test", outdir=outdir, h_image=h_images[i], l_image=l_images[i])
+                elif criterion.__class__.__name__ == 'ElboMetric':
+                    _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg, split="test", outdir=outdir, reconstructed_image=output['reconstr'][0])
+                else:
+                    _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg, split="test", outdir=outdir)  
 
     metrics = pd.DataFrame(metrics).set_index('image_id')
     metrics = pd.DataFrame(metrics)

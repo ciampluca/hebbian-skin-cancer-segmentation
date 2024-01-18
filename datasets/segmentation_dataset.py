@@ -153,28 +153,57 @@ def main():
     from PIL import Image
     import albumentations as A
     from albumentations.pytorch import ToTensorV2
+    import torchvision.transforms.functional as tf
+    import pywt
 
-    image_size = 256
+    def wavelet_filtering(images):
+        images = tf.rgb_to_grayscale(images)
+        images = images.squeeze(dim=1)
+        np_images = images.cpu().detach().numpy()
+        
+        h_images, l_images = [], []
+        for image in np_images:
+            LL, (LH, HL, HH) = pywt.dwt2(image, "db2")
+            h_images.append(HH + HL + LH)
+            l_images.append(LL)
+
+        h_images = np.stack(h_images, axis=0)
+        l_images = np.stack(l_images, axis=0)
+
+        h_images = torch.from_numpy(h_images).to(images.device).unsqueeze(dim=1).repeat(1, 3, 1, 1)
+        l_images = torch.from_numpy(l_images).to(images.device).unsqueeze(dim=1).repeat(1, 3, 1, 1)
+
+        h_images = tf.resize(h_images, [images.shape[1], images.shape[2]], antialias=True)
+        l_images = tf.resize(l_images, [images.shape[1], images.shape[2]], antialias=True)
+
+        return h_images, l_images
+
+
+    image_size = 480
 
     train_transform = A.Compose([
         A.LongestMaxSize(image_size),
         A.PadIfNeeded(min_height=image_size, min_width=image_size, border_mode=cv2.BORDER_CONSTANT),
-        A.Flip(),
+        A.VerticalFlip(),
+        A.HorizontalFlip(),
         A.ShiftScaleRotate(shift_limit=0.05, scale_limit=0.05, rotate_limit=15, p=0.5),
-        #A.RGBShift(r_shift_limit=15, g_shift_limit=15, b_shift_limit=15, p=0.5),
-        #A.RandomBrightnessContrast(p=0.5),
-        #A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+        A.RGBShift(r_shift_limit=15, g_shift_limit=15, b_shift_limit=15, p=0.5),
+        A.RandomBrightnessContrast(p=0.5),
+        A.Normalize(mean=(0.7534, 0.5765, 0.4885), std=(0.1647, 0.1598, 0.1588)),
         ToTensorV2(),
     ])
 
     train_dataset_params = {
-        'root': "data/DataScienceBowl2018",
-        'split': "train",
+        'root': "data/GlaS/train",
+        'split': "all",
         'split_seed': 87,
+        'cross_val_num_buckets': 10,
         'cross_val_bucket_validation_index': 0,
         'in_memory': False,
         'target': True,
         'transforms': train_transform,
+        'smpleff_regime': 1.,
+        'use_pseudolabel': True,
     }
 
     batch_size = 1
@@ -192,12 +221,21 @@ def main():
             break
 
         images, targets, image_ids, original_sizes = sample
+        h_images, l_images = wavelet_filtering(images)
         
-        for image, target, image_id, original_height, original_width in zip(images, targets, image_ids, *original_sizes):
+        for image, target, image_id, original_height, original_width, h_image, l_image in zip(images, targets, image_ids, *original_sizes, h_images, l_images):
             print("Image: {}".format(image_id))
             print("Original Size (w-h): {}-{}".format(original_width, original_height))
+
             image = np.moveaxis(np.array(image), 0, -1)
-            Image.fromarray(image).save(debug_dir / 'img_{}'.format(image_id)) 
+            h_image, l_image = np.moveaxis(np.array(h_image), 0, -1), np.moveaxis(np.array(l_image), 0, -1)
+            image = (image - np.min(image)) / (np.max(image) - np.min(image))
+            h_image = (h_image - np.min(h_image)) / (np.max(h_image) - np.min(h_image))
+            l_image = (l_image - np.min(l_image)) / (np.max(l_image) - np.min(l_image))
+
+            Image.fromarray((image*255).astype(np.uint8)).save(debug_dir / 'img_{}'.format(image_id)) 
+            Image.fromarray((h_image*255).astype(np.uint8)).save(debug_dir / 'h_img_{}'.format(image_id)) 
+            Image.fromarray((l_image*255).astype(np.uint8)).save(debug_dir / 'l_img_{}'.format(image_id)) 
             Image.fromarray(np.array(target*255).astype(np.uint8)).save(debug_dir / 'mask_{}'.format(image_id)) 
 
 if __name__ == "__main__":
