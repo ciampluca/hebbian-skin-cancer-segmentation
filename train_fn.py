@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 
-def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_map, cfg, split="validation", outdir=None, h_image=None, l_image=None, reconstructed_image=None):
+def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_map, cfg, split="validation", outdir=None, h_image=None, l_image=None, reconstructed_image=None, perturbed_segmentation_map=None):
     debug_folder_name = 'train_output_debug' if split == "train" else 'val_output_debug' if split == "validation" else Path(outdir / "test_output_debug")
     debug_dir = Path(debug_folder_name)
     debug_dir.mkdir(parents=True, exist_ok=True)
@@ -61,7 +61,8 @@ def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_
     for i in range(n_classes):
         _scale_and_save(segmentation_map[i, :, :], debug_dir / f'{image_id.stem}_segm_cls{i}.png')
         _scale_and_save(target_map[i, :, :], debug_dir / f'{image_id.stem}_target_cls{i}.png')
-
+        if perturbed_segmentation_map is not None:
+            _scale_and_save(perturbed_segmentation_map[i, :, :], debug_dir / f'{image_id.stem}_perturbed_segm_cls{i}.png')
 
 def _save_debug_metrics(metrics, epoch):
     debug_dir = Path('output_debug')
@@ -89,6 +90,11 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
     else:
         wavelet_lambda = cfg.optim.wavelet_lambda
 
+    if cfg.optim.perturbation_lambda == 'adaptive':
+        perturbation_lambda = cfg.optim.starting_perturbation_lambda * ((epoch+1) / cfg.optim.epochs)
+    else:
+        perturbation_lambda = cfg.optim.perturbation_lambda
+
     entropy_cost = EntropyMetric() if entropy_lambda != 0 else None
     aux_criterion = torch.nn.BCEWithLogitsLoss() if criterion.__class__.__name__ == 'ElboMetric' else None
 
@@ -97,6 +103,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
     progress = tqdm(dataloader, desc='TRAIN', leave=False)
     for i, sample in enumerate(progress):
         images, labels, image_ids, _ = sample
+        batch_size = labels.shape[0]
         if labels.ndim < 4: labels = labels.unsqueeze(dim=1)    # Unsqueeze channel dimension if necessary
 
         if wavelet_lambda != 0:
@@ -122,6 +129,12 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
             max_l_preds_prob = (l_preds_prob > 0.5).float()
             max_h_preds_prob = (h_preds_prob > 0.5).float()
 
+        if perturbation_lambda != 0:
+            perturbation_preds = preds
+            perturbation_preds_prob = preds_prob
+            preds = preds[:batch_size]
+            preds_prob = preds_prob[:batch_size]
+
         # computing loss and backwarding it
         if aux_criterion is not None:
             aux_loss = aux_criterion(preds[visible_labels], labels[visible_labels]) if any_visible_label else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
@@ -133,11 +146,16 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
             loss = criterion(preds[visible_labels], labels[visible_labels]) if any_visible_label else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
             entropy_loss = entropy_cost(preds) if entropy_lambda != 0 else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
             wavelet_loss = criterion(h_preds, max_l_preds_prob) + criterion(l_preds, max_h_preds_prob) if wavelet_lambda != 0 else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+            perturbation_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+            for i in range(cfg.optim.perturbation):
+                perturbation_loss = perturbation_loss + torch.mean((perturbation_preds[:batch_size] - perturbation_preds[(i+1)*batch_size:(i+2)*batch_size])**2) 
         else:
             loss = criterion(output, images)
             entropy_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
             wavelet_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-        total_loss = loss + entropy_lambda * entropy_loss + wavelet_lambda * wavelet_loss
+            perturbation_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+
+        total_loss = loss + entropy_lambda * entropy_loss + wavelet_lambda * wavelet_loss + perturbation_lambda * perturbation_loss
         total_loss.backward()
         
         # NCHW -> NHWC
@@ -149,6 +167,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
             'aux_loss (BCE)': aux_loss.item(),
             'entropy_loss': entropy_loss.item(),
             'wavelet_loss': wavelet_loss.item(),
+            'perturbation_loss': perturbation_loss.item(),
             'dice': coefs_pixel['segm/dice'],
             'jaccard': coefs_pixel['segm/jaccard'],
             'hausdorff distance': coefs_hausdorff_distance['segm/95hd'],
@@ -172,6 +191,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
                     writer.add_scalar(f'train/{metric}', value, n_iter)
             writer.add_scalar('train/entropy_lambda', entropy_lambda, n_iter)
             writer.add_scalar('train/wavelet_lambda', wavelet_lambda, n_iter)
+            writer.add_scalar('train/perturbation_lambda', perturbation_lambda, n_iter)
 
         if cfg.optim.debug and epoch % cfg.optim.debug_freq == 0 and cfg.optim.save_debug_train_images:
             if wavelet_lambda != 0:
@@ -179,7 +199,10 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
                     _save_image_and_segmentation_maps(unfiltered_image, image_id, pred_seg_map, label, cfg, split="train", h_image=h_image, l_image=l_image)
             elif criterion.__class__.__name__ == 'ElboMetric':
                  for image, reconstr_image, label, image_id, pred_seg_map in zip(images, output['reconstr'], labels, image_ids, preds_prob):
-                    _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train", reconstructed_image=reconstr_image)               
+                    _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train", reconstructed_image=reconstr_image)
+            elif perturbation_lambda != 0:
+                for image, label, image_id, pred_seg_map, first_perturbed_pred_seg_map in zip(images, labels, image_ids, perturbation_preds_prob[:batch_size], perturbation_preds_prob[batch_size:2*batch_size]):
+                    _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train", perturbed_segmentation_map=first_perturbed_pred_seg_map)          
             else:
                 for image, label, image_id, pred_seg_map in zip(images, labels, image_ids, preds_prob):
                     _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train")
@@ -308,7 +331,7 @@ def predict(dataloader, model, device, cfg, outdir, debug=0, csv_file_name='pred
                 elif criterion.__class__.__name__ == 'ElboMetric':
                     _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg, split="test", outdir=outdir, reconstructed_image=output['reconstr'][0])
                 else:
-                    _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg, split="test", outdir=outdir)  
+                    _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg, split="test", outdir=outdir)
 
     metrics = pd.DataFrame(metrics).set_index('image_id')
     metrics = pd.DataFrame(metrics)

@@ -7,8 +7,11 @@ defaults:
 optim:
   epochs: 300
 
+  optimizer:
+    lr: 0.001
+
   lr_scheduler:
-      milestones: [250, 280, 300]
+      milestones: [100, 150, 200]
 
   wavelet_lambda: adaptive
-  starting_wavelet_lambda: 5
+  starting_wavelet_lambda: 1

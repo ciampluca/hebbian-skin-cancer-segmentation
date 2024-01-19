@@ -36,3 +36,8 @@ starting_entropy_lambda: 5      # used only with 'adaptive' EM
 wavelet_lambda: 0   # used by XNet; can be a fixed value or 'adaptive'
 starting_wavelet_lambda: 5      # used only with 'adaptive' XNet
 use_h_wavelet: false     # if false, it uses low frequency wavelet
+
+perturbation: 0     # used by CCT; number of performed input perturbations
+uniform_range: 0.3
+perturbation_lambda: 0
+starting_perturbation_lambda: 5     # can be a fixed value or 'adaptive'

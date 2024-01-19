@@ -10,8 +10,11 @@ model:
 optim:
   epochs: 300
 
+  optimizer:
+    lr: 0.001
+
   lr_scheduler:
-      milestones: [250, 280, 300]
+      milestones: [100, 150, 200]
 
   loss:
     _target_: metrics.ElboMetric

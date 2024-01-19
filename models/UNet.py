@@ -11,6 +11,7 @@ from utils import get_init_param_by_name
 class UNet(nn.Module):
     def __init__(self, cfg, **kwargs):
         super(UNet, self).__init__()
+
         self.net = UNetModel(
             in_channels=get_init_param_by_name('in_channels', kwargs, cfg.model, 3),
             out_channels=get_init_param_by_name('out_channels', kwargs, cfg.model, 1),
@@ -21,6 +22,8 @@ class UNet(nn.Module):
             up_mode=get_init_param_by_name('up_mode', kwargs, cfg.model, 'upconv'),
             last_bias=get_init_param_by_name('last_bias', kwargs, cfg.model, True),
             latent_sampling=get_init_param_by_name('latent_sampling', kwargs, cfg.model, False),
+            perturbation=get_init_param_by_name('perturbation', kwargs, cfg.optim, 0),
+            uniform_range=get_init_param_by_name('uniform_range', kwargs, cfg.optim, 0.3),
         )
     
     def forward(self, x):
@@ -51,6 +54,8 @@ class UNetModel(nn.Module):
             up_mode='upconv',
             last_bias=True,
             latent_sampling=False,
+            perturbation=0,
+            uniform_range=0.3,
     ):
         """
         Implementation of
@@ -88,6 +93,9 @@ class UNetModel(nn.Module):
             prev_channels = 2 ** (wf + i)
         
         self.latent_sampling = latent_sampling
+        self.uniform_range = uniform_range
+        self.perturbation = perturbation
+
         if self.latent_sampling:
             self.mu = nn.Conv2d(prev_channels, prev_channels, kernel_size=1)
             self.var = nn.Conv2d(prev_channels, prev_channels, kernel_size=1)
@@ -136,9 +144,17 @@ class UNetModel(nn.Module):
             std = torch.exp(0.5 * log_var)
             eps = torch.randn_like(std)
             x =  eps * std + mu
+
+        x_noise = [x]
+        if self.perturbation > 0 and self.training:
+            for i in range(self.perturbation):
+                noise_vector = ((torch.rand_like(x) * 2) - 1) * self.uniform_range 
+                x_noise.append(x.mul(noise_vector) + x)
+
+        x = torch.cat(x_noise, dim=0)
         
         for i, up in enumerate(self.up_path):
-            x = up(x, blocks[-i - 1])
+            x = up(x, blocks[-i - 1].repeat(self.perturbation+1 if self.training else 1, 1, 1, 1))
 
         output = self.last(x)
         reconstr = None

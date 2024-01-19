@@ -13,5 +13,6 @@ optim:
   lr_scheduler:
       milestones: [100, 150, 200]
 
-  wavelet_lambda: adaptive
-  starting_wavelet_lambda: 1
+  perturbation: 3
+  perturbation_lambda: adaptive
+  starting_perturbation_lambda: 1
