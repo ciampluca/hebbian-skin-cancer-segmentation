@@ -4,6 +4,7 @@ from pathlib import Path
 import re
 import random
 import numpy as np
+import math
 
 import torch
 import torchvision.transforms.functional as tf
@@ -50,7 +51,7 @@ class CheckpointManager:
                 continue
             
             cur_best = self.current_best[metric] and self.current_best[metric].get('value', None)
-            is_new_best = cur_best is None or ((value < cur_best) if mode == 'min' else (value > cur_best))
+            is_new_best = (cur_best is None and not math.isnan(value)) or ((value < cur_best) if mode == 'min' else (value > cur_best))
             if is_new_best:
                 best_metric_ckpt_name = self.ckpt_format(metric)
                 best_metric_ckpt_path = self.ckpt_dir / best_metric_ckpt_name
