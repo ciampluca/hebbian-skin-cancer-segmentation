@@ -144,11 +144,11 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
             aux_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
         if criterion.__class__.__name__ != 'ElboMetric':
             loss = criterion(preds[visible_labels], labels[visible_labels]) if any_visible_label else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-            entropy_loss = entropy_cost(preds) if entropy_lambda != 0 else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-            wavelet_loss = criterion(h_preds, max_l_preds_prob) + criterion(l_preds, max_h_preds_prob) if wavelet_lambda != 0 else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+            entropy_loss = entropy_cost(preds[~visible_labels]) if entropy_lambda != 0 and torch.any(~visible_labels) else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+            wavelet_loss = criterion(h_preds[~visible_labels], max_l_preds_prob[~visible_labels]) + criterion(l_preds[~visible_labels], max_h_preds_prob[~visible_labels]) if wavelet_lambda != 0 and torch.any(~visible_labels) else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
             perturbation_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
             for i in range(cfg.optim.perturbation):
-                perturbation_loss = perturbation_loss + torch.mean((perturbation_preds[:batch_size] - perturbation_preds[(i+1)*batch_size:(i+2)*batch_size])**2) 
+                perturbation_loss = perturbation_loss + (torch.mean((perturbation_preds[:batch_size][~visible_labels] - perturbation_preds[(i+1)*batch_size:(i+2)*batch_size][~visible_labels])**2) if torch.any(~visible_labels) else 0)
         else:
             loss = criterion(output, images)
             entropy_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
