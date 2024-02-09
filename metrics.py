@@ -12,6 +12,9 @@ def _dice_jaccard_single_class(y_true, y_pred, smooth, axis):
     jaccard = (intersection + smooth) / (union + smooth)
     dice = 2. * (intersection + smooth) / (sum_ + smooth)
 
+    if y_true.sum(axis) == 0. and sum_ < smooth:
+        return torch.tensor([1.0], device=y_pred.device), torch.tensor([1.0], device=y_pred.device)
+
     return dice.mean(), jaccard.mean()
 
 

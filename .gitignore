@@ -136,12 +136,6 @@ dmypy.json
 /datasets/trash/
 /runs/
 /output_debug/
-#PH2_url.txt
-#BrainMRI_url.txt
-#KvasirSEG_url.txt
-#DRIVE_url.txt
-#DataScienceBowl2018_url.txt
-#ISIC2016_url.txt
 /data/PH2
 /data/BrainMRI
 /data/KvasirSEG
@@ -150,6 +144,9 @@ dmypy.json
 /data/ISIC2016
 /data/GlaS
 /data/TREND
+/data/ColonDB
+/figures/
 #semi-supervised_papers.txt
 unsupervised_papers.txt
-domande_per_lagani.txt
+/NN_human_eyes/
+data/NN_human_eyes/

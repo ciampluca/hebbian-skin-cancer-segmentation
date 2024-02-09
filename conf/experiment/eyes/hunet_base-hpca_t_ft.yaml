@@ -1,0 +1,27 @@
+# @package _global_
+
+defaults:
+ - eyes/common
+ - /common/model: hunet
+
+model:
+  hebb:
+    w_nrm: False
+    mode: 'hpca_t'
+    patchwise: True
+    contrast: 1.
+    uniformity: False
+    alpha: 0
+  pretrained: last://last    # best://[dice, jaccard]
+  reset_clf: 1
+
+optim:
+  epochs: 300
+
+  lr_scheduler:
+      milestones: [250, 280, 300]
+
+data:
+  train:
+    use_pseudolabel: false
+

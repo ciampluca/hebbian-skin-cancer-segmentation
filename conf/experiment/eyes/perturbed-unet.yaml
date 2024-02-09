@@ -1,0 +1,18 @@
+# @package _global_
+
+defaults:
+ - eyes/common
+ - /common/model: unet
+
+optim:
+  epochs: 300
+
+  optimizer:
+    lr: 0.001
+
+  lr_scheduler:
+      milestones: [200, 250, 280]
+
+  perturbation: 3
+  perturbation_lambda: adaptive
+  starting_perturbation_lambda: 1

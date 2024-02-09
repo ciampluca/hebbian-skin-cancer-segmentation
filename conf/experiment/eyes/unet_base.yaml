@@ -1,0 +1,15 @@
+# @package _global_
+
+defaults:
+ - eyes/common
+ - /common/model: unet
+
+optim:
+  epochs: 300
+
+  lr_scheduler:
+      milestones: [250, 280, 300]
+
+data:
+  train:
+    use_pseudolabel: false

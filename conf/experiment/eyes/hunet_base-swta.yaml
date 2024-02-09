@@ -1,0 +1,24 @@
+# @package _global_
+
+defaults:
+ - eyes/common
+ - /common/model: hunet
+
+model:
+  hebb:
+    w_nrm: True
+    mode: 'swta'
+    patchwise: True
+    contrast: 1.
+    uniformity: False
+    alpha: 1
+
+optim:
+  epochs: 300
+
+  lr_scheduler:
+      milestones: [250, 280, 300]
+
+data:
+  train:
+    use_pseudolabel: false
