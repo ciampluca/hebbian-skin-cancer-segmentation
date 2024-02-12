@@ -110,4 +110,15 @@ def wavelet_filtering(images):
 
     return h_images, l_images
 
+
+def update_teacher_variables(model, teacher_model, alpha, global_step):
+    # Use the true average until the exponential average is more correct
+    alpha = min(1 - 1 / (global_step + 1), alpha)
+    for teacher_param, param in zip(teacher_model.parameters(), model.parameters()):
+        teacher_param.data.mul_(alpha).add_(param.data, alpha=1 - alpha)
+
+
+def initialize_teacher_variables(model, teacher_model):
+    for teacher_param, param in zip(teacher_model.parameters(), model.parameters()):
+        teacher_param.data.add_(param.data)
     

@@ -1,7 +1,7 @@
 # @package _global_
 
 defaults:
- - ph2/common
+ - glas/common
  - /common/model: unet
 
 optim:
@@ -13,5 +13,6 @@ optim:
   lr_scheduler:
       milestones: [100, 200, 250]
 
-  wavelet_lambda: adaptive
-  starting_wavelet_lambda: 3
+  teacher_lambda: adaptive
+  starting_teacher_lambda: 3
+  teacher_alpha: 0.99

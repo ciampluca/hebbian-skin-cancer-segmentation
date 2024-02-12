@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 from train_fn import train_one_epoch, validate
-from utils import seed_everything, seed_worker, CheckpointManager
+from utils import seed_everything, seed_worker, CheckpointManager, initialize_teacher_variables
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -61,6 +61,13 @@ def main(cfg):
     model_param_string = ', '.join(f'{k}={v}' for k, v in cfg.model.module.items() if not k.startswith('_'))
     log.info(f"[MODEL] {cfg.model.name}({model_param_string})")
 
+    # create teacher model for MT method
+    if cfg.optim.teacher_lambda != 0:
+        teacher_model = hydra.utils.instantiate(cfg.model.module, cfg)
+        teacher_model.to(device)
+        teacher_model_param_string = ', '.join(f'{k}={v}' for k, v in cfg.model.module.items() if not k.startswith('_'))
+        log.info(f"[TEACHER MODEL] {cfg.model.name}({teacher_model_param_string})")
+
     # build the optimizer
     optimizer = hydra.utils.instantiate(cfg.optim.optimizer, model.parameters())
     scheduler = hydra.utils.instantiate(cfg.optim.lr_scheduler, optimizer)
@@ -100,6 +107,9 @@ def main(cfg):
         if cfg.model.reset_clf and hasattr(model, 'reset_clf'):
             model.reset_clf(cfg.model.reset_clf)    # Resets final classifier with number of output channels specified in cfg.model.reset_clf
         log.info(f"[PRETRAINED]: {cfg.model.pretrained}")
+
+        if cfg.optim.teacher_lambda != 0:
+            initialize_teacher_variables(model, teacher_model)
         
     start_epoch = 0
     best_metrics = {}
@@ -137,7 +147,7 @@ def main(cfg):
     progress = trange(start_epoch, cfg.optim.epochs, initial=start_epoch)
     for epoch in progress:
         # train
-        train_metrics = train_one_epoch(train_loader, model, optimizer, device, writer, epoch, cfg)
+        train_metrics = train_one_epoch(train_loader, model, optimizer, device, writer, epoch, cfg, teacher_model=teacher_model)
         scheduler.step()  # update lr scheduler
 
         # convert for pandas

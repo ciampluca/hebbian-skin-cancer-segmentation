@@ -12,7 +12,7 @@ from tqdm import tqdm
 import pandas as pd
 from PIL import Image
 
-from utils import wavelet_filtering
+from utils import wavelet_filtering, update_teacher_variables
 from metrics import dice_jaccard, hausdorff_distance, average_surface_distance, EntropyMetric
 
 tqdm = partial(tqdm, dynamic_ncols=True)
@@ -73,7 +73,7 @@ def _save_debug_metrics(metrics, epoch):
     metrics.to_csv(debug_dir / Path(csv_file_path), index=False)
 
 
-def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
+def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg, teacher_model=None):
     """ Trains the model for one epoch. """
     model.train()
     optimizer.zero_grad()
@@ -95,6 +95,11 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
     else:
         perturbation_lambda = cfg.optim.perturbation_lambda
 
+    if cfg.optim.teacher_lambda == 'adaptive':
+        teacher_lambda = cfg.optim.starting_teacher_lambda * ((epoch+1) / cfg.optim.epochs)
+    else:
+        teacher_lambda = cfg.optim.teacher_lambda 
+
     entropy_cost = EntropyMetric() if entropy_lambda != 0 else None
     aux_criterion = torch.nn.BCEWithLogitsLoss() if criterion.__class__.__name__ == 'ElboMetric' else None
 
@@ -106,14 +111,17 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
         batch_size = labels.shape[0]
         if labels.ndim < 4: labels = labels.unsqueeze(dim=1)    # Unsqueeze channel dimension if necessary
 
+        images, labels = images.to(device), labels.to(device)
+        visible_labels = torch.all(labels.view(labels.shape[0], -1) != -1, dim=1)
+        any_visible_label = torch.any(visible_labels)
+
         if wavelet_lambda != 0:
             h_images, l_images = wavelet_filtering(images)
             unfiltered_images = images
             images = torch.cat([h_images, l_images], dim=0)
 
-        images, labels = images.to(device), labels.to(device)
-        visible_labels = torch.all(labels.view(labels.shape[0], -1) != -1, dim=1)
-        any_visible_label = torch.any(visible_labels)
+        if teacher_lambda != 0:
+            noised_images = torch.clamp(torch.randn_like(images[~visible_labels]) * 0.1, -0.2, 0.2) + images[~visible_labels]
 
         # computing outputs
         output = model(images)
@@ -135,6 +143,12 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
             preds = preds[:batch_size]
             preds_prob = preds_prob[:batch_size]
 
+        if teacher_lambda != 0 and teacher_model is not None:
+            with torch.no_grad():
+                teacher_output = teacher_model(noised_images)
+                teacher_preds = teacher_output['output'] if isinstance(teacher_output, dict) else teacher_output
+                # teacher_prob = (torch.sigmoid(teacher_preds)) if criterion.__class__.__name__.endswith("WithLogitsLoss") or criterion.__class__.__name__ == "ElboMetric" else teacher_preds
+
         # computing loss and backwarding it
         if aux_criterion is not None:
             aux_loss = aux_criterion(preds[visible_labels], labels[visible_labels]) if any_visible_label else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
@@ -149,13 +163,15 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
             perturbation_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
             for i in range(cfg.optim.perturbation):
                 perturbation_loss = perturbation_loss + (torch.mean((perturbation_preds[:batch_size][~visible_labels] - perturbation_preds[(i+1)*batch_size:(i+2)*batch_size][~visible_labels])**2) if torch.any(~visible_labels) else 0)
+            teacher_loss = torch.mean((preds[~visible_labels] - teacher_preds)**2)
         else:
             loss = criterion(output, images)
             entropy_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
             wavelet_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
             perturbation_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+            teacher_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
 
-        total_loss = loss + entropy_lambda * entropy_loss + wavelet_lambda * wavelet_loss + perturbation_lambda * perturbation_loss
+        total_loss = loss + entropy_lambda * entropy_loss + wavelet_lambda * wavelet_loss + perturbation_lambda * perturbation_loss + teacher_lambda * teacher_loss
         total_loss.backward()
         
         # NCHW -> NHWC
@@ -168,6 +184,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
             'entropy_loss': entropy_loss.item(),
             'wavelet_loss': wavelet_loss.item(),
             'perturbation_loss': perturbation_loss.item(),
+            'teacher_loss': teacher_loss.item(),
             'dice': coefs_pixel['segm/dice'],
             'jaccard': coefs_pixel['segm/jaccard'],
             'hausdorff distance': coefs_hausdorff_distance['segm/95hd'],
@@ -182,6 +199,8 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
             if hasattr(model, 'local_update'): model.local_update()
             optimizer.step()
             optimizer.zero_grad()
+            if teacher_model is not None:
+                update_teacher_variables(model, teacher_model, cfg.optim.teacher_alpha, epoch)
 
         if (i + 1) % cfg.optim.log_every == 0:
             batch_metrics.update({'lr': optimizer.param_groups[0]['lr']})
@@ -192,6 +211,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg):
             writer.add_scalar('train/entropy_lambda', entropy_lambda, n_iter)
             writer.add_scalar('train/wavelet_lambda', wavelet_lambda, n_iter)
             writer.add_scalar('train/perturbation_lambda', perturbation_lambda, n_iter)
+            writer.add_scalar('train/teacher_lambda', teacher_lambda, n_iter)
 
         if cfg.optim.debug and epoch % cfg.optim.debug_freq == 0 and cfg.optim.save_debug_train_images:
             if wavelet_lambda != 0:

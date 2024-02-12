@@ -1,0 +1,30 @@
+# @package _global_
+
+defaults:
+ - glas/common
+ - /common/model: hunet
+
+model:
+  hebb:
+    w_nrm: True
+    mode: 'swta_t'
+    patchwise: True
+    contrast: 1.
+    uniformity: False
+    alpha: 0
+  pretrained: last://last    # best://[dice, jaccard]
+  reset_clf: 1
+
+optim:
+  epochs: 300
+
+  optimizer:
+    lr: 0.0001
+
+  lr_scheduler:
+      milestones: [100, 200, 250]
+
+  teacher_lambda: adaptive
+  starting_teacher_lambda: 3
+  teacher_alpha: 0.99
+

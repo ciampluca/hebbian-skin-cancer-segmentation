@@ -10,8 +10,6 @@ model:
   latent_sampling: True
 
 optim:
-  optimizer:
-   lr: 0.001
   batch_size: 4
   batch_accumulation: 1
 
@@ -19,6 +17,9 @@ optim:
 
   lr_scheduler:
        milestones: [250, 280, 300]
+
+  optimizer:
+    lr: 0.0001
 
 data:
   train:

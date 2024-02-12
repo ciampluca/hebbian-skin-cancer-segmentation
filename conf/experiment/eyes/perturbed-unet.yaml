@@ -8,11 +8,11 @@ optim:
   epochs: 300
 
   optimizer:
-    lr: 0.001
+    lr: 0.0001
 
   lr_scheduler:
-      milestones: [200, 250, 280]
+      milestones: [100, 200, 250]
 
   perturbation: 3
   perturbation_lambda: adaptive
-  starting_perturbation_lambda: 1
+  starting_perturbation_lambda: 3

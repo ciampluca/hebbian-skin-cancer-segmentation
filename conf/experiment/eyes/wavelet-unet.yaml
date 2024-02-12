@@ -8,10 +8,10 @@ optim:
   epochs: 300
 
   optimizer:
-    lr: 0.001
+    lr: 0.0001
 
   lr_scheduler:
-      milestones: [100, 150, 200]
+      milestones: [100, 200, 250]
 
   wavelet_lambda: adaptive
-  starting_wavelet_lambda: 1
+  starting_wavelet_lambda: 3

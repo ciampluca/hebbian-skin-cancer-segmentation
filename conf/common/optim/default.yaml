@@ -41,3 +41,7 @@ perturbation: 0     # used by CCT; number of performed input perturbations
 uniform_range: 0.3
 perturbation_lambda: 0
 starting_perturbation_lambda: 5     # can be a fixed value or 'adaptive'
+
+teacher_lambda: 0   # used by MT; can be a fixed value or 'adaptive'
+starting_teacher_lambda: 5
+teacher_alpha: 0.99
