@@ -83,7 +83,10 @@ def main(cfg):
             checkpoint_config_path = Path(re.sub("run-\d+", "run-0", checkpoint_config_path))
             exp_name = checkpoint_config_path.parts[-4]
             if "base" not in exp_name:
-                new_exp_name = exp_name.replace('unet', 'unet_base')
+                new_exp_name = exp_name
+                if not exp_name.startswith("hunet"):
+                    new_exp_name = new_exp_name.split("-", 1)[1]
+                new_exp_name = new_exp_name.replace('unet', 'unet_base')
                 checkpoint_config_path = Path(str(checkpoint_config_path).replace(exp_name, new_exp_name))
             best_models_folder = checkpoint_config_path / 'best_models'
             metric_name = cfg.model.pretrained.split('best://', 1)[1]
@@ -95,7 +98,10 @@ def main(cfg):
             checkpoint_config_path = Path(re.sub("run-\d+", "run-0", checkpoint_config_path))
             exp_name = checkpoint_config_path.parts[-4]
             if "base" not in exp_name:
-                new_exp_name = exp_name.replace('unet', 'unet_base')
+                new_exp_name = exp_name
+                if not exp_name.startswith("hunet"):
+                    new_exp_name = new_exp_name.split("-", 1)[1]
+                new_exp_name = new_exp_name.replace('unet', 'unet_base')
                 checkpoint_config_path = Path(str(checkpoint_config_path).replace(exp_name, new_exp_name))
             ckpt_file_name = cfg.model.pretrained.split('last://', 1)[1]
             ckpt_path = checkpoint_config_path / f'{ckpt_file_name}.pth'
