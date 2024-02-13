@@ -304,7 +304,7 @@ def validate(dataloader, model, device, epoch, cfg):
 
 
 @torch.no_grad()
-def predict(dataloader, model, device, cfg, outdir, debug=0, csv_file_name='preds.csv'):
+def predict(dataloader, model, device, cfg, outdir, debug=0, csv_file_name='preds.csv', segm_threshold=None):
     """ Make predictions on data. """
     model.eval()
     criterion = hydra.utils.instantiate(cfg.optim.loss)
@@ -335,7 +335,7 @@ def predict(dataloader, model, device, cfg, outdir, debug=0, csv_file_name='pred
 
             # computing metrics
             segm_metrics_pixel, segm_metrics_distance = {}, {}
-            segm_metrics_pixel = dice_jaccard(label.movedim(1, -1), pred_prob.movedim(1, -1))    # NCHW -> NHWC
+            segm_metrics_pixel = dice_jaccard(label.movedim(1, -1), pred_prob.movedim(1, -1), thr=segm_threshold)    # NCHW -> NHWC
             segm_metrics_distance = hausdorff_distance(label.movedim(1, -1), pred_prob.movedim(1, -1), thr=0.5)
             segm_metrics_distance.update(average_surface_distance(label.movedim(1, -1), pred_prob.movedim(1, -1), thr=0.5))
 
@@ -347,11 +347,11 @@ def predict(dataloader, model, device, cfg, outdir, debug=0, csv_file_name='pred
 
             if outdir and debug:
                 if use_waivelet_filtering:
-                    _save_image_and_segmentation_maps(unfiltered_images[i], image_id, pred_prob, label, cfg, split="test", outdir=outdir, h_image=h_images[i], l_image=l_images[i])
+                    _save_image_and_segmentation_maps(unfiltered_images[i], image_id, pred_prob, label, cfg, split="test", outdir=outdir, h_image=h_images[i], l_image=l_images[i], segm_threshold=segm_threshold)
                 elif criterion.__class__.__name__ == 'ElboMetric':
-                    _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg, split="test", outdir=outdir, reconstructed_image=output['reconstr'][0])
+                    _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg, split="test", outdir=outdir, reconstructed_image=output['reconstr'][0], segm_threshold=segm_threshold)
                 else:
-                    _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg, split="test", outdir=outdir)
+                    _save_image_and_segmentation_maps(image, image_id, pred_prob, label, cfg, split="test", outdir=outdir, segm_threshold=segm_threshold)
 
     metrics = pd.DataFrame(metrics).set_index('image_id')
     metrics = pd.DataFrame(metrics)

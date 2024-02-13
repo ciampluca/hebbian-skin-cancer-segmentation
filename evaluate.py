@@ -56,7 +56,7 @@ def main(args):
     outdir = (run_path / 'test_predictions') if args.save else None
         
     # make predictions
-    predict(test_loader, model, device, cfg, outdir, debug=args.debug, csv_file_name=args.output_file_name)
+    predict(test_loader, model, device, cfg, outdir, debug=args.debug, csv_file_name=args.output_file_name, segm_threshold=args.segm_threshold)
 
     log.info("Evaluation ended. Exiting....")
 
@@ -73,6 +73,7 @@ if __name__ == "__main__":
     parser.add_argument('--load-target', default=True, help='load also target')
     parser.add_argument('--in-memory', default=False, help='load dataset in memory')
     parser.add_argument('--batch-size', type=int, default=None, help='batch size used for evaluation')
+    parser.add_argument('--segm-threshold', type=float, default=0.5, help='threshold used for dice-jaccard computation')
     parser.add_argument('--output-file-name', default='preds.csv', help='file name where predictions will be stored')
     parser.set_defaults(save=True)
 
