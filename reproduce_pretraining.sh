@@ -24,11 +24,11 @@ EXPS=(
     glas/hunet_base-hpca_t
     glas/vae-unet_base
     #################################
-    # TREND Dataset
+    # EYES Dataset
     #################################
-    trend/hunet_base-hpca
-    trend/hunet_base-hpca_t
-    trend/vae-unet_base
+    eyes/hunet_base-hpca
+    eyes/hunet_base-hpca_t
+    eyes/vae-unet_base
 )
 
 # Train & Evaluate 
@@ -42,8 +42,8 @@ for EXP in ${EXPS[@]}; do
     case $EXP in 
         ph2*)
             CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/PH2 --in-memory True --best-on-metric last --output-file-name preds_from_last.csv;;
-        trend*)
-            CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/TREND --in-memory True --best-on-metric last --output-file-name preds_from_last.csv;;        
+        eyes*)
+            CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/NN_human_eyes --in-memory True --best-on-metric last --output-file-name preds_from_last.csv;;
         glas*)
             CUDA_VISIBLE_DEVICES=$EVAL_GPU HYDRA_FULL_ERROR=1 python evaluate.py $EVAL_EXP_ROOT/experiment=$EXP/inv_temp-1/regime-1.0/run-0 --data-root $EVAL_DATA_ROOT/GlaS/test --in-memory True --test-split all --best-on-metric last --output-file-name preds_from_last.csv;;
     esac

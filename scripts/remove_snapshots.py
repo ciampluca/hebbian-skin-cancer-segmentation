@@ -2,8 +2,8 @@ import os
 from tqdm import tqdm
 
 
-ROOT = "/home/luca/dgx-a100/workspace/hebbian-skin-cancer-segmentation/runs"
-DATASET = "ph2"
+ROOT = "/home/luca/datino/results/hebbian-medical-image-segmentation/runs"
+DATASET = "glas"
 
 METRICS_TO_REMOVE = ['95hd', 'asd']
 
