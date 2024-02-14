@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 
-def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_map, cfg, split="validation", outdir=None, h_image=None, l_image=None, reconstructed_image=None, perturbed_segmentation_map=None):
+def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_map, cfg, split="validation", outdir=None, h_image=None, l_image=None, reconstructed_image=None, perturbed_segmentation_map=None, segm_threshold=None):
     debug_folder_name = 'train_output_debug' if split == "train" else 'val_output_debug' if split == "validation" else Path(outdir / "test_output_debug")
     debug_dir = Path(debug_folder_name)
     debug_dir.mkdir(parents=True, exist_ok=True)
@@ -58,6 +58,7 @@ def _save_image_and_segmentation_maps(image, image_id, segmentation_map, target_
         _scale_and_save(reconstructed_image, debug_dir / r_image_name, denormalize_image=True)
     
     n_classes = segmentation_map.shape[0]
+    segmentation_map = (segmentation_map >= segm_threshold) if segm_threshold is not None else segmentation_map
     for i in range(n_classes):
         _scale_and_save(segmentation_map[i, :, :], debug_dir / f'{image_id.stem}_segm_cls{i}.png')
         _scale_and_save(target_map[i, :, :], debug_dir / f'{image_id.stem}_target_cls{i}.png')
