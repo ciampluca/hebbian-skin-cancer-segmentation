@@ -61,7 +61,8 @@ def main(cfg):
     model_param_string = ', '.join(f'{k}={v}' for k, v in cfg.model.module.items() if not k.startswith('_'))
     log.info(f"[MODEL] {cfg.model.name}({model_param_string})")
 
-    # create teacher model for MT method
+    # (eventually) create teacher model for MT method
+    teacher_model = None
     if cfg.optim.teacher_lambda != 0:
         teacher_model = hydra.utils.instantiate(cfg.model.module, cfg)
         teacher_model.to(device)
