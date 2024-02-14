@@ -164,7 +164,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg, te
             perturbation_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
             for i in range(cfg.optim.perturbation):
                 perturbation_loss = perturbation_loss + (torch.mean((perturbation_preds[:batch_size][~visible_labels] - perturbation_preds[(i+1)*batch_size:(i+2)*batch_size][~visible_labels])**2) if torch.any(~visible_labels) else 0)
-            teacher_loss = torch.mean((preds[~visible_labels] - teacher_preds)**2)
+            teacher_loss = torch.mean((preds[~visible_labels] - teacher_preds)**2) if teacher_lambda != 0 else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
         else:
             loss = criterion(output, images)
             entropy_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
