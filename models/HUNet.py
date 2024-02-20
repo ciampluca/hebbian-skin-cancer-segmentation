@@ -38,6 +38,8 @@ class HUNet(nn.Module):
             up_mode=get_init_param_by_name('up_mode', kwargs, cfg.model, 'upconv'),
             hebb_params=hebb_params,
             last_bias=get_init_param_by_name('last_bias', kwargs, cfg.model, True),
+            perturbation=get_init_param_by_name('perturbation', kwargs, cfg.optim, 0),
+            uniform_range=get_init_param_by_name('uniform_range', kwargs, cfg.optim, 0.3),
         )
     
     def forward(self, x):
@@ -69,6 +71,8 @@ class HUNetModel(nn.Module):
             up_mode='upconv',
             hebb_params=None,
             last_bias=True,
+            perturbation=0,
+            uniform_range=0.3,
     ):
         """
         Implementation of
@@ -113,6 +117,9 @@ class HUNetModel(nn.Module):
             )
             prev_channels = 2 ** (wf + i)
 
+        self.uniform_range = uniform_range
+        self.perturbation = perturbation
+
         self.last_bias = last_bias
         self.last = nn.Conv2d(prev_channels, out_channels, kernel_size=1, bias=self.last_bias)
         if not self.last_bias: self.last.bias.requires_grad = False
@@ -140,8 +147,16 @@ class HUNetModel(nn.Module):
                 blocks.append(x)
                 x = F.max_pool2d(x, 2)
 
+        x_noise = [x]
+        if self.perturbation > 0 and self.training:
+            for i in range(self.perturbation):
+                noise_vector = ((torch.rand_like(x) * 2) - 1) * self.uniform_range 
+                x_noise.append(x.mul(noise_vector) + x)
+
+        x = torch.cat(x_noise, dim=0)
+
         for i, up in enumerate(self.up_path):
-            x = up(x, blocks[-i - 1])
+            x = up(x, blocks[-i - 1].repeat(self.perturbation+1 if self.training else 1, 1, 1, 1))
 
         torch.set_grad_enabled(True)
         output = self.last(x)
