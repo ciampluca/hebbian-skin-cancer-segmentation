@@ -1,0 +1,118 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%             Unsupervised Semantic Segmentation                  %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+---------------------------
+CVPR 2023
+---------------------------
+
+1. Leveraging Hidden Positives for Unsupervised Semantic Segmentation
+Code: https://github.com/hynnsk/HP
+Dataset: COCO-stuff, Cityscapes, Postdam-3
+Metrics: Accuracy, mIoU
+Note: spiega bena come fare la evaluation; sostanzialmente ci sono due modi.
+
+2. ACSeg: Adaptive Conceptualization for Unsupervised Semantic Segmentation
+Code: no code
+Dataset: PASCAL VOC 2012, COCO-stuff-27
+Metrics: mIoU, kNN-retrieval
+
+
+---------------------------
+ICCV 2023
+---------------------------
+
+1. Learning Neural Eigenfunctions for Unsupervised Semantic Segmentation
+Code: https://github.com/thudzj/NeuralEigenfunctionSegmentor
+Dataset: Cityscapes, Pascal Context
+Metrics: Accuracy, mIoU
+
+
+---------------------------
+ICLR 2023
+---------------------------
+
+1. Unsupervised Semantic Segmentation with Self-supervised Object-centric Representation
+Code: no code
+Dataset: PASCAL VOC 2012, COCO
+Metrics: mIoU
+
+
+
+
+---------------------------
+CVPR 2022
+---------------------------
+
+1. Self-Supervised Learning of Object Parts for Semantic Segmentation
+Code: https://github.com/MkuuWaUjinga/leopart
+Dataset: VOC, COCO
+Metrics: mIoU
+Note: non sicurissimo che ci interessi
+
+2. Deep Spectral Methods: A Surprisingly Strong Baseline for Unsupervised Semantic Segmentation and Localization
+Code: https://github.com/lukemelas/deep-spectral-segmentation
+Dataset: PASCAL VOC 2012
+Metrics: mIoU
+
+3. Unsupervised Hierarchical Semantic Segmentation with Multiview Cosegmentation and Clustering Transformer
+Code: https://github.com/twke18/HSG
+Dataset: PASCAL VOC 2012, COCO, COCO-Stuff, Cityscapes, Postdam, KITTI-STEP
+Metrics: Accuracy, mIoU
+
+
+---------------------------
+ICLR 2022
+---------------------------
+
+1. Unsupervised Semantic Segmentation by Distilling Feature Correspondences
+Code: https://github.com/mhamilton723/STEGO
+Dataset: COCO-stuff, Cityscapes
+Metrics: Accuracy, mIoU
+
+
+---------------------------
+ECCV 2022
+---------------------------
+
+1. TransFGU: A Top-down Approach to Fine-Grained Unsupervised Semantic Segmentation
+Code: https://github.com/damo-cv/TransFGU
+Dataset: PASCAL VOC, COCO-stuff, Cityscapes, LIP
+Metrics: Accuracy, mIoU
+
+
+---------------------------
+TPAMI 2022
+---------------------------
+
+1. Large-scale Unsupervised Semantic Segmentation
+Code: https://github.com/LUSSeg/PASS
+Dataset: ImageNet-S
+
+
+
+
+---------------------------
+CVPR 2021
+---------------------------
+
+1. PiCIE: Unsupervised Semantic Segmentation using Invariance and Equivariance in Clustering
+Code: https://github.com/janghyuncho/PiCIE
+Dataset: COCO-stuff, Cityscapes
+Metrics: Accuracy, mIoU
+
+
+---------------------------
+ICCV 2021
+---------------------------
+
+1. Unsupervised Semantic Segmentation by Contrasting Object Mask Proposals
+Code: github.com/wvangansbeke/Unsupervised-Semantic-Segmentation.git
+Dataset: COCO, PASCAL, DAVIS-2016
+Metrics: mIoU, k-means (forse)
+
+
+
+
+
