@@ -5,9 +5,9 @@
 
 set -e
 
-REPS=5
-START_REP=0
-EVAL_GPU=0
+REPS=10
+START_REP=8
+EVAL_GPU=1
 
 EVAL_EXP_ROOT="./runs"
 EVAL_DATA_ROOT="./data"
@@ -20,8 +20,8 @@ REGIMES=(
     0.01
     0.02
     #0.05
-    0.1
-    0.2
+    #0.1
+    #0.2
     #1.0
 )
 
@@ -54,7 +54,6 @@ EXPS=(
     #glas/wavelet-unet
     #glas/perturbed-unet
     #glas/teacher-unet
-    glas/superpix-unet
     #################################
     # EYES Dataset
     #################################
@@ -66,7 +65,7 @@ EXPS=(
     #eyes/hunet-hpca_t_ft
     #eyes/vae-unet_base_ft
     #eyes/vae-unet_ft
-    #eyes/wavelet-unet
+    eyes/wavelet-unet_gpu1
     #eyes/perturbed-unet
     #eyes/teacher-unet
 )

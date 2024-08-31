@@ -121,4 +121,23 @@ def update_teacher_variables(model, teacher_model, alpha, global_step):
 def initialize_teacher_variables(model, teacher_model):
     for teacher_param, param in zip(teacher_model.parameters(), model.parameters()):
         teacher_param.data.add_(param.data)
-    
+
+
+def superpix_segment(images, thr=0.01):
+    def _pixels_close(im, x, y, x_n, y_n, thr=0.01):
+        return (im[:, x, y] - im[:, x_n, y_n]).abs().sum() < thr
+
+    superpix = torch.zeros_like(images).sum(dim=1)
+    starting_points = []
+    for i, im in enumerate(images):
+        queue = []
+        x, y = random.randint(0, im.shape[-2]), random.randint(0, im.shape[-1])
+        queue.append((x, y))
+        while len(queue) > 0:
+            x, y = queue[0]
+            queue = queue[1:]
+            superpix[i, x, y] = 1
+            neighbors = [(x_n, y_n) for x_n in [x-1, x, x+1] for y_n in [y-1, y, y+1] if superpix[i, x_n, y_n] == 0 and _pixels_close(im, x, y, x_n, y_n, thr)]
+            for x_n, y_n in neighbors: queue.append((x_n, y_n))
+    return superpix.unsqueeze(1)
+

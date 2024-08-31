@@ -16,4 +16,4 @@ optim:
   wavelet_lambda: adaptive
   starting_wavelet_lambda: 3
 
-gpu: 2
+gpu: 1

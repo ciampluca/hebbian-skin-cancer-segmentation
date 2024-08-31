@@ -28,3 +28,4 @@ optim:
   starting_teacher_lambda: 3
   teacher_alpha: 0.99
 
+gpu: 4

@@ -12,7 +12,7 @@ from tqdm import tqdm
 import pandas as pd
 from PIL import Image
 
-from utils import wavelet_filtering, update_teacher_variables
+from utils import wavelet_filtering, update_teacher_variables, superpix_segment
 from metrics import dice_jaccard, hausdorff_distance, average_surface_distance, EntropyMetric
 
 tqdm = partial(tqdm, dynamic_ncols=True)
@@ -101,6 +101,12 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg, te
     else:
         teacher_lambda = cfg.optim.teacher_lambda 
 
+    if cfg.optim.superpix_lambda == 'adaptive':
+        superpix_lambda = cfg.optim.starting_superpix_lambda * ((epoch+1) / cfg.optim.epochs)
+    else:
+        superpix_lambda = cfg.optim.superpix_lambda 
+
+
     entropy_cost = EntropyMetric() if entropy_lambda != 0 else None
     aux_criterion = torch.nn.BCEWithLogitsLoss() if criterion.__class__.__name__ == 'ElboMetric' else None
 
@@ -150,6 +156,10 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg, te
                 teacher_preds = teacher_output['output'] if isinstance(teacher_output, dict) else teacher_output
                 # teacher_prob = (torch.sigmoid(teacher_preds)) if criterion.__class__.__name__.endswith("WithLogitsLoss") or criterion.__class__.__name__ == "ElboMetric" else teacher_preds
 
+        if superpix_lambda != 0:
+            superpix_labels = -torch.ones_like(labels)
+            if torch.any(~visible_labels): superpix_labels[~visible_labels] = superpix_segment(images[~visible_labels])
+
         # computing loss and backwarding it
         if aux_criterion is not None:
             aux_loss = aux_criterion(preds[visible_labels], labels[visible_labels]) if any_visible_label else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
@@ -165,14 +175,16 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg, te
             for i in range(cfg.optim.perturbation):
                 perturbation_loss = perturbation_loss + (torch.mean((perturbation_preds[:batch_size][~visible_labels] - perturbation_preds[(i+1)*batch_size:(i+2)*batch_size][~visible_labels])**2) if torch.any(~visible_labels) else 0)
             teacher_loss = torch.mean((preds[~visible_labels] - teacher_preds)**2) if teacher_lambda != 0 else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+            superpix_loss = criterion(preds[~visible_labels], superpix_labels) if torch.any(~visible_labels) else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
         else:
             loss = criterion(output, images)
             entropy_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
             wavelet_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
             perturbation_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
             teacher_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+            superpix_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
 
-        total_loss = loss + entropy_lambda * entropy_loss + wavelet_lambda * wavelet_loss + perturbation_lambda * perturbation_loss + teacher_lambda * teacher_loss
+        total_loss = loss + entropy_lambda * entropy_loss + wavelet_lambda * wavelet_loss + perturbation_lambda * perturbation_loss + teacher_lambda * teacher_loss + superpix_lambda * superpix_loss
         total_loss.backward()
         
         # NCHW -> NHWC
@@ -186,6 +198,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg, te
             'wavelet_loss': wavelet_loss.item(),
             'perturbation_loss': perturbation_loss.item(),
             'teacher_loss': teacher_loss.item(),
+            'superpix_loss': superpix_loss.item(),
             'dice': coefs_pixel['segm/dice'],
             'jaccard': coefs_pixel['segm/jaccard'],
             'hausdorff distance': coefs_hausdorff_distance['segm/95hd'],
@@ -213,6 +226,7 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg, te
             writer.add_scalar('train/wavelet_lambda', wavelet_lambda, n_iter)
             writer.add_scalar('train/perturbation_lambda', perturbation_lambda, n_iter)
             writer.add_scalar('train/teacher_lambda', teacher_lambda, n_iter)
+            writer.add_scalar('train/superpix_lambda', superpix_lambda, n_iter)
 
         if cfg.optim.debug and epoch % cfg.optim.debug_freq == 0 and cfg.optim.save_debug_train_images:
             if wavelet_lambda != 0:
@@ -223,7 +237,10 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg, te
                     _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train", reconstructed_image=reconstr_image)
             elif perturbation_lambda != 0:
                 for image, label, image_id, pred_seg_map, first_perturbed_pred_seg_map in zip(images, labels, image_ids, perturbation_preds_prob[:batch_size], perturbation_preds_prob[batch_size:2*batch_size]):
-                    _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train", perturbed_segmentation_map=first_perturbed_pred_seg_map)          
+                    _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train", perturbed_segmentation_map=first_perturbed_pred_seg_map)
+            elif superpix_lambda != 0:
+                for image, label, superpix_label, image_id, pred_seg_map in zip(images, labels, superpix_labels, image_ids, preds_prob):
+                    _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train", perturbed_segmentation_map=superpix_label)
             else:
                 for image, label, image_id, pred_seg_map in zip(images, labels, image_ids, preds_prob):
                     _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train")

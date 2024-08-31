@@ -28,3 +28,4 @@ optim:
   perturbation_lambda: adaptive
   starting_perturbation_lambda: 3
 
+gpu: 5
