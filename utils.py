@@ -130,7 +130,7 @@ def superpix_segment(images, thr=0.01):
     superpix = torch.zeros_like(images).sum(dim=1)
     for i, im in enumerate(images):
         queue = []
-        x, y = random.randint(0, im.shape[-2]), random.randint(0, im.shape[-1])
+        x, y = random.randint(0, im.shape[-2]-1), random.randint(0, im.shape[-1]-1)
         queue.append((x, y))
         explored = torch.zeros_like(superpix[i])
         explored[x, y] = 1
