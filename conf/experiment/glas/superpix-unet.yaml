@@ -13,5 +13,4 @@ optim:
   lr_scheduler:
       milestones: [100, 200, 250]
 
-  superpix_lambda: adaptive
-  starting_superpix_lambda: 3
+  superpix_lambda: 1

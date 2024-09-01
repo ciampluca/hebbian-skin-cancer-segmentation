@@ -48,5 +48,4 @@ teacher_alpha: 0.99
 
 superpix_lambda: 0   # used by MT; can be a fixed value or 'adaptive'
 starting_superpix_lambda: 5
-superpix_alpha: 0.99
 

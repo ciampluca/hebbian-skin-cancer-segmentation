@@ -5,7 +5,7 @@
 
 set -e
 
-REPS=5
+REPS=1
 START_REP=0
 EVAL_GPU=0
 
@@ -17,11 +17,12 @@ INV_TEMP_GlaS=10         # to be set accordingly, used by SWTA
 INV_TEMP_EYES=20    # to be set accordingly, used by SWTA
 
 REGIMES=(
-    0.01
-    0.02
+    0.0
+    #0.01
+    #0.02
     #0.05
-    0.1
-    0.2
+    #0.1
+    #0.2
     #1.0
 )
 
@@ -40,6 +41,7 @@ EXPS=(
     #ph2/wavelet-unet
     #ph2/perturbed-unet
     #ph2/teacher-unet
+    ph2/superpix-unet
     #################################
     # GlaS Dataset
     #################################
@@ -69,6 +71,7 @@ EXPS=(
     #eyes/wavelet-unet
     #eyes/perturbed-unet
     #eyes/teacher-unet
+    eyes/superpix-unet
 )
 
 # Train & Evaluate
