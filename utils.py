@@ -125,19 +125,22 @@ def initialize_teacher_variables(model, teacher_model):
 
 def superpix_segment(images, thr=0.01):
     def _pixels_close(im, x, y, x_n, y_n, thr=0.01):
-        return (im[:, x, y] - im[:, x_n, y_n]).abs().sum() < thr
+        return (im[:, x, y] - im[:, x_n, y_n]).abs().sum().item() < thr
 
     superpix = torch.zeros_like(images).sum(dim=1)
-    starting_points = []
     for i, im in enumerate(images):
         queue = []
         x, y = random.randint(0, im.shape[-2]), random.randint(0, im.shape[-1])
         queue.append((x, y))
+        explored = torch.zeros_like(superpix[i])
+        explored[x, y] = 1
         while len(queue) > 0:
             x, y = queue[0]
-            queue = queue[1:]
+            queue = queue[1:] if len(queue) > 1 else []
             superpix[i, x, y] = 1
-            neighbors = [(x_n, y_n) for x_n in [x-1, x, x+1] for y_n in [y-1, y, y+1] if superpix[i, x_n, y_n] == 0 and _pixels_close(im, x, y, x_n, y_n, thr)]
-            for x_n, y_n in neighbors: queue.append((x_n, y_n))
+            neighbors = [(x_n, y_n) for x_n in [max(x-1, 0), x, min(x+1, im.shape[-2]-1)] for y_n in [max(y-1, 0), y, min(y+1, im.shape[-1]-1)] if explored[x_n, y_n].item() == 0 and _pixels_close(im, x, y, x_n, y_n, thr)]
+            for x_n, y_n in neighbors: 
+                queue.append((x_n, y_n))
+                explored[x_n, y_n] = 1
     return superpix.unsqueeze(1)
 
