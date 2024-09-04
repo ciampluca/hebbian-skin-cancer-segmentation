@@ -1,0 +1,9 @@
+# @package model
+
+defaults:
+  - common
+
+name: DDPM-UNet
+module:
+  _target_: models.DDPMUNet
+

@@ -159,4 +159,7 @@ class EntropyMetric:
             return -torch.sum(torch.mul(outputs, torch.log2(outputs + self.epsilon))) / (n * h * w * np.log2(2))
         else:
             return -torch.sum(torch.mul(outputs, torch.log2(outputs + self.epsilon))) / (n * h * w * np.log2(c))
+        
+        
+
 

@@ -11,6 +11,7 @@ import hydra
 from tqdm import tqdm
 import pandas as pd
 from PIL import Image
+from denoising_diffusion_pytorch import GaussianDiffusion
 
 from utils import wavelet_filtering, update_teacher_variables, superpix_segment
 from metrics import dice_jaccard, hausdorff_distance, average_surface_distance, EntropyMetric
@@ -79,7 +80,15 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg, te
     model.train()
     optimizer.zero_grad()
 
-    criterion = hydra.utils.instantiate(cfg.optim.loss)
+    if cfg.optim.diffusion_timestamp != 0:
+        diffusion = GaussianDiffusion(
+            model.net,
+            image_size = cfg.data.image_size,
+            timesteps = cfg.optim.diffusion_timestamp,    # number of steps
+            device = device,
+        )
+    else:
+        criterion = hydra.utils.instantiate(cfg.optim.loss)
 
     if cfg.optim.entropy_lambda == 'adaptive':
         entropy_lambda = cfg.optim.starting_entropy_lambda * ((epoch+1) / cfg.optim.epochs)
@@ -106,9 +115,9 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg, te
     else:
         superpix_lambda = cfg.optim.superpix_lambda 
 
-
-    entropy_cost = EntropyMetric() if entropy_lambda != 0 else None
-    aux_criterion = torch.nn.BCEWithLogitsLoss() if criterion.__class__.__name__ == 'ElboMetric' else None
+    if cfg.optim.diffusion_timestamp == 0:
+        entropy_cost = EntropyMetric() if entropy_lambda != 0 else None
+        aux_criterion = torch.nn.BCEWithLogitsLoss() if criterion.__class__.__name__ == 'ElboMetric' else None
 
     metrics = []
     n_batches = len(dataloader)
@@ -131,119 +140,144 @@ def train_one_epoch(dataloader, model, optimizer, device, writer, epoch, cfg, te
             noised_images = torch.clamp(torch.randn_like(images[~visible_labels]) * 0.1, -0.2, 0.2) + images[~visible_labels]
 
         # computing outputs
-        output = model(images)
-        preds = output['output'] if isinstance(output, dict) else output
-
-        preds_prob = (torch.sigmoid(preds)) if criterion.__class__.__name__.endswith("WithLogitsLoss") or criterion.__class__.__name__ == "ElboMetric" else preds
-
-        if wavelet_lambda != 0:
-            h_preds, l_preds = preds[:preds.shape[0]//2], preds[preds.shape[0]//2:]
-            h_preds_prob, l_preds_prob = preds_prob[:preds_prob.shape[0]//2], preds_prob[preds_prob.shape[0]//2:]
-            preds_prob = h_preds_prob  if cfg.optim.use_h_wavelet else l_preds_prob
-            preds = h_preds if cfg.optim.use_h_wavelet else l_preds
-            max_l_preds_prob = (l_preds_prob > 0.5).float()
-            max_h_preds_prob = (h_preds_prob > 0.5).float()
-
-        if perturbation_lambda != 0:
-            perturbation_preds = preds
-            perturbation_preds_prob = preds_prob
-            preds = preds[:batch_size]
-            preds_prob = preds_prob[:batch_size]
-
-        if teacher_lambda != 0 and teacher_model is not None:
-            with torch.no_grad():
-                teacher_output = teacher_model(noised_images)
-                teacher_preds = teacher_output['output'] if isinstance(teacher_output, dict) else teacher_output
-                # teacher_prob = (torch.sigmoid(teacher_preds)) if criterion.__class__.__name__.endswith("WithLogitsLoss") or criterion.__class__.__name__ == "ElboMetric" else teacher_preds
-
-        if superpix_lambda != 0:
-            superpix_labels = -torch.ones_like(labels)
-            if torch.any(~visible_labels): superpix_labels[~visible_labels] = superpix_segment(images[~visible_labels])
-
-        # computing loss and backwarding it
-        if aux_criterion is not None:
-            aux_loss = aux_criterion(preds[visible_labels], labels[visible_labels]) if any_visible_label else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-            aux_loss.backward(retain_graph=True)
-            if hasattr(model, 'reset_internal_grads'): model.reset_internal_grads()
+        if cfg.optim.diffusion_timestamp != 0:
+            total_loss = diffusion(images)
         else:
-            aux_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-        if criterion.__class__.__name__ != 'ElboMetric':
-            loss = criterion(preds[visible_labels], labels[visible_labels]) if any_visible_label else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-            entropy_loss = entropy_cost(preds[~visible_labels]) if entropy_lambda != 0 and torch.any(~visible_labels) else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-            wavelet_loss = criterion(h_preds[~visible_labels], max_l_preds_prob[~visible_labels]) + criterion(l_preds[~visible_labels], max_h_preds_prob[~visible_labels]) if wavelet_lambda != 0 and torch.any(~visible_labels) else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-            perturbation_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-            for i in range(cfg.optim.perturbation):
-                perturbation_loss = perturbation_loss + (torch.mean((perturbation_preds[:batch_size][~visible_labels] - perturbation_preds[(i+1)*batch_size:(i+2)*batch_size][~visible_labels])**2) if torch.any(~visible_labels) else 0)
-            teacher_loss = torch.mean((preds[~visible_labels] - teacher_preds)**2) if teacher_lambda != 0 else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-            superpix_loss = criterion(preds[~visible_labels], superpix_labels[~visible_labels]) if torch.any(~visible_labels) else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-        else:
-            loss = criterion(output, images)
-            entropy_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-            wavelet_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-            perturbation_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-            teacher_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
-            superpix_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+            output = model(images)
+            preds = output['output'] if isinstance(output, dict) else output
 
-        total_loss = loss + entropy_lambda * entropy_loss + wavelet_lambda * wavelet_loss + perturbation_lambda * perturbation_loss + teacher_lambda * teacher_loss + superpix_lambda * superpix_loss
+            preds_prob = (torch.sigmoid(preds)) if criterion.__class__.__name__.endswith("WithLogitsLoss") or criterion.__class__.__name__ == "ElboMetric" else preds
+
+            if wavelet_lambda != 0:
+                h_preds, l_preds = preds[:preds.shape[0]//2], preds[preds.shape[0]//2:]
+                h_preds_prob, l_preds_prob = preds_prob[:preds_prob.shape[0]//2], preds_prob[preds_prob.shape[0]//2:]
+                preds_prob = h_preds_prob  if cfg.optim.use_h_wavelet else l_preds_prob
+                preds = h_preds if cfg.optim.use_h_wavelet else l_preds
+                max_l_preds_prob = (l_preds_prob > 0.5).float()
+                max_h_preds_prob = (h_preds_prob > 0.5).float()
+
+            if perturbation_lambda != 0:
+                perturbation_preds = preds
+                perturbation_preds_prob = preds_prob
+                preds = preds[:batch_size]
+                preds_prob = preds_prob[:batch_size]
+
+            if teacher_lambda != 0 and teacher_model is not None:
+                with torch.no_grad():
+                    teacher_output = teacher_model(noised_images)
+                    teacher_preds = teacher_output['output'] if isinstance(teacher_output, dict) else teacher_output
+                    # teacher_prob = (torch.sigmoid(teacher_preds)) if criterion.__class__.__name__.endswith("WithLogitsLoss") or criterion.__class__.__name__ == "ElboMetric" else teacher_preds
+
+            if superpix_lambda != 0:
+                superpix_labels = -torch.ones_like(labels)
+                if torch.any(~visible_labels): superpix_labels[~visible_labels] = superpix_segment(images[~visible_labels])
+
+            # computing loss and backwarding it
+            if aux_criterion is not None:
+                aux_loss = aux_criterion(preds[visible_labels], labels[visible_labels]) if any_visible_label else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+                aux_loss.backward(retain_graph=True)
+                if hasattr(model, 'reset_internal_grads'): model.reset_internal_grads()
+            else:
+                aux_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+            if criterion.__class__.__name__ != 'ElboMetric':
+                loss = criterion(preds[visible_labels], labels[visible_labels]) if any_visible_label else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+                entropy_loss = entropy_cost(preds[~visible_labels]) if entropy_lambda != 0 and torch.any(~visible_labels) else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+                wavelet_loss = criterion(h_preds[~visible_labels], max_l_preds_prob[~visible_labels]) + criterion(l_preds[~visible_labels], max_h_preds_prob[~visible_labels]) if wavelet_lambda != 0 and torch.any(~visible_labels) else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+                perturbation_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+                for i in range(cfg.optim.perturbation):
+                    perturbation_loss = perturbation_loss + (torch.mean((perturbation_preds[:batch_size][~visible_labels] - perturbation_preds[(i+1)*batch_size:(i+2)*batch_size][~visible_labels])**2) if torch.any(~visible_labels) else 0)
+                teacher_loss = torch.mean((preds[~visible_labels] - teacher_preds)**2) if teacher_lambda != 0 else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+                superpix_loss = criterion(preds[~visible_labels], superpix_labels[~visible_labels]) if torch.any(~visible_labels) else torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+            else:
+                loss = criterion(output, images)
+                entropy_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+                wavelet_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+                perturbation_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+                teacher_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+                superpix_loss = torch.zeros(1, dtype=preds.dtype, device=device, requires_grad=True)
+
+            total_loss = loss + entropy_lambda * entropy_loss + wavelet_lambda * wavelet_loss + perturbation_lambda * perturbation_loss + teacher_lambda * teacher_loss + superpix_lambda * superpix_loss
+        
         total_loss.backward()
         
-        # NCHW -> NHWC
-        coefs_pixel = dice_jaccard(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1)) if any_visible_label else {'segm/dice': None, 'segm/jaccard': None}
-        coefs_hausdorff_distance = hausdorff_distance(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1), thr=0.5) if any_visible_label else {'segm/95hd': None}
-        coefs_average_surface_distance = average_surface_distance(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1), thr=0.5) if any_visible_label else {'segm/asd': None}
-        batch_metrics = {
-            'loss ' + '(BCE)' if criterion.__class__.__name__ != 'ElboMetric' else '(ELBO)': loss.item(),
-            'aux_loss (BCE)': aux_loss.item(),
-            'entropy_loss': entropy_loss.item(),
-            'wavelet_loss': wavelet_loss.item(),
-            'perturbation_loss': perturbation_loss.item(),
-            'teacher_loss': teacher_loss.item(),
-            'superpix_loss': superpix_loss.item(),
-            'dice': coefs_pixel['segm/dice'],
-            'jaccard': coefs_pixel['segm/jaccard'],
-            'hausdorff distance': coefs_hausdorff_distance['segm/95hd'],
-            'average surface distance': coefs_average_surface_distance['segm/asd'],
-        }
-        metrics.append(batch_metrics)
+        if cfg.optim.diffusion_timestamp == 0:
+            # NCHW -> NHWC
+            coefs_pixel = dice_jaccard(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1)) if any_visible_label else {'segm/dice': None, 'segm/jaccard': None}
+            coefs_hausdorff_distance = hausdorff_distance(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1), thr=0.5) if any_visible_label else {'segm/95hd': None}
+            coefs_average_surface_distance = average_surface_distance(labels[visible_labels].movedim(1, -1), preds_prob[visible_labels].movedim(1, -1), thr=0.5) if any_visible_label else {'segm/asd': None}
+            batch_metrics = {
+                'loss ' + '(BCE)' if criterion.__class__.__name__ != 'ElboMetric' else '(ELBO)': loss.item(),
+                'aux_loss (BCE)': aux_loss.item(),
+                'entropy_loss': entropy_loss.item(),
+                'wavelet_loss': wavelet_loss.item(),
+                'perturbation_loss': perturbation_loss.item(),
+                'teacher_loss': teacher_loss.item(),
+                'superpix_loss': superpix_loss.item(),
+                'dice': coefs_pixel['segm/dice'],
+                'jaccard': coefs_pixel['segm/jaccard'],
+                'hausdorff distance': coefs_hausdorff_distance['segm/95hd'],
+                'average surface distance': coefs_average_surface_distance['segm/asd'],
+            }
+            metrics.append(batch_metrics)
 
-        postfix = {metric: f'{value:.3f}' if value is not None else None for metric, value in batch_metrics.items()}
-        progress.set_postfix(postfix)
+            postfix = {metric: f'{value:.3f}' if value is not None else None for metric, value in batch_metrics.items()}
+            progress.set_postfix(postfix)
 
-        if (i + 1) % cfg.optim.batch_accumulation == 0 or (i + 1) == n_batches:
-            if hasattr(model, 'local_update'): model.local_update()
-            optimizer.step()
-            optimizer.zero_grad()
-            if teacher_model is not None:
-                update_teacher_variables(model, teacher_model, cfg.optim.teacher_alpha, epoch)
+            if (i + 1) % cfg.optim.batch_accumulation == 0 or (i + 1) == n_batches:
+                if hasattr(model, 'local_update'): model.local_update()
+                optimizer.step()
+                optimizer.zero_grad()
+                if teacher_model is not None:
+                    update_teacher_variables(model, teacher_model, cfg.optim.teacher_alpha, epoch)
 
-        if (i + 1) % cfg.optim.log_every == 0:
-            batch_metrics.update({'lr': optimizer.param_groups[0]['lr']})
-            n_iter = epoch * n_batches + i
-            for metric, value in batch_metrics.items():
-                if value is not None:
-                    writer.add_scalar(f'train/{metric}', value, n_iter)
-            writer.add_scalar('train/entropy_lambda', entropy_lambda, n_iter)
-            writer.add_scalar('train/wavelet_lambda', wavelet_lambda, n_iter)
-            writer.add_scalar('train/perturbation_lambda', perturbation_lambda, n_iter)
-            writer.add_scalar('train/teacher_lambda', teacher_lambda, n_iter)
-            writer.add_scalar('train/superpix_lambda', superpix_lambda, n_iter)
+            if (i + 1) % cfg.optim.log_every == 0:
+                batch_metrics.update({'lr': optimizer.param_groups[0]['lr']})
+                n_iter = epoch * n_batches + i
+                for metric, value in batch_metrics.items():
+                    if value is not None:
+                        writer.add_scalar(f'train/{metric}', value, n_iter)
+                writer.add_scalar('train/entropy_lambda', entropy_lambda, n_iter)
+                writer.add_scalar('train/wavelet_lambda', wavelet_lambda, n_iter)
+                writer.add_scalar('train/perturbation_lambda', perturbation_lambda, n_iter)
+                writer.add_scalar('train/teacher_lambda', teacher_lambda, n_iter)
+                writer.add_scalar('train/superpix_lambda', superpix_lambda, n_iter)
 
-        if cfg.optim.debug and epoch % cfg.optim.debug_freq == 0 and cfg.optim.save_debug_train_images:
-            if wavelet_lambda != 0:
-                for unfiltered_image, h_image, l_image, label, image_id, pred_seg_map in zip(unfiltered_images, h_images, l_images, labels, image_ids, preds_prob):
-                    _save_image_and_segmentation_maps(unfiltered_image, image_id, pred_seg_map, label, cfg, split="train", h_image=h_image, l_image=l_image)
-            elif criterion.__class__.__name__ == 'ElboMetric':
-                 for image, reconstr_image, label, image_id, pred_seg_map in zip(images, output['reconstr'], labels, image_ids, preds_prob):
-                    _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train", reconstructed_image=reconstr_image)
-            elif perturbation_lambda != 0:
-                for image, label, image_id, pred_seg_map, first_perturbed_pred_seg_map in zip(images, labels, image_ids, perturbation_preds_prob[:batch_size], perturbation_preds_prob[batch_size:2*batch_size]):
-                    _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train", perturbed_segmentation_map=first_perturbed_pred_seg_map)
-            elif superpix_lambda != 0:
-                for image, label, superpix_label, image_id, pred_seg_map in zip(images, labels, superpix_labels, image_ids, preds_prob):
-                    _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train", perturbed_segmentation_map=superpix_label)
-            else:
-                for image, label, image_id, pred_seg_map in zip(images, labels, image_ids, preds_prob):
-                    _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train")
+            if cfg.optim.debug and epoch % cfg.optim.debug_freq == 0 and cfg.optim.save_debug_train_images:
+                if wavelet_lambda != 0:
+                    for unfiltered_image, h_image, l_image, label, image_id, pred_seg_map in zip(unfiltered_images, h_images, l_images, labels, image_ids, preds_prob):
+                        _save_image_and_segmentation_maps(unfiltered_image, image_id, pred_seg_map, label, cfg, split="train", h_image=h_image, l_image=l_image)
+                elif criterion.__class__.__name__ == 'ElboMetric':
+                    for image, reconstr_image, label, image_id, pred_seg_map in zip(images, output['reconstr'], labels, image_ids, preds_prob):
+                        _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train", reconstructed_image=reconstr_image)
+                elif perturbation_lambda != 0:
+                    for image, label, image_id, pred_seg_map, first_perturbed_pred_seg_map in zip(images, labels, image_ids, perturbation_preds_prob[:batch_size], perturbation_preds_prob[batch_size:2*batch_size]):
+                        _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train", perturbed_segmentation_map=first_perturbed_pred_seg_map)
+                elif superpix_lambda != 0:
+                    for image, label, superpix_label, image_id, pred_seg_map in zip(images, labels, superpix_labels, image_ids, preds_prob):
+                        _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train", perturbed_segmentation_map=superpix_label)
+                else:
+                    for image, label, image_id, pred_seg_map in zip(images, labels, image_ids, preds_prob):
+                        _save_image_and_segmentation_maps(image, image_id, pred_seg_map, label, cfg, split="train")
+
+        else:
+            batch_metrics = {
+                'loss diffusion': total_loss.item(),
+            }
+            metrics.append(batch_metrics)
+            
+            postfix = {metric: f'{value:.3f}' if value is not None else None for metric, value in batch_metrics.items()}
+            progress.set_postfix(postfix)
+            
+            if (i + 1) % cfg.optim.batch_accumulation == 0 or (i + 1) == n_batches:
+                optimizer.step()
+                optimizer.zero_grad()
+
+            if (i + 1) % cfg.optim.log_every == 0:
+                batch_metrics.update({'lr': optimizer.param_groups[0]['lr']})
+                n_iter = epoch * n_batches + i
+                for metric, value in batch_metrics.items():
+                    if value is not None:
+                        writer.add_scalar(f'train/{metric}', value, n_iter)
 
     metrics = pd.DataFrame(metrics).mean(axis=0).to_dict()
 

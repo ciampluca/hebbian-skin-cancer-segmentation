@@ -164,7 +164,7 @@ def main(cfg):
         train_log.to_csv(train_log_path)
 
         # evaluation
-        if (epoch + 1) % cfg.optim.val_freq == 0:
+        if (epoch + 1) % cfg.optim.val_freq == 0 and cfg.optim.diffusion_timestamp == 0:
             valid_metrics = validate(valid_loader, model, device, epoch, cfg)
 
             for metric, value in valid_metrics.items():  # log to tensorboard
@@ -192,6 +192,16 @@ def main(cfg):
             valid_metrics = pd.DataFrame(valid_metrics, index=[epoch]).rename_axis('epoch')
             valid_log = pd.concat([valid_log, valid_metrics])
             valid_log.to_csv(valid_log_path)
+            
+        if (epoch + 1) % cfg.optim.val_freq == 0 and cfg.optim.diffusion_timestamp != 0:
+            # save last checkpoint for resuming
+            torch.save({
+                'model': model.state_dict(),
+                'optimizer': optimizer.state_dict(),
+                'lr_scheduler': scheduler.state_dict(),
+                'epoch': epoch,
+                'best_metrics': best_metrics,
+            }, 'last.pth')
 
     log.info("Training ended. Exiting....")
 

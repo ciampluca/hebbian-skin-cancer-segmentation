@@ -1,0 +1,16 @@
+# @package _global_
+
+defaults:
+ - ph2/common
+ - /common/model: unet
+
+optim:
+  epochs: 300
+
+  optimizer:
+    lr: 0.0001
+
+  lr_scheduler:
+      milestones: [100, 200, 250]
+
+  superpix_lambda: 1

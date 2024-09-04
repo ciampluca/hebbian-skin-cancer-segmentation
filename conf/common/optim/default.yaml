@@ -46,6 +46,8 @@ teacher_lambda: 0   # used by MT; can be a fixed value or 'adaptive'
 starting_teacher_lambda: 5
 teacher_alpha: 0.99
 
-superpix_lambda: 0   # used by MT; can be a fixed value or 'adaptive'
+superpix_lambda: 0   # used by superpix; can be a fixed value or 'adaptive'
 starting_superpix_lambda: 5
+
+diffusion_timestamp: 0     # used by ddpm
 

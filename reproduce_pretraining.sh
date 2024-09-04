@@ -17,18 +17,21 @@ EXPS=(
     ph2/hunet_base-hpca
     ph2/hunet_base-hpca_t
     ph2/vae-unet_base
+    ph2/ddpm-unet_base
     #################################
     # GlaS Dataset
     #################################
     glas/hunet_base-hpca
     glas/hunet_base-hpca_t
     glas/vae-unet_base
+    glas/ddpm-unet_base
     #################################
     # EYES Dataset
     #################################
     eyes/hunet_base-hpca
     eyes/hunet_base-hpca_t
     eyes/vae-unet_base
+    eyes/ddpm-unet_base
 )
 
 # Train & Evaluate 

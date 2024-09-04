@@ -1,0 +1,20 @@
+# @package _global_
+
+defaults:
+ - ph2/common
+ - /common/model: ddpm_unet
+
+optim:
+  epochs: 300
+
+  optimizer:
+    lr: 0.001
+
+  lr_scheduler:
+      milestones: [100, 150, 200]
+
+  diffusion_timestamp: 1000
+
+data:
+  train:
+    use_pseudolabel: false

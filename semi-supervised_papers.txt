@@ -12,18 +12,22 @@ Code: https://github.com/aijinrjinr/MLB-Seg
 Dataset: Left Atrial (LA), Prostate MR Image Segmentation challenge (PROMISE 2012)
 Metrics: Dice Coefficient, Jaccard Index, Hausdorff Distance, Average Surface Distance
 Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
+Nota 2: potrebbe anche andare bene da prendere come esempio per l'estensione, controllare meglio anche la qualità del repo
 
 2. Correlation-Aware Mutual Learning for Semi-supervised Medical Image Segmentation
 Code: https://github.com/Herschel555/CAML
 Dataset: Left Atrial (LA)
 Metrics: Dice Coefficient, Jaccard Index, Hausdorff Distance, Average Surface Distance
 Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
+Nota 2: interessante anche perchè dice che c'è casino in letteratura sui risultati, e si rifa gli esperimenti; controllare meglio la qualità del repo;
+        si rifa proprio una tabella dove ci mette i risultati che ha rifatto e quelli che c'erano riportati (e che sono diversi)
 
 3. Cross-Adversarial Local Distribution Regularization for Semi-supervised Medical Image Segmentation
 Code (il repo è vuoto): https://github.com/PotatoThanh/Cross-adversarial-local-distribution-regularization
 Dataset: Left Atrial (LA), Automated Cardiac Diagnosis Challenge (ACDC)
 Metrics: Dice Coefficient, Jaccard Index, 95% Hausdorff Distance, Average Surface Distance
 Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è 
+Nota 2: interessante anche perchè usa come backbone per il 2D la Unet, guardare meglio il repo
 
 4. Decoupled Consistency for Semi-supervised Medical Image Segmentation
 Code: https://github.com/wxfaaaaa/DCNet
@@ -70,7 +74,7 @@ CVPR 2023
 ---------------------------
 
 1. Pseudo-label Guided Contrastive Learning for Semi-supervised Medical Image Segmentation
-Code (404 error): https://github.com/hritam-98/PatchCL-MedSeg
+Code: https://github.com/hritam-98/PatchCL-MedSeg
 Dataset: Automated Cardiac Diagnosis Challenge (ACDC), KiTS19, Colorectal Adenocarcinoma Gland (CRAG) 
 Metrics: Dice Coefficient, 95% Hausdorff Distance, Average Surface Distance
 Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
@@ -141,7 +145,7 @@ Metrics: Dice Coefficient, Jaccard Index, 95% Hausdorff Distance, Average Surfac
 Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
 
 6. Semi-supervised Histological Image Segmentation via Hierarchical Consistency Enforcement
-Code (repo vuoto): https://github.com/qgking/HCE
+Code (repo 404): https://github.com/qgking/HCE
 Dataset: MoNuSeg, CRAG
 Metrics: Dice Coefficient, Jaccard Index, 95% Hausdorff Distance
 Note: può essere interessante, c'è anche una tabellina di metodi con i risultati già fatti che si potrebbe prendere così come è
@@ -262,3 +266,98 @@ Note: può essere interessante, c'è anche una tabellina di metodi con i risulta
                Usato solo da un paper qui nella lista, comunque almeno ci sarebbe una tabellina con altri metodi già fatta. Inoltre è 2D, penso con 
                due classi, quindi sicuramente è papabile.
                Per il setting semi-supervised dicono di usare il 20%-80% che è quello più usato
+
+
+
+
+
+%----------------------------------------------%
+%                 Results                      %
+%----------------------------------------------%
+
+-----------------------
+1. Left Atrial (LA) 
+
+- MICCAI 2023.1: 
+      - regime 10% 
+            ours MLB-Seg --> DC 88.69, JI 79.86, HD 8.99, ASD 2.61
+            UNet++ --> DC 81.33
+            DAP --> 81.89
+            UA-MT --> 84.25
+            SASSNet --> 87.32
+            LG-ER-MT --> 85.54
+            DUWM --> 85.91
+            DTC --> 86.57
+            MC-Net --> 87.71
+            Uncertainty-based --> 86.58
+
+- MICCAI 2023.2 (fa regimi 5-10-20):
+      - regime 10%
+            ours --> 89.62+/-0.20
+            V-Net --> 79.87+/-1.23 (riportato 78.57)
+            UA-MT --> 85.81+/-0.17 (riportato 84.25)
+            SASSNet --> 85.71+/-0.87 (riportato 86.81)
+            DTC --> 84.55+/-1.72 (riportato -)
+            MC-Net --> 86.87+/-1.74 (riportato 87.71)
+            URPC --> 83.37+/-0.21 (riportato -)
+            SS-Net --> 86.56+/-0.69 (riportato 88.55)
+            MC-Net+ --> 87.68+/-0.56 (riportato 88.96)
+
+- MICCAI 2023.3 (fa regimi 5-10):
+      - regime 10%
+            ours Cross-ALD --> 89.92
+            V-Net --> 82.74
+            UA-MT --> 87.79
+            SASSNet --> 87.54
+            DTC --> 87.51
+            URPC --> 86.92
+            MC-Net --> 87.62
+            SS-Net --> 88.55
+
+- MICCAI 2023.5 (fa regimi 10-20):
+      - regime 10%
+            ours DMD --> 90.46
+            V-Net --> 79.99
+            DAP --> 81.89
+            UA-MT --> 84.25
+            SASSNet --> 87.32
+            LG-ER-MT --> 85.54
+            DUWM --> 85.91
+            DTC --> 86.57
+            MC-Net --> 87.71
+            SS-Net --> 88.55
+
+- MICCAI 2023.8 (fa regimi 20)
+
+- MICCAI 2023.9 (fa regimi 5-10):
+      - regime 10%
+            our ACTION++ --> 89.9
+            V-Net --> 82.7
+            UA-MT --> 87.8
+            SASSNet --> 87.5
+            DTC --> 87.5
+            URPC --> 86.9
+            MC-Net --> 87.6
+            SS-Net --> 88.6
+
+- MICCAI 2022.2 (fa regimi 5-10):
+      - regime 10%
+            our SS-Net --> 88.55
+            UA-MT --> 87.79
+            SASSNet --> 87.54
+            DTC --> 87.51
+            URPC --> 86.92
+            MC-Net --> 87.62
+
+- MICCAI 2022.3 (fa regimi 20):
+
+- MICCAI 2022.4 (fa regimi 10):
+      - regime 10%
+            ours --> 86.58 +- 1.03
+            SASSNet --> 83.70 +- 1.48
+            DCT --> 83.10 +- 0.26
+            UA-MT --> 85.09 +- 1.42
+            URPC --> 84.47 +- 0.31
+
+
+
